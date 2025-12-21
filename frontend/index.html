@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Federated Learning | Baseline Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div>
+          <h1>Federated Learning Dashboard</h1>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">SUPPORT2 Study | Baseline Local Model performance</p>
+        </div>
+        <div class="nav-tag">
+          Local Benchmark: <span style="color: var(--accent-green); font-weight: 700;">ACTIVE</span>
+        </div>
+      </header>
+
+      <section class="metrics-grid">
+        <div class="card">
+          <div class="card-title">Total Patients</div>
+          <div class="card-value" id="total-samples">9,105</div>
+          <div class="card-subtitle">Distributed across 8 clinical nodes</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg Accuracy</div>
+          <div class="card-value" id="avg-accuracy">0.00%</div>
+          <div class="card-subtitle">Mean performance of local models</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg AUC-ROC</div>
+          <div class="card-value" id="avg-auc">0.000</div>
+          <div class="card-subtitle">Mean predictive power</div>
+        </div>
+      </section>
+
+      <section class="charts-grid">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Node Data Distribution</h3>
+            <p>Number of patient records per specialized hospital node</p>
+          </div>
+          <canvas id="distribution-chart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Performance Analysis</h3>
+            <p>Accuracy and AUC-ROC comparison by hospital group</p>
+          </div>
+          <canvas id="performance-chart"></canvas>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
