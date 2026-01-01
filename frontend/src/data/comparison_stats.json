@@ -1,0 +1,9 @@
+{
+    "local_accuracy": 0.698549875,
+    "centralized_accuracy": 0.7325529040972535,
+    "federated_accuracy": 0.6995051731893838,
+    "improvement_local_central": 4.867659463435378,
+    "improvement_local_fed": 0.13675447145184583,
+    "improvement_central_fed": -4.5113097938769915,
+    "dataset_name": "SUPPORT2 Clinical Study"
+}

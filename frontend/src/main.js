@@ -1,6 +1,8 @@
 import './style.css' // Import the unified stylesheet for the application
 import Chart from 'chart.js/auto' // Import Chart.js library for creating data visualizations
 import rawData from './data/baseline.json' // Import the JSON data file containing hospital performance metrics
+import trainingHistory from './data/training_history.json' // Import training history 
+import comparisonStats from './data/comparison_stats.json' // Import comparison statistics
 
 // Global Chart Configuration
 // Set the default text color for all charts to a light gray to match the dark theme
@@ -28,53 +30,38 @@ const initDashboard = () => {
   const federatedData = rawData.filter(d => d.Type === 'Federated');
 
   // Determine which dataset to use for the top-level aggregate metrics.
-  // If Federated data exists, we prioritize showing that to demonstrate improvement.
-  // Otherwise, we fall back to the Local data.
   const displayData = federatedData.length > 0 ? federatedData : localData;
 
   // Calculate Aggregate Current Metrics
-
-  // Total Samples: Sum of patient records across all hospitals (using Local data as source of truth for volume)
   const totalSamples = localData.reduce((acc, curr) => acc + curr.Samples, 0);
-
-  // Average Accuracy: Sum of all accuracies divided by count, converted to percentage
   const avgAccuracy = (displayData.reduce((acc, curr) => acc + curr.Accuracy, 0) / displayData.length) * 100;
-
-  // Average AUC-ROC: Sum of all AUC scores divided by count
-  // AUC (Area Under Curve) is a robust metric for binary classification (Survival/Death)
   const avgAuc = displayData.reduce((acc, curr) => acc + curr['AUC-ROC'], 0) / displayData.length;
-
-  // Calculate Global Improvement (Diff between Federated and Local)
-  // Calculate average AUC for the baseline (local) models
   const localAvgAuc = localData.reduce((acc, curr) => acc + curr['AUC-ROC'], 0) / localData.length;
-
-  // Improvement: Subtract Local AUC from Current (Federated) AUC
-  // If no Federated data, improvement is "N/A"
   const improvement = federatedData.length > 0 ? (avgAuc - localAvgAuc).toFixed(3) : "N/A";
 
+  // --- Dynamic Title and Subtext ---
+  const datasetName = comparisonStats?.dataset_name || "Clinical Study";
+  document.getElementById('dataset-name').textContent = `${datasetName} | Federated Learning Analysis`;
+  document.title = `FL Dashboard | ${datasetName}`;
+
+  const nodeCount = localData.length;
+  document.getElementById('node-count-subtext').textContent = `Distributed across ${nodeCount} clinical nodes`;
+
   // Update the Dashboard DOM Elements
-
-  // Update the "Total Patients" card
   document.getElementById('total-samples').textContent = totalSamples.toLocaleString();
-
-  // Update the "Avg Accuracy" card (formatted with % symbol)
   document.getElementById('avg-accuracy').textContent = `${avgAccuracy.toFixed(1)}%`;
-
-  // Update the "Avg AUC Score" card
   document.getElementById('avg-auc').textContent = avgAuc.toFixed(3);
 
-  // Update the 'Global Gain' tag in the header if Federated Learning has improved results
   const navTag = document.querySelector('.nav-tag');
   if (federatedData.length > 0) {
-    // Inject HTML showing the positive gain in green
     navTag.innerHTML = `Global Gain: <span style="color: var(--accent-green); font-weight: 700;">+${improvement} AUC</span>`;
   }
 
-  // Render the Bar Chart showing patient distribution per hospital
+  // Render Charts
   renderDistributionChart(localData);
-
-  // Render the Line/Comparison Chart showing model performance
   renderPerformanceComparison(localData, federatedData);
+  renderTrainingChart(trainingHistory);
+  renderComparisonStats(comparisonStats);
 }
 
 /**
@@ -199,6 +186,114 @@ const renderPerformanceComparison = (local, federated) => {
       }
     }
   });
+}
+
+/**
+ * Renders a Dual-Axis Line Chart showing Accuracy and Loss over training rounds.
+ * @param {Array} history - Array of {round, accuracy, loss} objects
+ */
+const renderTrainingChart = (history) => {
+  // Only render if history data exists
+  if (!history || history.length === 0) return;
+
+  // Get context
+  const canvas = document.getElementById('training-chart');
+  if (!canvas) return; // Guard clause in case HTML element is missing
+  const ctx = canvas.getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: history.map(h => `Round ${h.round}`), // X-Axis: Rounds
+      datasets: [
+        {
+          label: 'Global Accuracy',
+          data: history.map(h => h.accuracy),
+          borderColor: '#bc8cff', // Purple
+          backgroundColor: 'rgba(188, 140, 255, 0.1)',
+          yAxisID: 'y', // Left Axis
+          tension: 0.3,
+          fill: true
+        },
+        {
+          label: 'Training Loss',
+          data: history.map(h => h.loss),
+          borderColor: '#f78166', // Red/Orange
+          backgroundColor: 'transparent',
+          yAxisID: 'y1', // Right Axis
+          tension: 0.3,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Accuracy' },
+          min: 0.5,
+          max: 1.0,
+          grid: { color: 'rgba(255, 255, 255, 0.05)' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: { display: true, text: 'Loss' },
+          min: 0,
+          grid: { drawOnChartArea: false } // Only show grid for left axis
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Renders cards for detailed Comparison Statistics.
+ * @param {Object} stats - The comparison statistics object
+ */
+const renderComparisonStats = (stats) => {
+  const container = document.getElementById('comparison-grid');
+  if (!container || !stats) return;
+
+  // Helper to Create Card HTML
+  const createCard = (title, value, subtext, color = 'var(--text-primary)') => {
+    return `
+            <div class="card" style="padding: 1.25rem;">
+                <div class="card-title" style="font-size: 0.85rem;">${title}</div>
+                <div class="card-value" style="font-size: 1.5rem; color: ${color};">${value}</div>
+                <div class="card-subtitle" style="font-size: 0.75rem;">${subtext}</div>
+            </div>
+        `;
+  };
+
+  // Determine colors for improvements (Green if positive, Red if negative)
+  const colorImp = (val) => val >= 0 ? 'var(--accent-green)' : '#f78166';
+
+  const html = [
+    // Baseline Metrics
+    createCard("Local Baseline Acc", `${(stats.local_accuracy * 100).toFixed(2)}%`, "Avg. of isolated hospitals"),
+    createCard("Centralized Acc", `${(stats.centralized_accuracy * 100).toFixed(2)}%`, "Pooled data (Gold Standard)"),
+    createCard("Federated Acc", `${(stats.federated_accuracy * 100).toFixed(2)}%`, "Distributed Global Model"),
+
+    // Comparisons / Improvements
+    createCard("Local → Centralized", `${stats.improvement_local_central > 0 ? '+' : ''}${stats.improvement_local_central.toFixed(2)}%`, "Gain from pooling data", colorImp(stats.improvement_local_central)),
+    createCard("Local → Federated", `${stats.improvement_local_fed > 0 ? '+' : ''}${stats.improvement_local_fed.toFixed(2)}%`, "Gain from FL vs Local", colorImp(stats.improvement_local_fed)),
+    createCard("Centralized → Federated", `${stats.improvement_central_fed > 0 ? '+' : ''}${stats.improvement_central_fed.toFixed(2)}%`, "Gap to Gold Standard", colorImp(stats.improvement_central_fed))
+  ].join('');
+
+  container.innerHTML = html;
 }
 
 // Wait for the HTML document to be fully loaded before running the script
