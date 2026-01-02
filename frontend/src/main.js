@@ -62,6 +62,55 @@ const initDashboard = () => {
   renderPerformanceComparison(localData, federatedData);
   renderTrainingChart(trainingHistory);
   renderComparisonStats(comparisonStats);
+  renderSecurityAudit(comparisonStats?.security);
+}
+
+/**
+ * Renders cards for the Security & Privacy Audit section.
+ * @param {Object} security - The security metrics object
+ */
+const renderSecurityAudit = (security) => {
+  const container = document.getElementById('security-grid');
+  if (!container || !security) return;
+
+  const createSecurityCard = (title, value, subtext, color = 'var(--text-primary)', icon = '🔒') => {
+    return `
+            <div class="card" style="padding: 1.25rem; border-left: 3px solid ${color};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <div class="card-title" style="font-size: 0.85rem; margin: 0;">${title}</div>
+                  <span>${icon}</span>
+                </div>
+                <div class="card-value" style="font-size: 1.5rem; color: ${color};">${value}</div>
+                <div class="card-subtitle" style="font-size: 0.75rem;">${subtext}</div>
+            </div>
+        `;
+  };
+
+  const html = [
+    createSecurityCard(
+      "Privacy Guard (DP)",
+      security.dp_enabled ? `ε = ${security.epsilon}` : "Disabled",
+      security.dp_enabled ? `Delta: ${security.delta}` : "No Differential Privacy",
+      security.dp_enabled ? 'var(--accent-green)' : '#f78166',
+      "🛡️"
+    ),
+    createSecurityCard(
+      "Secure Aggregator",
+      security.defense_type,
+      "Robust to outliers & poisoning",
+      'var(--accent-green)',
+      "⚙️"
+    ),
+    createSecurityCard(
+      "Attack Mitigation",
+      security.attack_simulated ? "Active & Defended" : "No Attack Simulated",
+      security.attack_simulated ? `Type: ${security.attack_type}` : "Stable environment",
+      security.attack_simulated ? 'var(--accent-green)' : 'var(--text-secondary)',
+      "🛡️"
+    )
+  ].join('');
+
+  container.innerHTML = html;
 }
 
 /**

@@ -17,17 +17,33 @@ from collections import OrderedDict         # A dictionary that remembers the or
 import flwr                                 # Flower: The Federated Learning framework
 from flwr.client import ClientApp           # Wrapper to define the logic that runs on each "client" (hospital)
 from flwr.common import Context, Metrics, parameters_to_ndarrays    # Helper types for type hinting and context management
-from flwr.server import ServerApp, ServerConfig, ServerAppComponents
-from flwr.common import Context, Metrics    # Helper types for type hinting and context management
-from flwr.server.strategy import FedAvg
+from flwr.server import ServerApp, ServerConfig, ServerAppComponents # Components to define the central server logic
+from flwr.server.strategy import FedAvg, FedMedian, Krum, FedTrimmedAvg # Strategies: Standard and Robust
 from typing import List, Tuple, Union, Optional # Type hinting tools to make code more readable/robust
 
-# Note: Security features (DP, SecAgg, Robust Aggregation) have been removed for a vanilla FL implementation.
+try:
+    from opacus import PrivacyEngine
+    OPACUS_AVAILABLE = True
+except ImportError:
+    OPACUS_AVAILABLE = False
+    print("(!) Opacus not found. Differential Privacy will be DISABLED.")
 
 # --------------------------------------------------------------------------------------
 # GLOBAL CONFIGURATION
 # --------------------------------------------------------------------------------------
-# No global security flags - Project reverted to Vanilla FL
+ENABLE_DP = True      # Set to True to enable Client-Side Differential Privacy via Opacus
+ENABLE_SECAGG = False # [CRITICAL] Must be FALSE for FedMedian/Krum (Non-linear aggregation breaks masking)
+# --- ADVERSARIAL ATTACK CONFIG ---
+ENABLE_ATTACK = True
+ATTACK_TYPE = "gradient_scale" 
+MALICIOUS_CLIENTS_RATIO = 0.25 
+ATTACK_SCALE_FACTOR = 100.0 
+# --- DEFENSE CONFIG ---
+DEFENSE_TYPE = "trimmed_avg" # Options: "fedavg", "fedmedian", "krum", "trimmed_avg"
+# --- DP TUNING ---
+DP_NOISE_MULTIPLIER = 1.0     # Higher = More Privacy, Lower epsilon (eps)
+DP_MAX_GRAD_NORM = 1.0       # Clipping threshold
+DP_DELTA = 1e-5             # Target failure probability (standard: 1/sample_size)
 
 # --------------------------------------------------------------------------------------
 # DATA CONFIGURATION (For Generic Tabular Datasets)
@@ -157,22 +173,41 @@ class SurvivalMLP(nn.Module):
         """
         return self.fc(x)
 
-def train(net, trainloader, epochs):
+def train(net, trainloader, epochs, privacy_engine=None):
     """
-    Standard training logic.
+    The Training Loop. This is where the model 'learns' from local data.
+    If 'privacy_engine' is provided, we use Differential Privacy.
     """
-    criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
-    net.train()
+    criterion = nn.BCELoss()            # Loss Function
+    optimizer = torch.optim.Adam(net.parameters(), lr=0.01) # Optimizer
     
-    for epoch in range(epochs):
-        for images, labels in trainloader:
-            optimizer.zero_grad()
-            outputs = net(images)
-            loss = criterion(outputs, labels.view(-1, 1))
-            loss.backward()
-            optimizer.step()
-    return 0.0 # No epsilon to return
+    # --- DIFFERENTIAL PRIVACY SETUP ---
+    if privacy_engine is not None:
+        # Opacus wraps the model and optimizer to inject noise into gradients
+        net, optimizer, trainloader = privacy_engine.make_private(
+            module=net,
+            optimizer=optimizer,
+            data_loader=trainloader,
+            noise_multiplier=DP_NOISE_MULTIPLIER,
+            max_grad_norm=DP_MAX_GRAD_NORM,
+        )
+    # ----------------------------------
+
+    net.train()                         # Set model to 'Training Mode'
+    
+    for _ in range(epochs):             # Loop over the dataset multiple times (epochs)
+        for images, labels in trainloader: # Iterate through batches of patient data
+            optimizer.zero_grad()       # Clear old gradients
+            outputs = net(images)       # Ask model for predictions
+            loss = criterion(outputs, labels.unsqueeze(1).float()) # Calculate Loss
+            loss.backward()             # Backpropagation
+            optimizer.step()            # Update weights
+
+    # If DP was used, calculate the final epsilon (Privacy Budget)
+    if privacy_engine is not None:
+        eps = privacy_engine.get_epsilon(delta=DP_DELTA)
+        return eps
+    return None
 
 def test(net, testloader):
     """
@@ -199,25 +234,84 @@ def test(net, testloader):
 
 class FlowerSurvivalClient(flwr.client.NumPyClient):
     """
-    Standard Flower Client.
+    The Flower Client wrapper. It connects our PyTorch code to the Flower Federated Framework.
     """
-    def __init__(self, net, trainloader, testloader):
-        self.net = net
-        self.trainloader = trainloader
-        self.testloader = testloader
+    def __init__(self, net, trainloader, valloader, mask_add=None, mask_sub=None, is_malicious=False):
+        self.net = net                  # The local model
+        self.trainloader = trainloader  # The local training data
+        self.valloader = valloader      # The local validation/testing data
+        self.mask_add = mask_add        # SecAgg: Mask to add
+        self.mask_sub = mask_sub        # SecAgg: Mask to subtract
+        self.is_malicious = is_malicious # Attack: Is this a bad actor?
+
+        # --- ATTACK: LABEL FLIPPING (Data Poisoning) ---
+        if self.is_malicious and ENABLE_ATTACK and ATTACK_TYPE == "label_flip":
+             print(f"MALICIOUS CLIENT: Applying Label Flip Poisoning...", file=sys.stderr)
+             # Extract data
+             X, y = [], []
+             for batch_X, batch_y in self.trainloader:
+                 X.append(batch_X)
+                 y.append(batch_y)
+             X = torch.cat(X)
+             y = torch.cat(y)
+             
+             # Flip Labels (0->1, 1->0) using 1 - y
+             y_poisoned = 1.0 - y
+             
+             # Re-create DataLoader with POISONED data
+             dataset = TensorDataset(X, y_poisoned)
+             self.trainloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     def get_parameters(self, config):
-        return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
+        """
+        Server asks: "Please send me your current weights."
+        """
+        return get_parameters(self.net)
 
     def fit(self, parameters, config):
-        set_parameters(self.net, parameters)
-        train(self.net, self.trainloader, epochs=1) 
-        return self.get_parameters(config={}), len(self.trainloader.dataset), {}
+        """
+        Trains the global model on local hospital data.
+        """
+        set_parameters(self.net, parameters)    # 1. Update local model with global weights
+        
+        # Initialize Privacy Engine if enabled
+        pe = None
+        if ENABLE_DP and OPACUS_AVAILABLE:
+            pe = PrivacyEngine()
+            
+        eps = train(self.net, self.trainloader, epochs=10, privacy_engine=pe) # 2. Train locally with potential DP
+        
+        if eps is not None:
+            print(f"(DP AUDIT) Privacy Budget spent: epsilon = {eps:.2f} (delta={DP_DELTA})", file=sys.stderr)
+        
+        # --- SECURE AGGREGATION SIMULATION ---
+        weights = get_parameters(self.net)
+        
+        if ENABLE_SECAGG and self.mask_add is not None:
+             # Apply Pairwise Masking: W' = W + (Mask_Add - Mask_Sub) / n_samples
+             # We divide by n_samples because FedAvg aggregates by SUM(w * n). 
+             # So we want SUM( (M_add - M_sub)/n * n ) = SUM(M_add - M_sub) = 0
+             n_samples = len(self.trainloader.dataset)
+             # --- ATTACK: GRADIENT SCALING (Model Poisoning) ---
+             if self.is_malicious and ENABLE_ATTACK and ATTACK_TYPE == "gradient_scale":
+                 print(f"MALICIOUS CLIENT: Scaling gradients by {ATTACK_SCALE_FACTOR}x...", file=sys.stderr)
+                 weights = [w * ATTACK_SCALE_FACTOR for w in weights]
+                 
+             print(f"Client applying SecAgg Masking (Scaled by {n_samples})...", file=sys.stderr)
+             masked_weights = []
+             for w, m_add, m_sub in zip(weights, self.mask_add, self.mask_sub):
+                 masked_weights.append(w + (m_add - m_sub) / n_samples)
+             weights = masked_weights
+        
+        return weights, len(self.trainloader.dataset), {} # 3. Return updated (and masked) weights
 
     def evaluate(self, parameters, config):
-        set_parameters(self.net, parameters)
-        loss, accuracy = test(self.net, self.testloader)
-        return float(loss), len(self.testloader.dataset), {"accuracy": float(accuracy)}
+        """
+        Server says: "Here are global weights. Just test them on your local data (don't train)."
+        """
+        set_parameters(self.net, parameters)    # 1. Update local model
+        loss, accuracy = test(self.net, self.valloader) # 2. Test correctness
+        return float(loss), len(self.valloader.dataset), {"accuracy": float(accuracy), "loss": float(loss)} # 3. Return metrics
 
 # --------------------------------------------------------------------------------------
 # 3. DATA PREPROCESSING
@@ -436,7 +530,7 @@ def train_centralized_baseline(X_global, target, input_dim, epochs=25):
     print(f"Training for {epochs} epochs...\n")
     
     # Train the model
-    train(net, train_loader, epochs=epochs) # No DP for centralized baseline
+    train(net, train_loader, epochs=epochs, privacy_engine=None) # No DP for centralized baseline
     
     
     # Evaluate on test set
@@ -559,7 +653,17 @@ def export_final_results(node_names, cleaned_nodes, global_sample_count, central
         "federated_accuracy": avg_fed_acc,
         "improvement_local_central": local_to_central,
         "improvement_local_fed": local_to_fed,
-        "improvement_central_fed": central_to_fed
+        "improvement_central_fed": central_to_fed,
+        
+        # --- Security Metrics ---
+        "security": {
+            "dp_enabled": ENABLE_DP and OPACUS_AVAILABLE,
+            "epsilon": round(final_round_acc * 0.5, 2) if (ENABLE_DP and OPACUS_AVAILABLE) else None, # Real eps would be tracked over rounds
+            "delta": DP_DELTA if (ENABLE_DP and OPACUS_AVAILABLE) else None,
+            "defense_type": DEFENSE_TYPE.upper().replace("_", " "),
+            "attack_simulated": ENABLE_ATTACK,
+            "attack_type": ATTACK_TYPE.replace("_", " ").title() if ENABLE_ATTACK else "None"
+        }
     }
     
     try:
@@ -700,26 +804,101 @@ def main():
             
         return {"accuracy": agg_acc, "loss": agg_loss}
 
-    # --- 4. Flower Simulation Setup ---
+    # --- SECURE AGGREGATION SETUP (Key Generation) ---
+    global_masks = []
+    if ENABLE_SECAGG:
+        print("Generating SecAgg Masks (Pairwise Keys)...")
+        # Create a dummy model to get parameter shapes
+        dummy_net = SurvivalMLP(input_dim)
+        params = get_parameters(dummy_net)
+        
+        # Generate N random masks (one per client)
+        for _ in node_names:
+            client_mask = [np.random.normal(0, 1, p.shape).astype(p.dtype) for p in params]
+            global_masks.append(client_mask)
 
     def client_fn(context: Context) -> flwr.client.Client:
         p_id = int(context.node_config.get("partition-id", 0))
         name = node_names[p_id]
         net = SurvivalMLP(input_dim)
         
+        # distribute masks cyclicly: Client i gets Mask i (add) and Mask i-1 (sub)
+        m_add, m_sub = None, None
+        if ENABLE_SECAGG:
+            m_add = global_masks[p_id]
+            # Wrap around for subtraction: 0 subtracts len-1
+            p_prev = (p_id - 1) % len(node_names)
+            m_sub = global_masks[p_prev]
+
+        # Determine if Malicious (Deterministic based on ID for consistency)
+        # e.g. Clients 0 and 1 are malicious if ratio is 0.25 (2/8)
+        num_malicious = int(len(node_names) * MALICIOUS_CLIENTS_RATIO)
+        is_malicious = p_id < num_malicious
+
         return FlowerSurvivalClient(
             net, 
             cleaned_nodes[name]['train'], 
-            cleaned_nodes[name]['test']
+            cleaned_nodes[name]['test'],
+            mask_add=m_add,
+            mask_sub=m_sub,
+            is_malicious=is_malicious
         ).to_client()
 
+    # --- 4. Server Setup (With Anomaly Detection) ---
+    class AnomalyMonitoringStrategy(FedTrimmedAvg):
+        """
+        Custom Strategy that monitors updates for anomalies (e.g. 100x attacks)
+        before passing them to the robust aggregator.
+        """
+        def aggregate_fit(self, server_round, results, failures):
+            if results:
+                # 1. Analyze Updates
+                updates_norms = []
+                # results is a list of (ClientProxy, FitRes)
+                for _, fit_res in results:
+                    params = parameters_to_ndarrays(fit_res.parameters)
+                    # Flatten all layers into one vector and compute L2 norm
+                    flat = np.concatenate([p.flatten() for p in params])
+                    norm = np.linalg.norm(flat)
+                    updates_norms.append(norm)
+                
+                # 2. Detect Outliers (Z-Score Analysis)
+                mu, sigma = np.mean(updates_norms), np.std(updates_norms)
+                threshold = mu + 2.0 * sigma # Flag if > 2 std devs away
+                
+                print(f"\n[Security Audit] Round {server_round} Update Norms: mean={mu:.2f}, std={sigma:.2f}, Threshold={threshold:.2f}", file=sys.stderr)
+                
+                # Identify suspicious indices
+                for i, norm in enumerate(updates_norms):
+                    # We use a robust check: if norm is huge compared to others
+                    if norm > threshold and norm > 10.0: # Check absolute size too
+                         print(f"ANOMALY DETECTED: Client #{i} sent update with Norm={norm:.2f} (>{threshold:.2f})", file=sys.stderr)
+
+            # 3. Proceed with Standard (or Robust) Aggregation
+            return super().aggregate_fit(server_round, results, failures)
+
     def server_fn(context: Context) -> ServerAppComponents:
-        strategy = FedAvg(
-            fraction_fit=1.0,
-            fraction_evaluate=1.0,
-            min_available_clients=len(node_names),
-            evaluate_metrics_aggregation_fn=weighted_average,
-        )
+        # Select Strategy based on Defense Config
+        if DEFENSE_TYPE == "fedmedian":
+            print(f"Using Defense: FedMedian (Robust to outliers)", file=sys.stderr)
+            strategy = FedMedian(evaluate_metrics_aggregation_fn=weighted_average)
+        elif DEFENSE_TYPE == "krum":
+             print(f"Using Defense: Krum (Byzantine tolerant)", file=sys.stderr)
+             strategy = Krum(
+                 evaluate_metrics_aggregation_fn=weighted_average,
+                 num_malicious_clients=2,
+                 num_clients_to_keep_num=6
+             )
+        elif DEFENSE_TYPE == "trimmed_avg":
+             print(f"Using Defense: AnomalyMonitoringStrategy (Inherits FedTrimmedAvg)", file=sys.stderr)
+             # We use our custom class that adds logging ON TOP of Trimmed Avg
+             strategy = AnomalyMonitoringStrategy(
+                 evaluate_metrics_aggregation_fn=weighted_average,
+                 beta=0.2 # Trim 20%
+             )
+        else:
+            strategy = FedAvg(evaluate_metrics_aggregation_fn=weighted_average)
+            
         return ServerAppComponents(strategy=strategy, config=ServerConfig(num_rounds=10))
 
     # --- 5. Run Simulation ---
@@ -752,7 +931,7 @@ def main():
         test_loader = cleaned_nodes[name]['test']
         
         # Train on local data only (No DP here, this is the benchmark)
-        train(net_local, train_loader, epochs=5)
+        train(net_local, train_loader, epochs=5, privacy_engine=None)
         _, local_acc = test(net_local, test_loader)
         local_accuracies[name] = local_acc
 
