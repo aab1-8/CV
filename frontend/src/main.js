@@ -45,24 +45,33 @@ const initDashboard = () => {
   document.title = `FL Dashboard | ${datasetName}`;
 
   const nodeCount = localData.length;
-  document.getElementById('node-count-subtext').textContent = `Distributed across ${nodeCount} clinical nodes`;
+  const nodeCountEl = document.getElementById('node-count-subtext');
+  if (nodeCountEl) nodeCountEl.textContent = `Distributed across ${nodeCount} clinical nodes`;
 
-  // Update the Dashboard DOM Elements
-  document.getElementById('total-samples').textContent = totalSamples.toLocaleString();
-  document.getElementById('avg-accuracy').textContent = `${avgAccuracy.toFixed(1)}%`;
-  document.getElementById('avg-auc').textContent = avgAuc.toFixed(3);
+  // Update the Dashboard DOM Elements (with null checks since they may be in hidden view)
+  const totalSamplesEl = document.getElementById('total-samples');
+  const avgAccuracyEl = document.getElementById('avg-accuracy');
+  const avgAucEl = document.getElementById('avg-auc');
+
+  if (totalSamplesEl) totalSamplesEl.textContent = totalSamples.toLocaleString();
+  if (avgAccuracyEl) avgAccuracyEl.textContent = `${avgAccuracy.toFixed(1)}%`;
+  if (avgAucEl) avgAucEl.textContent = avgAuc.toFixed(3);
 
   const navTag = document.querySelector('.nav-tag');
-  if (federatedData.length > 0) {
+  if (navTag && federatedData.length > 0) {
     navTag.innerHTML = `Global Gain: <span style="color: var(--accent-green); font-weight: 700;">+${improvement} AUC</span>`;
   }
 
-  // Render Charts
-  renderDistributionChart(localData);
-  renderPerformanceComparison(localData, federatedData);
-  renderTrainingChart(trainingHistory);
-  renderComparisonStats(comparisonStats);
-  renderSecurityAudit(comparisonStats?.security);
+  // Render Charts (only if in analytics view or chart elements exist)
+  try {
+    renderDistributionChart(localData);
+    renderPerformanceComparison(localData, federatedData);
+    renderTrainingChart(trainingHistory);
+    renderComparisonStats(comparisonStats);
+    renderSecurityAudit(comparisonStats?.security);
+  } catch (e) {
+    console.warn('Chart rendering deferred:', e.message);
+  }
 }
 
 /**
@@ -345,5 +354,265 @@ const renderComparisonStats = (stats) => {
   container.innerHTML = html;
 }
 
+// ============ MARKETPLACE LOGIC ============
+
+const DATA_TYPES = {
+  diabetes: { label: 'Diabetes Classification', icon: '🩸' },
+  stroke: { label: 'Stroke Prediction', icon: '🧠' },
+  survival: { label: 'Survival Analysis', icon: '📊' },
+  heart: { label: 'Heart Disease', icon: '❤️' }
+};
+
+// Load requests from localStorage
+function loadRequests() {
+  const stored = localStorage.getItem('medshare_requests');
+  return stored ? JSON.parse(stored) : [];
+}
+
+// Save requests to localStorage
+function saveRequests(requests) {
+  localStorage.setItem('medshare_requests', JSON.stringify(requests));
+}
+
+// Generate unique ID
+function generateId() {
+  return 'REQ-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+// Render request card HTML
+function renderRequestCard(request, isHospitalView = false) {
+  const dataInfo = DATA_TYPES[request.dataType] || { label: request.dataType, icon: '📋' };
+  const progress = (request.contributions / request.hospitalsNeeded) * 100;
+  const status = request.contributions >= request.hospitalsNeeded ? 'completed' :
+    request.contributions > 0 ? 'in-progress' : 'open';
+  const statusLabel = status === 'completed' ? 'Completed' :
+    status === 'in-progress' ? 'In Progress' : 'Open';
+
+  const acceptButton = isHospitalView && status !== 'completed'
+    ? `<button class="btn-secondary" onclick="acceptRequest('${request.id}')">✓ Accept & Train</button>`
+    : '';
+
+  const aggregateButton = !isHospitalView && status === 'completed'
+    ? `<button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="viewAggregatedModel('${request.id}')">🔗 View FL Model</button>`
+    : '';
+
+  return `
+    <div class="request-card" data-id="${request.id}">
+      <div class="request-header">
+        <div class="request-title">${dataInfo.icon} ${dataInfo.label}</div>
+        <span class="status-badge ${status}">${statusLabel}</span>
+      </div>
+      <div class="request-meta">
+        <span>🏥 ${request.hospitalsNeeded} hospitals</span>
+        <span>📋 ${request.modelType === 'binary' ? 'Binary' : 'Multi-class'}</span>
+        <span class="request-id">${request.id}</span>
+      </div>
+      ${request.description ? `<p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">${request.description}</p>` : ''}
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${progress}%"></div>
+      </div>
+      <div class="progress-text">${request.contributions}/${request.hospitalsNeeded} hospitals contributed</div>
+      <div style="display: flex; gap: 0.5rem;">
+        ${acceptButton}
+        ${aggregateButton}
+      </div>
+    </div>
+  `;
+}
+
+// Update Marketplace Statistics
+function updateMarketplaceStats() {
+  const requests = loadRequests();
+  const totalModels = requests.length;
+  const totalContributions = requests.reduce((acc, curr) => acc + curr.contributions, 0);
+
+  const modelsEl = document.getElementById('stats-models-requested');
+  const contribsEl = document.getElementById('stats-total-contributions');
+
+  if (modelsEl) modelsEl.textContent = totalModels;
+  if (contribsEl) contribsEl.textContent = totalContributions;
+}
+
+// Render requests for Researcher view
+function renderResearcherRequests() {
+  const container = document.getElementById('researcher-requests-list');
+  if (!container) return;
+
+  const requests = loadRequests();
+  updateMarketplaceStats(); // Update stats whenever rendering
+  
+  if (requests.length === 0) {
+    container.innerHTML = '<div class="empty-state">No requests yet. Create one above to start collecting hospital contributions.</div>';
+    return;
+  }
+
+  container.innerHTML = requests.map(r => renderRequestCard(r, false)).join('');
+}
+
+// Render requests for Hospital view
+function renderHospitalRequests() {
+  const container = document.getElementById('hospital-requests-list');
+  if (!container) return;
+
+  const requests = loadRequests().filter(r => r.contributions < r.hospitalsNeeded);
+  if (requests.length === 0) {
+    container.innerHTML = '<div class="empty-state">No active requests. Check the Marketplace for new opportunities.</div>';
+    return;
+  }
+
+  container.innerHTML = requests.map(r => renderRequestCard(r, true)).join('');
+}
+
+// Handle creating a new request
+function handleCreateRequest(e) {
+  e.preventDefault();
+
+  const dataType = document.getElementById('req-data-type').value;
+  const hospitalsNeeded = parseInt(document.getElementById('req-hospitals').value);
+  const modelType = document.getElementById('req-model-type').value;
+  const description = document.getElementById('req-description').value;
+
+  const newRequest = {
+    id: generateId(),
+    dataType,
+    hospitalsNeeded,
+    modelType,
+    description,
+    contributions: 0,
+    contributorHashes: [],
+    createdAt: new Date().toISOString()
+  };
+
+  const requests = loadRequests();
+  requests.unshift(newRequest);
+  saveRequests(requests);
+
+  // Clear form
+  document.getElementById('req-description').value = '';
+
+  // Re-render
+  renderResearcherRequests();
+  renderHospitalRequests();
+
+  // Show confirmation
+  alert(`✅ Request ${newRequest.id} created!\n\nResearchers will see this in the Marketplace.\nHospitals can now contribute local models.`);
+}
+
+// Accept a request (simulate training)
+window.acceptRequest = function (requestId) {
+  const hospitalName = document.getElementById('hospital-name')?.value || 'Anonymous Hospital';
+
+  // Simulate training delay
+  const card = document.querySelector(`.request-card[data-id="${requestId}"]`);
+  if (card) {
+    const btn = card.querySelector('.btn-secondary');
+    if (btn) {
+      btn.textContent = '⏳ Training...';
+      btn.disabled = true;
+    }
+  }
+
+  setTimeout(() => {
+    const requests = loadRequests();
+    const request = requests.find(r => r.id === requestId);
+
+    if (request && request.contributions < request.hospitalsNeeded) {
+      request.contributions++;
+      // Generate simulated model hash
+      const modelHash = 'MODEL-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+      request.contributorHashes.push({
+        hospital: hospitalName,
+        hash: modelHash,
+        timestamp: new Date().toISOString()
+      });
+
+      saveRequests(requests);
+      renderResearcherRequests();
+      renderHospitalRequests();
+
+      if (request.contributions >= request.hospitalsNeeded) {
+        alert(`🎉 Request ${requestId} is now COMPLETE!\n\nAll ${request.hospitalsNeeded} hospitals have contributed.\nThe researcher can now aggregate the FL model.`);
+      } else {
+        alert(`✅ Contribution submitted!\n\nModel Hash: ${modelHash}\nProgress: ${request.contributions}/${request.hospitalsNeeded} hospitals`);
+      }
+    }
+  }, 1500); // 1.5 second simulated training
+}
+
+// View aggregated model (for completed requests)
+window.viewAggregatedModel = function (requestId) {
+  const requests = loadRequests();
+  const request = requests.find(r => r.id === requestId);
+
+  if (request) {
+    const hashes = request.contributorHashes.map(c => `• ${c.hospital}: ${c.hash}`).join('\n');
+    const aggregatedHash = 'FL-' + Math.random().toString(36).substr(2, 12).toUpperCase();
+
+    alert(`🔗 Federated Learning Model Aggregated!\n\nRequest: ${requestId}\nContributing Hospitals:\n${hashes}\n\n📦 Aggregated Model Hash: ${aggregatedHash}\n\nThis hash would be posted to the blockchain for verification.`);
+  }
+}
+
+// View switching logic
+function setupViewToggle() {
+  const btnHospital = document.getElementById('btn-hospital');
+  const btnMarketplace = document.getElementById('btn-marketplace');
+  const btnAnalytics = document.getElementById('btn-analytics');
+
+  const hospitalView = document.getElementById('hospital-view');
+  const marketplaceView = document.getElementById('marketplace-view');
+  const analyticsView = document.getElementById('analytics-view');
+
+  if (!btnHospital || !btnMarketplace || !btnAnalytics) return;
+
+  function switchView(view) {
+    // Update buttons
+    [btnHospital, btnMarketplace, btnAnalytics].forEach(btn => btn.classList.remove('active'));
+
+    // Hide all views
+    [hospitalView, marketplaceView, analyticsView].forEach(v => {
+      if (v) v.style.display = 'none';
+    });
+
+    // Show selected view
+    if (view === 'hospital') {
+      btnHospital.classList.add('active');
+      if (hospitalView) hospitalView.style.display = 'block';
+      renderHospitalRequests();
+    } else if (view === 'marketplace') {
+      btnMarketplace.classList.add('active');
+      if (marketplaceView) marketplaceView.style.display = 'block';
+      renderResearcherRequests();
+    } else if (view === 'analytics') {
+      btnAnalytics.classList.add('active');
+      if (analyticsView) analyticsView.style.display = 'block';
+    }
+  }
+
+  btnHospital.addEventListener('click', () => switchView('hospital'));
+  btnMarketplace.addEventListener('click', () => switchView('marketplace'));
+  btnAnalytics.addEventListener('click', () => switchView('analytics'));
+
+  // Initial render
+  renderHospitalRequests();
+}
+
+// Setup request form
+function setupRequestForm() {
+  const form = document.getElementById('request-form');
+  if (form) {
+    form.addEventListener('submit', handleCreateRequest);
+  }
+}
+
+// Initialize marketplace features
+function initMarketplace() {
+  setupViewToggle();
+  setupRequestForm();
+}
+
 // Wait for the HTML document to be fully loaded before running the script
-document.addEventListener('DOMContentLoaded', initDashboard);
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboard();
+  initMarketplace();
+});
+

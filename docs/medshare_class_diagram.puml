@@ -1,0 +1,76 @@
+@startuml
+!theme vibrant
+title MedShare Class Diagram
+
+' --- Python Components ---
+package "federated_survival.py" {
+    class SurvivalMLP {
+        +input_dim: int
+        +num_classes: int
+        +fc: Sequential
+        +forward(x: Tensor) : Tensor
+    }
+
+    class FlowerSurvivalClient {
+        -net: SurvivalMLP
+        -trainloader: DataLoader
+        -valloader: DataLoader
+        -privacy_engine: PrivacyEngine
+        -blockchain: MedShareBlockchain
+        +get_parameters(config) : List[np.array]
+        +fit(parameters, config) : Tuple
+        +evaluate(parameters, config) : Tuple
+    }
+
+    class AnomalyMonitoringStrategy {
+        +latest_weights: List[np.array]
+        +aggregate_fit(server_round, results, failures) : Tuple
+        -check_audit_norms(results) : void
+    }
+    
+    class WeightCaptureWrapper {
+        +base_strategy: Strategy
+        +latest_weights: List[np.array]
+        +aggregate_fit(server_round, results, failures)
+    }
+}
+
+package "blockchain_service.py" {
+    class MedShareBlockchain {
+        +w3: Web3
+        +contract_registry: Contract
+        +contract_task: Contract
+        +post_commitment(task_id, round, weights) : Receipt
+        +post_final_model(task_id, weights) : Receipt
+        +authorize_hospital(hospital_idx) : void
+        -hash_weights(weights) : bytes32
+    }
+}
+
+' --- Solidity Contracts ---
+package "Smart Contracts" {
+    class CommitmentRegistry {
+        +commitments: mapping
+        +finalModelWeights: mapping
+        +postCommitment(taskId, round, hash) : event
+        +postFinalWeights(taskId, hash) : event
+        +authorizeHospital(address) : void
+    }
+
+    class MedShareTask {
+        +tasks: mapping
+        +createTask(name, description, budget) : void
+    }
+}
+
+' --- Relationships ---
+FlowerSurvivalClient --> SurvivalMLP : "Trains"
+FlowerSurvivalClient --> MedShareBlockchain : "Logs Hash"
+AnomalyMonitoringStrategy --> MedShareBlockchain : "Logs Final Model"
+WeightCaptureWrapper --> AnomalyMonitoringStrategy : "Wraps"
+MedShareBlockchain --> CommitmentRegistry : "Calls (RPC)"
+MedShareBlockchain --> MedShareTask : "Calls (RPC)"
+AnomalyMonitoringStrategy --|> flwr.server.strategy.FedTrimmedAvg : "Inherits"
+FlowerSurvivalClient --|> flwr.client.NumPyClient : "Inherits"
+
+@enduml

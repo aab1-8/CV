@@ -1,0 +1,59 @@
+@startuml
+!theme vibrant
+title MedShare Architecture: Privacy-Preserving Federated Learning
+
+package "Hospital Node (Client)" {
+    [Data Loader] as DL
+    [Preprocessing (Standard scaler)] as PRE
+    [PyTorch Model (SurvivalMLP)] as MLP
+    [Opacus Privacy Engine] as DP
+    [Bloom Filter / Local Cache] as CACHE
+    
+    DL -> PRE
+    PRE -> MLP
+    MLP <-> DP : "Add Noise (epsilon=1.0)"
+}
+
+package "Aggregation Server (Central)" {
+    [Flower ServerApp] as FL_SERVER
+    [AnomalyMonitoringStrategy] as STRAT
+    [Global Model State] as GLOBAL_NET
+    
+    FL_SERVER -> STRAT : "Aggregate & Audit"
+    STRAT -> GLOBAL_NET : "Update Global Weights"
+}
+
+package "Blockchain Network (Ganache)" {
+    [CommitmentRegistry.sol] as REGISTRY
+    [MedShareTask.sol] as TASK
+}
+
+package "Analyst Dashboard" {
+    [Vite Frontend] as UI
+    [Visualization Scripts] as VIZ
+}
+
+' Data Flow
+MLP --> FL_SERVER : "Model Updates (Gradients)"
+FL_SERVER --> MLP : "Global Parameters"
+
+' Security Flow
+STRAT --> REGISTRY : "Post Final Model Hash"
+MLP --> REGISTRY : "Post Update Commitment (Hash)"
+REGISTRY --> UI : "Audit Logs (Gas Costs)"
+
+' Visualization
+VIZ --> UI : "Generate PNG Plots"
+GLOBAL_NET --> VIZ : "Checkpoint (best_model.pth)"
+
+note right of DP
+  Ensures Local Data
+  never leaves the node
+end note
+
+note right of STRAT
+  Filters malicious updates
+  (Trimmed Mean Defense)
+end note
+
+@enduml

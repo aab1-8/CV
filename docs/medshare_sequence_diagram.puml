@@ -1,0 +1,60 @@
+@startuml
+!theme vibrant
+title MedShare Sequence: Federated Round Execution
+
+actor "Hospital Node" as NODE
+participant "Flower Client" as CLIENT
+participant "PyTorch Model" as MODEL
+participant "Opacus Engine" as PRIVACY
+database "Local Data" as DATA
+participant "Blockchain Service" as CHAIN
+participant "Smart Contract" as CONTRACT
+participant "Aggregation Server" as SERVER
+participant "Strategy (Defense)" as STRAT
+
+== Initialization ==
+SERVER -> CLIENT : Request Initial Parameters
+CLIENT -> MODEL : get_parameters()
+CLIENT --> SERVER : Return Random/Init Weights
+
+== Training Round (Loop) ==
+SERVER -> CLIENT : 1. fit(global_weights)
+activate CLIENT
+
+CLIENT -> MODEL : set_parameters(global_weights)
+CLIENT -> DATA : Load Batch
+CLIENT -> MODEL : Forward Pass
+MODEL -> PRIVACY : Calculate Gradients (Clipped)
+PRIVACY -> PRIVACY : Add Gaussian Noise (sigma=1.0)
+PRIVACY --> MODEL : Update Weights (Backprop)
+
+CLIENT -> CHAIN : Hash & Sign(New Weights)
+activate CHAIN
+CHAIN -> CONTRACT : postCommitment(round, hash)
+CONTRACT --> CHAIN : Transaction Receipt (Gas Used)
+CHAIN --> CLIENT : Return tx_hash
+deactivate CHAIN
+
+CLIENT --> SERVER : Return (New Weights, num_samples, tx_hash)
+deactivate CLIENT
+
+== Aggregation Phase ==
+SERVER -> STRAT : aggregate_fit(results)
+activate STRAT
+
+STRAT -> STRAT : Calculate Norms
+STRAT -> STRAT : Defend (Trim Outliers / Krum)
+note right: "Drops malicious updates (e.g. Label Flip)"
+
+STRAT -> CHAIN : postFinalModel(global_hash)
+CHAIN -> CONTRACT : Log Final Round Hash
+STRAT --> SERVER : Return Aggregated Global Model
+deactivate STRAT
+
+== Evaluation ==
+SERVER -> CLIENT : evaluate(new_global_model)
+CLIENT -> DATA : Test on Holdout Set (Validation)
+CLIENT -> MODEL : accuracy_score()
+CLIENT --> SERVER : Return (Accuracy, Loss)
+
+@enduml

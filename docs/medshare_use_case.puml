@@ -1,0 +1,50 @@
+@startuml
+!theme vibrant
+title MedShare Use Cases
+
+left to right direction
+actor "Medical Researcher" as RESEARCHER
+actor "Hospital IT Admin" as ADMIN
+actor "Malicious Attacker" as ATTACKER
+actor "Auditor" as AUDITOR
+
+rectangle "MedShare System" {
+    usecase "Initialize FL Task" as U1
+    usecase "Authorize Hospital Node" as U2
+    usecase "Train Local Model" as U3
+    usecase "Apply Differential Privacy" as U4
+    usecase "Post Blockchain Commitment" as U5
+    usecase "Aggregate Global Model" as U6
+    usecase "Defend Against Poisoning" as U7
+    usecase "Verify Audit Trail" as U8
+    usecase "Download Best Model" as U9
+}
+
+RESEARCHER --> U1
+RESEARCHER --> U9
+ADMIN --> U2
+ADMIN --> U3
+U3 ..> U4 : "include"
+U3 ..> U5 : "include"
+
+' System automatically handles aggregation
+U3 --> U6
+U6 ..> U7 : "include"
+
+ATTACKER --> U3 : "Inject Poisoned Data"
+U7 --> ATTACKER : "Block Malicious Update"
+
+AUDITOR --> U8
+U8 ..> U5 : "Verify Hash"
+
+note right of U4
+  Opacus Engine
+  (Noise + Clipping)
+end note
+
+note right of U7
+  FedTrimmedAvg / Krum
+  detects high norms
+end note
+
+@enduml

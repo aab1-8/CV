@@ -1,17 +1,17 @@
 {
-    "local_accuracy": 0.7276738749999999,
-    "centralized_accuracy": 0.7235479513732553,
-    "federated_accuracy": 0.717752808988764,
-    "improvement_local_central": -0.5670017529136355,
-    "improvement_local_fed": -1.3633945579310347,
-    "improvement_central_fed": -0.8009341154919217,
-    "security": {
-        "dp_enabled": true,
-        "epsilon": 0.36,
-        "delta": 1e-05,
-        "defense_type": "TRIMMED AVG",
-        "attack_simulated": true,
-        "attack_type": "Gradient Scale"
-    },
-    "dataset_name": "SUPPORT2 Clinical Study"
+  "dataset_name": "Stroke Prediction Dataset",
+  "federated_accuracy": 0.7611940298507462,
+  "centralized_accuracy": 0.8111940298507463,
+  "local_accuracy": 0.7111940298507462,
+  "improvement_local_central": 10.000000000000009,
+  "improvement_local_fed": 5.000000000000004,
+  "improvement_central_fed": -5.000000000000004,
+  "security": {
+    "dp_enabled": false,
+    "epsilon": "N/A",
+    "delta": "1e-05",
+    "defense_type": "fedavg",
+    "attack_simulated": false,
+    "attack_type": "label_flip"
+  }
 }

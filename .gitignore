@@ -22,6 +22,22 @@ Thumbs.db
 
 # Logs
 *.log
+ganache.log
 
 # Environment variables
 .env
+
+# Node
+node_modules/
+
+# Generated Test Results (keep templates, ignore outputs)
+test/exp_*.csv
+test/fig_*.png
+test/best_model.pth
+
+# Google Drive sync temp
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# Hardhat/Truffle artifacts (keep build/ for deploy_info.json)
+artifacts/
