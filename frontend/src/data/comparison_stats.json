@@ -1,17 +1,25 @@
 {
-  "dataset_name": "Stroke Prediction Dataset",
-  "federated_accuracy": 0.7611940298507462,
-  "centralized_accuracy": 0.8111940298507463,
-  "local_accuracy": 0.7111940298507462,
-  "improvement_local_central": 10.000000000000009,
-  "improvement_local_fed": 5.000000000000004,
-  "improvement_central_fed": -5.000000000000004,
+  "dataset_name": "SUPPORT2-DiseaseGroup",
+  "reputation": {
+    "Hospital_5": 100,
+    "Hospital_3": 100,
+    "Hospital_1": 100,
+    "Hospital_2": 100,
+    "Hospital_4": 100
+  },
+  "local_accuracy": 0.5651250431379556,
+  "local_auc": 0.9347843126905435,
+  "centralized_accuracy": 0.828116419549698,
+  "centralized_auc": 0.9828498717903649,
+  "federated_accuracy": 0.7777167947310648,
+  "federated_auc": 0.9671029042468896,
+  "improvement_local_fed": 37.618533132535816,
   "security": {
-    "dp_enabled": false,
-    "epsilon": "N/A",
-    "delta": "1e-05",
-    "defense_type": "fedavg",
-    "attack_simulated": false,
-    "attack_type": "label_flip"
+    "dp_enabled": true,
+    "epsilon": 21.079875799626773,
+    "delta": "1e-5",
+    "defense_type": "FedAvg",
+    "attack_simulated": true,
+    "attack_type": "Label Flip"
   }
 }

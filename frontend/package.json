@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "ethers": "^6.16.0",
     "lodash": "^4.17.21"
   }
 }

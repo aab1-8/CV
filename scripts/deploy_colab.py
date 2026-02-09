@@ -4,11 +4,20 @@ from web3 import Web3
 
 def deploy():
     """Deploys MedShareTask and CommitmentRegistry contracts to a local Ganache instance."""
-    print("Connecting to local blockchain at http://127.0.0.1:8546...")
-    w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8546"))
+    print("Connecting to local blockchain...")
+    ports = [8545, 8546]
+    w3 = None
+    for port in ports:
+        try:
+            provider = Web3(Web3.HTTPProvider(f"http://127.0.0.1:{port}"))
+            if provider.is_connected():
+                w3 = provider
+                print(f"✅ Connected to Ganache on port {port}")
+                break
+        except: continue
     
-    if not w3.is_connected():
-        print("[Error] Failed to connect to Ganache.")
+    if w3 is None:
+        print("[Error] Failed to connect to Ganache on ports 8545 or 8546.")
         return
 
     # Use the first account
@@ -21,7 +30,9 @@ def deploy():
             artifact = json.load(f)
         
         contract = w3.eth.contract(abi=artifact['abi'], bytecode=artifact['bytecode'])
-        tx_hash = contract.constructor().transact()
+        tx_hash = contract.constructor().transact({
+            'gasPrice': w3.to_wei(1, 'gwei')
+        })
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         
         print(f"[Success] {name} deployed to: {tx_receipt.contractAddress}")
@@ -30,11 +41,13 @@ def deploy():
     try:
         medshare_addr = deploy_contract("MedShareTask")
         commitment_addr = deploy_contract("CommitmentRegistry")
+        reputation_addr = deploy_contract("Reputation")
 
         deploy_info = {
             "network": "localhost",
             "MedShareTask": medshare_addr,
             "CommitmentRegistry": commitment_addr,
+            "Reputation": reputation_addr,
             "timestamp": Web3.to_json(w3.eth.get_block('latest')['timestamp'])
         }
 

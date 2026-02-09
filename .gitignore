@@ -41,3 +41,8 @@ test/best_model.pth
 
 # Hardhat/Truffle artifacts (keep build/ for deploy_info.json)
 artifacts/
+
+# Local databases and caches
+ganache_db/
+cache/
+back_up_plots/

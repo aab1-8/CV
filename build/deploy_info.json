@@ -1,6 +1,7 @@
 {
   "network": "localhost",
-  "MedShareTask": "0x39cCA9Ea28DB6b2445c83C74a645fF59CC801d24",
-  "CommitmentRegistry": "0x9Ff39569987640e8704F8bfC68102C7BFA6C1C09",
-  "timestamp": "1769381563"
+  "MedShareTask": "0x5fDDF8B03fD7437623774dE74Ac0cEEeeE468be5",
+  "CommitmentRegistry": "0xA7D9eB5C23ceFcff0ffedB3dFBEd35D265197D67",
+  "Reputation": "0x51AD2B8a6255f4a901ff2Dc89F0323a6eA9787a2",
+  "timestamp": "1770655128"
 }

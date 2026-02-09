@@ -1,0 +1,8 @@
+{
+    "name": "medshare-core",
+    "version": "1.0.0",
+    "type": "module",
+    "devDependencies": {
+        "hardhat": "^2.19.0"
+    }
+}

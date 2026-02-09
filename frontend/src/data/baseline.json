@@ -1,79 +1,72 @@
 [
-    {
-        "Hospital": "Hospital_4",
-        "Accuracy": 0.807142857142857,
-        "AUC-ROC": 0.887142857142857,
-        "Samples": 207,
-        "Type": "Local Baseline"
-    },
-    {
-        "Hospital": "Hospital_4",
-        "Accuracy": 0.8571428571428571,
-        "AUC-ROC": 0.937142857142857,
-        "Samples": 207,
-        "Type": "Federated"
-    },
-    {
-        "Hospital": "Hospital_5",
-        "Accuracy": 0.6166666666666666,
-        "AUC-ROC": 0.6966666666666665,
-        "Samples": 180,
-        "Type": "Local Baseline"
-    },
-    {
-        "Hospital": "Hospital_5",
-        "Accuracy": 0.6666666666666666,
-        "AUC-ROC": 0.7466666666666666,
-        "Samples": 180,
-        "Type": "Federated"
-    },
-    {
-        "Hospital": "Hospital_2",
-        "Accuracy": 0.6166666666666666,
-        "AUC-ROC": 0.6966666666666665,
-        "Samples": 209,
-        "Type": "Local Baseline"
-    },
-    {
-        "Hospital": "Hospital_2",
-        "Accuracy": 0.6666666666666666,
-        "AUC-ROC": 0.7466666666666666,
-        "Samples": 209,
-        "Type": "Federated"
-    },
-    {
-        "Hospital": "Hospital_1",
-        "Accuracy": 0.7304878048780488,
-        "AUC-ROC": 0.8104878048780487,
-        "Samples": 205,
-        "Type": "Local Baseline"
-    },
-    {
-        "Hospital": "Hospital_1",
-        "Accuracy": 0.7804878048780488,
-        "AUC-ROC": 0.8604878048780488,
-        "Samples": 205,
-        "Type": "Federated"
-    },
-    {
-        "Hospital": "Hospital_3",
-        "Accuracy": 0.7749999999999999,
-        "AUC-ROC": 0.8549999999999999,
-        "Samples": 199,
-        "Type": "Local Baseline"
-    },
-    {
-        "Hospital": "Hospital_3",
-        "Accuracy": 0.825,
-        "AUC-ROC": 0.9049999999999999,
-        "Samples": 199,
-        "Type": "Federated"
-    },
-    {
-        "Hospital": "Global (All Hospitals)",
-        "Accuracy": 0.8111940298507463,
-        "AUC-ROC": 0.8911940298507462,
-        "Samples": 1000,
-        "Type": "Centralized Baseline"
-    }
+  {
+    "Hospital": "Hospital_5",
+    "Accuracy": 0.5796703296703297,
+    "AUC-ROC": 0.9333944184263445,
+    "Samples": 1820,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Hospital_5",
+    "Accuracy": 0.7777167947310648,
+    "AUC-ROC": 0.9671029042468896,
+    "Samples": 1820,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Hospital_3",
+    "Accuracy": 0.6417112299465241,
+    "AUC-ROC": 0.933706649392998,
+    "Samples": 1866,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Hospital_3",
+    "Accuracy": 0.7777167947310648,
+    "AUC-ROC": 0.9671029042468896,
+    "Samples": 1866,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Hospital_1",
+    "Accuracy": 0.5454545454545454,
+    "AUC-ROC": 0.9370048595614744,
+    "Samples": 1815,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Hospital_1",
+    "Accuracy": 0.7777167947310648,
+    "AUC-ROC": 0.9671029042468896,
+    "Samples": 1815,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Hospital_2",
+    "Accuracy": 0.5474254742547425,
+    "AUC-ROC": 0.9402233112087633,
+    "Samples": 1845,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Hospital_2",
+    "Accuracy": 0.7777167947310648,
+    "AUC-ROC": 0.9671029042468896,
+    "Samples": 1845,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Hospital_4",
+    "Accuracy": 0.5113636363636364,
+    "AUC-ROC": 0.9295923248631373,
+    "Samples": 1759,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Hospital_4",
+    "Accuracy": 0.7777167947310648,
+    "AUC-ROC": 0.9671029042468896,
+    "Samples": 1759,
+    "Type": "Federated"
+  }
 ]
