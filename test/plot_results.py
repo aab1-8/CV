@@ -65,23 +65,44 @@ def plot_save(name, func):
 
 def plot_dp():
     csv_path = os.path.join(script_dir, "exp_dp_results.csv")
+    mi_path = os.path.join(script_dir, "exp_mi_results.csv")
+    
     print(f"DEBUG: Checking for DP results at: {csv_path}")
-    print(f"DEBUG: Directory contents: {os.listdir(script_dir)}")
-    if not os.path.exists(csv_path): 
+    
+    df = None
+    
+    # Try loading DP results first
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path, na_filter=False)
+        df = df.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
+    elif os.path.exists(mi_path):
+        # Fallback to MI results which contain the same info (Accuracy vs Sigma)
+        print(f"DEBUG: using MI results for DP plot at: {mi_path}")
+        df_mi = pd.read_csv(mi_path, na_filter=False)
+        
+        def extract_noise(mode_str):
+            if "sigma=" in str(mode_str):
+                try: return float(str(mode_str).split("sigma=")[1].rstrip(")"))
+                except: return 0.0
+            return 0.0
+            
+        df_mi['noise'] = df_mi['Mode'].apply(extract_noise)
+        df_mi = df_mi[['noise', 'accuracy']] # Keep only relevant cols
+        df = df_mi.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
+    else: 
         print(f"DEBUG: File does not exist!")
         # Fallback to root
         root_path = os.path.join(os.path.dirname(script_dir), "root_exp_dp_results.csv")
         if os.path.exists(root_path):
             csv_path = root_path
             print(f"DEBUG: Found in root: {csv_path}")
+            df = pd.read_csv(csv_path, na_filter=False)
+            df = df.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
         else:
             return False
-    df = pd.read_csv(csv_path, na_filter=False)
-    df = df.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
-    
-    # plot_save already created the figure
-    # plt.figure(figsize=(12, 7))
-    
+
+    if df is None or df.empty: return False
+
     # Plot accuracy only
     plt.plot(df["noise"], df["accuracy"], marker="o", markersize=12, linewidth=4, color="#bc8cff", label="Model Accuracy")
     plt.xlabel("DP Noise Multiplier ($\\sigma$)", fontsize=14)
@@ -200,19 +221,25 @@ def plot_mi():
 
     if not dfs: return False
     
-    # Merge and prioritize MI results (usually more specific) then DP sweep results
+    # Merge and prioritize MI results
     df = pd.concat(dfs, ignore_index=True)
     
-    # Drop duplicates, favoring 'mi' source if both exist for same noise, then keeping last entry
+    # Sort by source (mi > dp) so we can keep 'first' or 'last' reliably
+    # We want 'mi' results to override 'dp' results if they exist for the same noise level
+    # 'mi' comes after 'dp' alphabetically, so descending sort puts 'mi' first
     df = df.sort_values(by=['noise', 'source'], ascending=[True, False])
-    df = df.drop_duplicates(subset=['noise'], keep='last')
     
-    def clean_label(mode_str):
-        if "sigma=" in str(mode_str):
-            return str(mode_str).split("(")[-1].split(")")[0] # returns 'sigma=0.1' etc.
+    # Drop duplicates by NOISE level, keeping the one from 'mi' (the first one due to sort)
+    df = df.drop_duplicates(subset=['noise'], keep='first')
+        
+    def clean_label(row):
+        mode_str = str(row['Mode'])
+        if "sigma=" in mode_str:
+            return f"Sigma={row['noise']}"
         return "Baseline"
     
-    df['label'] = df['Mode'].apply(clean_label)
+    df['label'] = df.apply(clean_label, axis=1)
+    
     # Force sort by noise level
     df = df.sort_values('noise')
     
