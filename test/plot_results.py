@@ -115,15 +115,19 @@ def plot_dp():
     return True
 
 def plot_robustness():
+    print("DEBUG: Entered plot_robustness")
     csv_path = os.path.join(script_dir, "exp_robustness_results.csv")
-    if not os.path.exists(csv_path): return False
+    if not os.path.exists(csv_path): 
+        print(f"DEBUG: File not found: {csv_path}")
+        return False
     df = pd.read_csv(csv_path, na_filter=False).drop_duplicates(subset=['attack', 'defense'], keep='last')
+    print(f"DEBUG: Loaded {len(df)} rows from {csv_path}")
     
     attack_map = {"None": "No Attack", "label_flip": "Label Flip", "gradient_scale": "Grad Scale"}
     df['attack'] = df['attack'].map(lambda x: attack_map.get(x, x))
     df['attack'] = pd.Categorical(df['attack'], categories=['No Attack', 'Label Flip', 'Grad Scale'], ordered=True)
     
-    colors = {"FedAvg": "#ff7b7b", "Trimmed-Avg": "#00d1ff"}
+    colors = {"FedAvg": "#ff7b7b", "Robust-MAD": "#00d1ff"}
     sns.barplot(data=df, x="attack", y="accuracy", hue="defense", palette=colors, edgecolor='black', alpha=0.9)
     plt.title("Adversarial Robustness: Defense Strategy Comparison", fontsize=18, fontweight='bold', pad=20)
     plt.xlabel("Simulated Attack Vector", fontsize=14)
@@ -141,7 +145,9 @@ def plot_gas():
     agg_df = df.groupby('Round')['GasUsed'].agg(['mean', 'std']).reset_index()
     if agg_df.empty: return False
 
-    plt.bar(agg_df['Round'].astype(str), agg_df['mean'], yerr=agg_df['std'], capsize=7, color='#62efab', alpha=0.3, label="Network Avg")
+    plt.bar(agg_df['Round'].astype(str), agg_df['mean'], yerr=agg_df['std'], 
+            capsize=3, color='#62efab', alpha=0.3, label="Network Avg",
+            error_kw={'elinewidth': 0.8, 'markeredgewidth': 0.8})
     
     # 1. Clean names: "Hospital_1" -> "Hospital 1"
     df['Client'] = df['Client'].str.replace('_', ' ')
@@ -154,17 +160,16 @@ def plot_gas():
     sns.stripplot(data=df, x="Round", y="GasUsed", hue="Client", 
                  palette="viridis", size=6, alpha=0.9, jitter=0.25, edgecolor="black", linewidth=1.0)
     
-    # Optimize Y-axis to focus on usage range
     # Optimize Y-axis to focus on usage range, accounting for error bars
-    min_gas = df['GasUsed'].min()
+    # We want to see from (mean - std) to (mean + std) plus a margin
+    agg_df['low'] = agg_df['mean'] - agg_df['std'].fillna(0)
+    agg_df['high'] = agg_df['mean'] + agg_df['std'].fillna(0)
     
-    # Calculate the absolute max height including the error bar (mean + std)
-    max_with_error = (agg_df['mean'] + agg_df['std']).max()
-    max_data = df['GasUsed'].max()
-    true_max = max(max_with_error, max_data)
+    abs_min = min(df['GasUsed'].min(), agg_df['low'].min())
+    abs_max = max(df['GasUsed'].max(), agg_df['high'].max())
     
-    margin = (true_max - min_gas) * 0.15 if true_max > min_gas else min_gas * 0.1
-    plt.ylim(bottom=max(0, min_gas - margin), top=true_max + margin)
+    margin = (abs_max - abs_min) * 0.15 if abs_max > abs_min else abs_max * 0.1
+    plt.ylim(bottom=max(0, abs_min - margin), top=abs_max + margin)
     
     plt.grid(axis='y', linestyle='--', alpha=0.5)
     plt.title("Blockchain Verification: Gas Cost Analysis", fontsize=18, fontweight='bold', pad=20)
@@ -198,7 +203,6 @@ def plot_mi():
     
     dfs = []
     
-    # helper to parse noise from Mode string
     def extract_noise(mode_str):
         if "sigma=" in str(mode_str):
             try: return float(str(mode_str).split("sigma=")[1].rstrip(")"))
@@ -208,101 +212,87 @@ def plot_mi():
     if os.path.exists(mi_path):
         df_mi = pd.read_csv(mi_path, na_filter=False)
         if not df_mi.empty:
+            # Backward compat: old CSVs had a single 'leakage' column
+            if 'leakage' in df_mi.columns and 'leakage_acc' not in df_mi.columns:
+                df_mi = df_mi.rename(columns={'leakage': 'leakage_acc'})
+                df_mi['leakage_auc'] = df_mi['leakage_acc']  # Duplicate as best guess
             df_mi['noise'] = df_mi['Mode'].apply(extract_noise)
             df_mi['source'] = 'mi'
             dfs.append(df_mi)
 
     if os.path.exists(dp_path):
         df_dp = pd.read_csv(dp_path, na_filter=False)
-        if not df_dp.empty and 'leakage' in df_dp.columns:
-            df_dp['Mode'] = df_dp['noise'].apply(lambda x: f"With DP (sigma={x})" if x > 0 else "No Privacy (Baseline)")
-            df_dp['source'] = 'dp'
-            dfs.append(df_dp)
+        if not df_dp.empty:
+            # Backward compat: old DP CSVs had 'leakage' instead of 'leakage_acc'
+            if 'leakage' in df_dp.columns and 'leakage_acc' not in df_dp.columns:
+                df_dp = df_dp.rename(columns={'leakage': 'leakage_acc'})
+                df_dp['leakage_auc'] = df_dp['leakage_acc']
+            if 'leakage_acc' in df_dp.columns:
+                df_dp['Mode'] = df_dp['noise'].apply(lambda x: f"With DP (sigma={x})" if x > 0 else "No Privacy (Baseline)")
+                df_dp['source'] = 'dp'
+                dfs.append(df_dp)
 
     if not dfs: return False
     
-    # Merge and prioritize MI results
     df = pd.concat(dfs, ignore_index=True)
-    
-    # Sort by source (mi > dp) so we can keep 'first' or 'last' reliably
-    # We want 'mi' results to override 'dp' results if they exist for the same noise level
-    # 'mi' comes after 'dp' alphabetically, so descending sort puts 'mi' first
     df = df.sort_values(by=['noise', 'source'], ascending=[True, False])
-    
-    # Drop duplicates by NOISE level, keeping the one from 'mi' (the first one due to sort)
     df = df.drop_duplicates(subset=['noise'], keep='first')
-        
+
     def clean_label(row):
-        mode_str = str(row['Mode'])
-        if "sigma=" in mode_str:
-            return f"Sigma={row['noise']}"
-        return "Baseline"
+        return f"σ={row['noise']}" if row['noise'] > 0 else "Baseline\n(No DP)"
     
     df['label'] = df.apply(clean_label, axis=1)
-    
-    # Force sort by noise level
-    df = df.sort_values('noise')
-    
-    # Ensure we have at least some data points
+    df = df.sort_values('noise').reset_index(drop=True)
+
     if len(df) == 0:
         return False
-    
-    # plot_save already created the figure
-    
-    # Create bar chart with color gradient
-    colors = plt.cm.magma(np.linspace(0.3, 0.8, len(df)))
-    bars = plt.bar(df['label'], df['leakage'], color=colors, edgecolor='black', linewidth=1.5, alpha=0.85)
-    
-    # Add labels for full visibility
-    for bar, (_, row) in zip(bars, df.iterrows()):
-        height = bar.get_height()
-        acc = row.get('accuracy', 0)
-        
-        # 1. Leakage label on TOP (The Privacy Proof)
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.005,
-                f'Leak: {height*100:.1f}%', ha='center', va='bottom', 
-                fontweight='bold', fontsize=10, color='darkred')
-        
-        # 2. Accuracy label INSIDE (The Utility Metric)
-        # Position it slightly below the top of the bar for readability
-        plt.text(bar.get_x() + bar.get_width()/2., height / 2 if height > 0.05 else height + 0.02,
-                f'Acc:\n{acc*100:.1f}%', ha='center', va='center', 
-                fontweight='bold', fontsize=9, color='white' if height > 0.05 else 'black')
-    
-    plt.title("Privacy Audit: Information Leakage vs. Sigma (\u03c3)", fontsize=18, fontweight='bold', pad=20)
-    plt.ylabel("Measured Leakage (Generalization Gap)", fontsize=14)
-    plt.xlabel("Privacy Protection Level", fontsize=14)
-    
-    # Dynamic Y-axis scaling to make small differences visible
-    max_leak = df['leakage'].max()
-    plt.ylim(0, max(0.15, max_leak * 1.35)) 
-    
-    plt.xticks(rotation=45, ha='right')
-    plt.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # Add explanatory annotation
-    plt.annotate("Baseline (High Risk)", xy=(0, df['leakage'].iloc[0]), xytext=(0.5, max_leak*1.2),
-                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
-    
-    plt.tight_layout()
-    return True
 
-def plot_robustness():
-    csv_path = os.path.join(script_dir, "exp_robustness_results.csv")
-    df = load_and_dedup(csv_path, subset_cols=['attack', 'defense'])
-    if df is None or df.empty: return False
-    
-    attack_map = {"None": "No Attack", "label_flip": "Label Flip", "gradient_scale": "Grad Scale"}
-    df['attack'] = df['attack'].map(lambda x: attack_map.get(x, x))
-    df['attack'] = pd.Categorical(df['attack'], categories=['No Attack', 'Label Flip', 'Grad Scale'], ordered=True)
-    
-    colors = {"FedAvg": "#ff7b7b", "Trimmed-Avg": "#00d1ff"}
-    sns.barplot(data=df, x="attack", y="accuracy", hue="defense", palette=colors, edgecolor='black', alpha=0.9)
-    plt.title("Adversarial Robustness: Defense Strategy Comparison", fontsize=18, fontweight='bold', pad=20)
-    plt.ylabel("Global Model Accuracy", fontsize=14)
-    plt.xlabel("Attack Scenario", fontsize=14)
-    plt.ylim(0, 1.0)
-    plt.legend(title="Defense Method", loc='lower right')
+    # --- Grouped bar chart: Accuracy Gap vs AUC Gap side by side ---
+    n = len(df)
+    x = np.arange(n)
+    bar_w = 0.35
+
+    bars_acc = plt.bar(x - bar_w/2, df['leakage_acc'], bar_w,
+                       label='Accuracy Gap (Yeom 2018)',
+                       color='#ff7b7b', edgecolor='black', linewidth=1.2, alpha=0.88)
+    bars_auc = plt.bar(x + bar_w/2, df['leakage_auc'], bar_w,
+                       label='AUC Gap — Primary (Nasr 2019)',
+                       color='#8c6fff', edgecolor='black', linewidth=1.2, alpha=0.88,
+                       hatch='//')
+
+    # Annotate each bar with its percentage value
+    for bar in bars_acc:
+        h = bar.get_height()
+        if h > 0.001:
+            plt.text(bar.get_x() + bar.get_width()/2., h + 0.003,
+                     f'{h*100:.1f}%', ha='center', va='bottom',
+                     fontsize=8.5, fontweight='bold', color='#cc0000')
+
+    for bar in bars_auc:
+        h = bar.get_height()
+        if h > 0.001:
+            plt.text(bar.get_x() + bar.get_width()/2., h + 0.003,
+                     f'{h*100:.1f}%', ha='center', va='bottom',
+                     fontsize=8.5, fontweight='bold', color='#5500cc')
+
+    # Annotate each group with model accuracy from the primary (mi) source
+    for i, (_, row) in enumerate(df.iterrows()):
+        acc = row.get('accuracy', 0)
+        plt.text(i, -0.012, f'Acc: {acc*100:.1f}%',
+                 ha='center', va='top', fontsize=8, color='#333333', fontstyle='italic')
+
+    plt.title("Privacy Audit: Information Leakage vs. DP Noise Level (σ)",
+              fontsize=17, fontweight='bold', pad=20)
+    plt.ylabel("Measured Leakage (Proxy Score)", fontsize=13)
+    plt.xlabel("Privacy Protection Level", fontsize=13)
+    plt.xticks(x, df['label'], fontsize=11)
+
+    max_leak = max(df['leakage_acc'].max(), df['leakage_auc'].max())
+    plt.ylim(-0.025, max(0.15, max_leak * 1.40))
+
+    plt.legend(loc='upper right', frameon=True, facecolor='white', framealpha=0.9, fontsize=10)
+    plt.grid(axis='y', alpha=0.3, linestyle='--')
+    plt.tight_layout()
     return True
 
 if __name__ == "__main__":

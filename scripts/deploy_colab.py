@@ -51,10 +51,41 @@ def deploy():
             "timestamp": Web3.to_json(w3.eth.get_block('latest')['timestamp'])
         }
 
+        # Link Reputation to MedShareTask
+        print("Linking Reputation to MedShareTask...")
+        task_abi = None
+        with open("build/MedShareTask.json", "r") as f:
+            task_abi = json.load(f)['abi']
+        
+        task_contract = w3.eth.contract(address=medshare_addr, abi=task_abi)
+        tx_hash = task_contract.functions.setReputationContract(reputation_addr).transact({
+            'from': w3.eth.accounts[0],
+            'gasPrice': w3.to_wei(1, 'gwei')
+        })
+        w3.eth.wait_for_transaction_receipt(tx_hash)
+        print("✅ Linking complete.")
+
+        # Save to build directory (for backend/clients)
         with open("build/deploy_info.json", "w") as f:
             json.dump(deploy_info, f, indent=2)
         
-        print("\n[Success] Deployment summary saved to build/deploy_info.json")
+        # --- CRITICAL: Sync to Frontend Data Directory ---
+        frontend_data_dir = os.path.join("frontend", "src", "data")
+        os.makedirs(frontend_data_dir, exist_ok=True)
+        
+        # Save deploy_info to frontend
+        with open(os.path.join(frontend_data_dir, "deploy_info.json"), "w") as f:
+            json.dump(deploy_info, f, indent=2)
+            
+        # Copy ABIs from build to frontend
+        import shutil
+        for contract in ["MedShareTask", "CommitmentRegistry", "Reputation"]:
+            src = os.path.join("build", f"{contract}.json")
+            dst = os.path.join(frontend_data_dir, f"{contract}.json")
+            if os.path.exists(src):
+                shutil.copy(src, dst)
+        
+        print("\n[Success] Deployment summary & artifacts synced to build/ and frontend/src/data/")
     except Exception as e:
         print(f"[Error] Deployment failed: {e}")
 

@@ -4,30 +4,74 @@ from torch.utils.data import DataLoader, TensorDataset
 def fetch_support2():
     try:
         from ucimlrepo import fetch_ucirepo
-        return fetch_ucirepo(id=880).data.original
+        repo = fetch_ucirepo(id=880)
+        return pd.concat([repo.data.features, repo.data.targets], axis=1)
     except:
         r = requests.get("https://archive.ics.uci.edu/static/public/880/support2.zip")
         with zipfile.ZipFile(io.BytesIO(r.content)) as z: return pd.read_csv(z.open('support2.csv'))
 
 def fetch_thyroid():
-    from ucimlrepo import fetch_ucirepo
-    # Thyroid Disease (ID 102)
-    return fetch_ucirepo(id=102).data.original
+    import pandas as pd, ssl, urllib.request, io
+
+    cols = [
+        "age", "sex", "on_thyroxine", "query_on_thyroxine", "on_antithyroid_medication",
+        "sick", "pregnant", "thyroid_surgery", "i131_treatment", "query_hypothyroid",
+        "query_hyperthyroid", "lithium", "goitre", "tumor", "hypopituitary", "psych",
+        "tsh", "t3", "tt4", "t4u", "fti", "target"
+    ]
+
+    # Method 1: ucimlrepo (preferred, no SSL issues)
+    try:
+        from ucimlrepo import fetch_ucirepo
+        print("[Data] Fetching Thyroid via ucimlrepo...")
+        repo = fetch_ucirepo(id=102)
+        X = repo.data.features
+        y = repo.data.targets
+        df = pd.concat([X.reset_index(drop=True), y.reset_index(drop=True)], axis=1)
+        # Standardize column names to match the definitive schema
+        df.columns = cols 
+        print(f"[Data] Thyroid loaded via ucimlrepo: {len(df)} rows, {len(df.columns)} cols")
+        return df
+    except Exception as e:
+        print(f"[Data] ucimlrepo failed ({e}), falling back to direct download...")
+
+    # Method 2: Direct URL with SSL verification bypassed (expired cert fallback)
+    base_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/thyroid-disease/"
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+
+    def read_url(url):
+        with urllib.request.urlopen(url, context=ssl_ctx) as resp:
+            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep="\s+", header=None)
+
+    train_df = read_url(f"{base_url}ann-train.data")
+    test_df  = read_url(f"{base_url}ann-test.data")
+    df = pd.concat([train_df, test_df], axis=0).reset_index(drop=True)
+    df.columns = cols
+    return df
 
 def fetch_diabetes_hospitals():
     from ucimlrepo import fetch_ucirepo
-    # Diabetes 130-Hospitals (ID 296)
-    return fetch_ucirepo(id=296).data.original
+    repo = fetch_ucirepo(id=296)
+    return pd.concat([repo.data.features, repo.data.targets], axis=1)
 
 def fetch_cdc_diabetes():
     from ucimlrepo import fetch_ucirepo
-    # CDC Diabetes Health Indicators (ID 891)
-    return fetch_ucirepo(id=891).data.original
+    repo = fetch_ucirepo(id=891)
+    return pd.concat([repo.data.features, repo.data.targets], axis=1)
+
+def fetch_cdc_diabetes_multiclass():
+    import kagglehub
+    path = kagglehub.dataset_download("alexteboul/diabetes-health-indicators-dataset")
+    # We use the 2015 version which is the standard 3-class variant
+    df = pd.read_csv(os.path.join(path, "diabetes_012_health_indicators_BRFSS2015.csv"))
+    return df
 
 def fetch_maternal_health():
     from ucimlrepo import fetch_ucirepo
-    # Maternal Health Risk (ID 863)
-    return fetch_ucirepo(id=863).data.original
+    repo = fetch_ucirepo(id=863)
+    return pd.concat([repo.data.features, repo.data.targets], axis=1)
 
 def fetch_hospital_admin():
     import kagglehub
@@ -40,39 +84,68 @@ def fetch_hospital_admin():
 
 def load_tabular_data(config):
     source, target = config.get("DATA_SOURCE", "support2"), config["TARGET_COLUMN"]
-    if source == "support2": df = fetch_support2()
-    elif source == "thyroid": df = fetch_thyroid()
+    if source == "support2": 
+        df = fetch_support2()
+        # If requested Support2-Disease target, map technical codes to Inventory names
+        if target.lower() == "dzgroup" or target.lower() == "disease_group":
+            # Exhaustive mapping to reach documented Inventory categories
+            support2_map = {
+                'ARF/MOSF w/Sepsis': 'Sepsis',
+                'MOSF w/Sepsis': 'Sepsis',
+                'Lung Cancer': 'Cancer', 
+                'MOSF w/Malignancy': 'Cancer',
+                'MOSF w/Malig': 'Cancer',
+                'Colon Cancer': 'Cancer',
+                'CHF': 'CHF', 
+                'COPD': 'COPD',
+                'Coma': 'Other',
+                'Cirrhosis': 'Other',
+                'Renal Failure': 'Other'
+            }
+            # Normalize dzgroup values for mapping
+            df['target_disease'] = df['dzgroup'].astype(str).str.strip().map(support2_map).fillna('Other')
+            df = df.drop(columns=['dzgroup'])
+            target = 'target_disease'
+    elif source == "thyroid": 
+        df = fetch_thyroid()
+        # UCI ID 102 ANNEX targets: 3=Negative (6666), 1=Hyper (166), 2=Hypo (368)
+        if 'target' in df.columns:
+            df['target'] = df['target'].map({3: 'Negative', 1: 'Hypo/Hyper', 2: 'Hypo/Hyper'})
     elif source == "diabetes_hospital": df = fetch_diabetes_hospitals()
-    elif source == "cdc_diabetes": df = fetch_cdc_diabetes()
+    elif source == "cdc_diabetes": 
+        if target == "Diabetes_012":
+            df = fetch_cdc_diabetes_multiclass()
+        else:
+            df = fetch_cdc_diabetes()
     elif source == "maternal_health": df = fetch_maternal_health()
     elif source == "hospital_admin":
         df = fetch_hospital_admin()
-        # Custom labeling: If predicting bill, create a median-split binary target
+        # Custom labeling: If predicting bill, create a median-split binary target (Matches 50/50 split in inventory)
         if target.lower() == "high_bill":
-            median = df['Bill Amount'].median()
-            df['high_bill'] = (df['Bill Amount'] > median).astype(int)
-        # Simplified multi-class: Group into 4 clear care-type categories
+            source_col = next((c for c in df.columns if c.lower() == "bill amount"), "Bill Amount")
+            median = df[source_col].median()
+            df['high_bill'] = (df[source_col] > median).astype(int)
+            df = df.drop(columns=[source_col])
+        # Simplified multi-class: Group into 4 clear care-type categories (Matches Admin-Category in inventory)
         elif target.lower() == "condition_category":
+            source_col = next((c for c in df.columns if c.lower() == "medical condition"), "Medical Condition")
             condition_map = {
-                # Emergency/Trauma (Immediate intervention needed)
                 'Fracture': 'Emergency', 'Sprain': 'Emergency', 'Burns': 'Emergency',
                 'Stroke': 'Emergency', 'Heart Disease': 'Emergency',
-                # Infectious (Contagious, requires isolation protocols)
                 'COVID-19': 'Infectious', 'Pneumonia': 'Infectious', 'Influenza': 'Infectious',
                 'Common Cold': 'Infectious', 'Bronchitis': 'Infectious', 'Sinusitis': 'Infectious',
                 'Urinary Tract Infection': 'Infectious', 'Gastroenteritis': 'Infectious',
                 'Skin Infection': 'Infectious',
-                # Chronic Care (Long-term management, outpatient focus)
                 'Diabetes': 'Chronic', 'Hypertension': 'Chronic', 'Asthma': 'Chronic',
                 'Chronic Obstructive Pulmonary Disease': 'Chronic', 'Chronic Kidney Disease': 'Chronic',
                 'Arthritis': 'Chronic', 'Allergies': 'Chronic',
-                # Specialized (Requires specialist departments)
                 "Alzheimer's Disease": 'Specialized', "Parkinson's Disease": 'Specialized',
                 'Epilepsy': 'Specialized', 'Migraine': 'Specialized', 
                 'Multiple Sclerosis': 'Specialized', 'Depression': 'Specialized',
                 'Anxiety': 'Specialized', 'Cancer': 'Specialized'
             }
-            df['condition_category'] = df['Medical Condition'].map(condition_map).fillna('Other')
+            df['condition_category'] = df[source_col].map(condition_map).fillna('Other')
+            df = df.drop(columns=[source_col])
     elif source == "stroke_prediction":
         import kagglehub
         df = pd.read_csv(os.path.join(kagglehub.dataset_download("fedesoriano/stroke-prediction-dataset"), "healthcare-dataset-stroke-data.csv"))
@@ -82,56 +155,72 @@ def load_tabular_data(config):
     df.columns = df.columns.str.lower()
     target = target.lower()
     
-    if config.get("apply_rebalancing"):
-        if target not in df.columns:
-            print(f"[Warning] Target column '{target}' not found. Available columns: {list(df.columns)}")
-        else:
-            # Apply SMOTE for better synthetic minority oversampling
-            try:
-                from imblearn.over_sampling import SMOTE
-                
-                # Separate features and target before preprocessing
-                y_raw = df[target]
-                X_raw = df.drop(columns=[target])
-                
-                # Only apply SMOTE if it's a binary or small multi-class problem
-                min_samples = y_raw.value_counts().min()
-                if y_raw.nunique() <= 5 and min_samples > 1:
-                    # Encode categorical features temporarily for SMOTE
-                    cat_cols_temp = X_raw.select_dtypes(include=['object', 'category']).columns
-                    X_encoded = pd.get_dummies(X_raw, columns=cat_cols_temp, drop_first=True)
+    if target in df.columns:
+        # --- Intelligent Rebalancing (SMOTE) ---
+        apply_rebal = config.get("apply_rebalancing")
+        counts = df[target].value_counts()
+        if len(counts) > 0:
+            minority_size = counts.min()
+            majority_size = counts.max()
+            ratio = majority_size / minority_size if minority_size > 0 else 100
+            
+            # Auto-trigger rebalancing if:
+            # 1. Explicitly requested: config["apply_rebalancing"] = True
+            # 2. Set to 'auto' and ratio > 3
+            # 3. Not specified (None) but ratio is severe (> 10)
+            should_rebalance = (apply_rebal is True) or \
+                              (apply_rebal == "auto" and ratio > 3.0) or \
+                              (apply_rebal is None and ratio > 10.0)
+            
+            if should_rebalance:
+                try:
+                    # Prefer imbalanced-learn for high-quality synthetic data
+                    from imblearn.over_sampling import SMOTE
+                    y_raw = df[target]
+                    X_raw = df.drop(columns=[target])
                     
-                    # Fill NaN values before SMOTE (SMOTE doesn't accept NaN)
-                    X_encoded = X_encoded.fillna(X_encoded.median(numeric_only=True)).fillna(0)
-                    
-                    # Apply SMOTE
-                    k = min(5, min_samples - 1)
-                    smote = SMOTE(random_state=42, k_neighbors=k)
-                    X_resampled, y_resampled = smote.fit_resample(X_encoded, y_raw)
-                    
-                    # Reconstruct dataframe
-                    df = pd.DataFrame(X_resampled, columns=X_encoded.columns)
-                    df[target] = y_resampled
-                    print(f"[Data] Applied SMOTE (k={k}): {len(y_raw)} → {len(y_resampled)} samples")
-                else:
-                    if min_samples <= 1:
-                        print(f"[Data] Skipping SMOTE (minority class has only {min_samples} sample). Falling back.")
-                        raise ValueError("Insufficient samples for SMOTE")
-                    print(f"[Data] Skipping SMOTE (too many classes: {y_raw.nunique()})")
-            except ImportError:
-                print("[Warning] imbalanced-learn not installed. Falling back to naive oversampling.")
-                min_c = df[target].value_counts().idxmin()
-                df = pd.concat([df, df[df[target] == min_c]] * 3).sample(frac=1).reset_index(drop=True)
-            except Exception as e:
-                print(f"[Warning] SMOTE failed ({e}). Using naive oversampling.")
-                min_c = df[target].value_counts().idxmin()
-                df = pd.concat([df, df[df[target] == min_c]] * 3).sample(frac=1).reset_index(drop=True)
+                    if y_raw.nunique() <= 10 and minority_size > 1:
+                        # 1. Encode all Categoricals
+                        X_encoded = pd.get_dummies(X_raw, drop_first=True).fillna(0)
+                        
+                        # 2. Execute Multi-class SMOTE
+                        k = min(5, minority_size - 1)
+                        smote = SMOTE(random_state=42, k_neighbors=k)
+                        X_resampled, y_resampled = smote.fit_resample(X_encoded, y_raw)
+                        
+                        # 3. Post-process: Round dummy variables to preserve binary integrity
+                        # (Prevents values like 0.7 from appearing in binary flags)
+                        binary_cols = [c for c in X_encoded.columns if X_encoded[c].nunique() <= 2]
+                        X_resampled[binary_cols] = X_resampled[binary_cols].round()
+                        
+                        df = pd.DataFrame(X_resampled, columns=X_encoded.columns)
+                        df[target] = y_resampled
+                        print(f"[Data] Multi-class SMOTE applied ({y_raw.nunique()} classes, Ratio: {ratio:.1f}:1)")
+                    else:
+                        raise ValueError("Skipping SMOTE (Too many classes or insufficient samples)")
+                except Exception as e:
+                    print(f"[Warning] Multi-class Rebalance Fallback: {e}")
+                    # Intelligent Naive Fallback: Oversample EVERY minority class to match majority
+                    major_size = counts.max()
+                    balanced_df = []
+                    for cls in counts.index:
+                        cls_df = df[df[target] == cls]
+                        if len(cls_df) < major_size:
+                            # Sample with replacement to match majority size
+                            cls_df = cls_df.sample(major_size, replace=True, random_state=42)
+                        balanced_df.append(cls_df)
+                    df = pd.concat(balanced_df).sample(frac=1).reset_index(drop=True)
+                    print(f"[Data] Balanced {len(counts)} classes via selective oversampling.")
 
     if config.get("sample_size") and len(df) > config["sample_size"]:
         df = df.sample(n=config["sample_size"], random_state=42).reset_index(drop=True)
 
     drop_cols = [c.lower() for c in config.get("DROP_COLUMNS", [])]
-    df = df.drop(columns=drop_cols, errors='ignore').fillna(df.median(numeric_only=True))
+    # Robust Case-Insensitive Drop: Lowercase everything for comparison but keep target alive
+    col_map = {c.lower(): c for c in df.columns}
+    cols_to_drop = [col_map[d] for d in drop_cols if d in col_map and col_map[d].lower() != target.lower()]
+    df = df.drop(columns=cols_to_drop, errors='ignore').replace('?', np.nan).apply(pd.to_numeric, errors='ignore')
+    df = df.fillna(df.median(numeric_only=True))
     cat_cols = df.select_dtypes(include=['object', 'category']).columns
     partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None
     
@@ -141,12 +230,14 @@ def load_tabular_data(config):
     else:
         parts = pd.Series([f"Hospital_{i+1}" for i in np.random.randint(0, config.get("NUM_PARTITIONS", 5), len(df))], index=df.index)
     
-    # Label encode target if it is categorical
-    if df[target].dtype == 'object' or df[target].dtype.name == 'category':
+    # Label encode target if it is categorical or not 0-indexed
+    target_vals = df[target].unique()
+    is_not_zero_indexed = df[target].dtype.kind in 'biufc' and (target_vals.min() != 0 or target_vals.max() != len(target_vals) - 1)
+    if df[target].dtype == 'object' or df[target].dtype.name == 'category' or is_not_zero_indexed:
         from sklearn.preprocessing import LabelEncoder
         le = LabelEncoder()
-        df[target] = le.fit_transform(df[target].astype(str))
-        print(f"[Data] Encoded categorical target '{target}' into {len(le.classes_)} classes.")
+        df[target] = le.fit_transform(df[target])
+        print(f"[Data] Encoded target '{target}' into {len(le.classes_)} classes ({le.classes_} -> range({len(le.classes_)})).")
 
     # One-hot encode categorical features
     cols_to_encode = [c for c in cat_cols if c not in [partition_col, target]]
@@ -157,4 +248,28 @@ def load_tabular_data(config):
     return X, np.asarray(y), parts, X.shape[1], (1 if y.nunique() <= 2 else int(y.nunique()))
 
 def create_dataloaders(X, y, batch_size=1024):
-    return DataLoader(TensorDataset(torch.tensor(X.values if hasattr(X, 'values') else X).float(), torch.tensor(y).float()), batch_size=batch_size, shuffle=True)
+    """Premium Data Pipeline: Uses optimized workers and memory pinning for GPU throughput."""
+    use_gpu = torch.cuda.is_available()
+    return DataLoader(
+        TensorDataset(
+            torch.tensor(X.values if hasattr(X, 'values') else X).float(), 
+            torch.tensor(y).float()
+        ), 
+        batch_size=batch_size, 
+        shuffle=True,
+        num_workers=0, # Better for small tabular data to avoid process fork overhead
+        pin_memory=use_gpu
+    )
+
+# --- GLOBAL DATA CACHE ---
+_DATA_CACHE = {}
+
+def get_data_cached(config):
+    """Prevents redundant disk I/O and SMOTE execution during sweeps."""
+    cache_key = f"{config.get('DATA_SOURCE')}_{config.get('TARGET_COLUMN')}_{config.get('sample_size')}_{config.get('apply_rebalancing')}"
+    if cache_key in _DATA_CACHE:
+        return _DATA_CACHE[cache_key]
+    
+    data = load_tabular_data(config)
+    _DATA_CACHE[cache_key] = data
+    return data

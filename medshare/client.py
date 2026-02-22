@@ -5,27 +5,37 @@ from .engine import train, test
 from .blockchain import BlockchainManager
 
 class FlowerSurvivalClient(flwr.client.NumPyClient):
-    def __init__(self, net, trainloader, valloader, num_classes=1, mask_add=None, mask_sub=None, is_malicious=False, client_id=0, task_id=0, attack_type="label_flip", enable_dp=False, noise_multiplier=1.0, max_grad_norm=1.5, attack_scale_factor=100.0, local_epochs=1, enable_blockchain=False):
+    def __init__(self, net, trainloader, valloader, num_classes=1, mask_add=None, mask_sub=None, is_malicious=False, client_id=0, task_id=0, attack_type="label_flip", enable_dp=False, noise_multiplier=1.0, max_grad_norm=1.5, attack_scale_factor=100.0, local_epochs=1, enable_blockchain=False, node_name=None):
         self.net, self.trainloader, self.valloader = net, trainloader, valloader
         self.num_classes, self.mask_add, self.mask_sub = num_classes, mask_add, mask_sub
         self.is_malicious, self.client_id, self.task_id = is_malicious, client_id, task_id
         self.attack_type, self.enable_dp = attack_type, enable_dp
-        self.noise_multiplier, self.max_grad_norm, self.attack_scale_factor = noise_multiplier, max_grad_norm, attack_scale_factor
+        self.noise_multiplier, self.max_grad_norm, self.attack_scale_factor = noise_multiplier, max_grad_norm, 100.0
         self.local_epochs, self.enable_blockchain = local_epochs, enable_blockchain
+        self.node_name = node_name or f"Hospital_{client_id}"
         
         # GPU Support Detection
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net.to(self.device)
 
         if self.is_malicious and self.attack_type == "label_flip":
-             X, y = next(iter(DataLoader(self.trainloader.dataset, batch_size=len(self.trainloader.dataset))))
-             # Handle multi-class label flipping: shift labels by 1 modulo num_classes
-             if self.num_classes > 1:
-                 y_flipped = (y.long() + 1) % self.num_classes
-                 y_flipped = y_flipped.float()
-             else:
-                 y_flipped = 1.0 - y
-             self.trainloader = DataLoader(TensorDataset(X, y_flipped), batch_size=32, shuffle=True)
+            # Memory-Efficient Label Flipping: Process in-place without loading full dataset into RAM
+            # This prevents OOM on large datasets (e.g. CDC-Diabetes)
+            new_data = []
+            for X, y in self.trainloader.dataset:
+                # Handle multi-class label flipping: shift labels by 1 modulo num_classes
+                if self.num_classes > 1:
+                    y_flipped = (float(y) + 1) % self.num_classes
+                else:
+                    y_flipped = 1.0 - float(y)
+                new_data.append((X, torch.tensor(y_flipped).float()))
+            
+            # Reconstruct loader with identical batch size and shuffle settings
+            self.trainloader = DataLoader(
+                new_data, 
+                batch_size=self.trainloader.batch_size, 
+                shuffle=True
+            )
 
     def fit(self, parameters, config):
         print(f"[Client {self.client_id}] Starting fit on {self.device}...")
@@ -67,6 +77,7 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
             "loss": float(train_loss),
             "privacy_spent": float(eps) if eps is not None else 0.0,
             "train_accuracy": float(train_acc),
+            "train_auc": float(train_auc),
             "test_accuracy": float(val_acc),
             "test_auc": float(val_auc),
             "gas_used": int(gas_used) if gas_used else 0,
@@ -74,7 +85,8 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
             "noise_multiplier": float(self.noise_multiplier),
             "attack_type": str(self.attack_type),
             "is_malicious": bool(self.is_malicious),
-            "experiment": str(self.experiment_info if hasattr(self, 'experiment_info') else "none")
+            "node_name": str(self.node_name),
+            "experiment": str(config.get("experiment", "none"))
         }
         
         # Inject all server config (total_rounds, defense_name, etc.) into metrics

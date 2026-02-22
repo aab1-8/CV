@@ -1,0 +1,9 @@
+Mode,leakage_acc,leakage_auc,accuracy
+No Privacy (Baseline),0.0149,0.0193,0.9508
+With DP (sigma=0.1),0.0089,0.0000,0.9327
+With DP (sigma=0.25),0.0000,0.0253,0.9397
+With DP (sigma=0.5),0.0000,0.0000,0.9293
+With DP (sigma=0.75),0.0000,0.0299,0.9327
+With DP (sigma=1.0),0.0035,0.0179,0.9230
+With DP (sigma=1.25),0.0044,0.0083,0.9223
+With DP (sigma=1.5),0.0000,0.0109,0.9348

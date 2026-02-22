@@ -43,7 +43,8 @@ class MedShareBlockchain:
 
     def update_reputation(self, hospital_idx, change, reason="FL Contribution"):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            # Offset by +1 to skip admin account
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             # Ensure the transaction is sent from the admin account (accounts[0])
             tx = self.reputation_contract.functions.updateReputation(acc, int(change), reason).transact({
                 'from': self.w3.eth.accounts[0],
@@ -56,7 +57,7 @@ class MedShareBlockchain:
 
     def get_reputation(self, hospital_idx):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             return 100 + self.reputation_contract.functions.getScore(acc).call()
         except: return 100
 
@@ -66,7 +67,7 @@ class MedShareBlockchain:
 
     def authorize_hospital(self, hospital_idx):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             # Check contract state instead of local set to handle process restarts
             is_auth = self.task_contract.functions.authorizedHospitals(acc).call()
             if not is_auth:
@@ -85,7 +86,7 @@ class MedShareBlockchain:
 
     def is_authorized(self, hospital_idx):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             return self.task_contract.functions.authorizedHospitals(acc).call()
         except: return False
 
@@ -93,7 +94,8 @@ class MedShareBlockchain:
         try:
             if not self.is_authorized(hospital_idx):
                 self.authorize_hospital(hospital_idx)
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            # Consistently use hospital_idx + 1 to skip admin account
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             tx = self.task_contract.functions.joinTask(task_id).transact({
                 'from': acc,
                 'gasPrice': self.w3.to_wei(1, 'gwei')
@@ -105,7 +107,7 @@ class MedShareBlockchain:
 
     def post_commitment(self, task_id, round_num, weights, hospital_idx=1):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             h = self.hash_weights(weights)
             tx = self.registry_contract.functions.postCommitment(task_id, round_num, h).transact({
                 'from': acc,
@@ -119,7 +121,7 @@ class MedShareBlockchain:
 
     def get_balance(self, hospital_idx):
         try:
-            acc = self.w3.eth.accounts[hospital_idx % len(self.w3.eth.accounts)]
+            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
             return self.w3.from_wei(self.w3.eth.get_balance(acc), 'ether')
         except: return 0
 
@@ -172,7 +174,10 @@ class MedShareBlockchain:
         """Completes the task on MedShareTask and distributes bounties."""
         try:
             final_hash = self.hash_weights(weights).hex()
-            tx = self.task_contract.functions.completeTask(task_id, final_hash).transact({'from': self.w3.eth.accounts[0]})
+            tx = self.task_contract.functions.completeTask(task_id, final_hash).transact({
+                'from': self.w3.eth.accounts[0],
+                'gasPrice': self.w3.to_wei(1, 'gwei')
+            })
             self.w3.eth.wait_for_transaction_receipt(tx)
             print(f"[Blockchain] Task {task_id} finalized. Bounty distributed.")
             return True

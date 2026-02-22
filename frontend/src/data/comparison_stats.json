@@ -1,25 +1,30 @@
 {
-  "dataset_name": "SUPPORT2-DiseaseGroup",
+  "dataset_name": "SUPPORT2-Death",
   "reputation": {
-    "Hospital_5": 100,
-    "Hospital_3": 100,
-    "Hospital_1": 100,
-    "Hospital_2": 100,
-    "Hospital_4": 100
+    "Lung Cancer": 100,
+    "Cirrhosis": 100,
+    "ARF/MOSF w/Sepsis": 100,
+    "Coma": 100,
+    "CHF": 100,
+    "Colon Cancer": 100,
+    "COPD": 100,
+    "MOSF w/Malig": 100
   },
-  "local_accuracy": 0.5651250431379556,
-  "local_auc": 0.9347843126905435,
-  "centralized_accuracy": 0.828116419549698,
-  "centralized_auc": 0.9828498717903649,
-  "federated_accuracy": 0.7777167947310648,
-  "federated_auc": 0.9671029042468896,
-  "improvement_local_fed": 37.618533132535816,
+  "local_accuracy": 0.7515847576936642,
+  "local_auc": 0.638746097857102,
+  "centralized_accuracy": 0.785282811641955,
+  "centralized_auc": 0.8721854608951383,
+  "federated_accuracy": 0.34136986301369865,
+  "federated_auc": 0.5294380759723921,
+  "improvement_local_fed": -54.57999120934323,
   "security": {
     "dp_enabled": true,
-    "epsilon": 21.079875799626773,
+    "epsilon": 2.483663754586264,
     "delta": "1e-5",
+    "leakage_acc": 0.0,
+    "leakage_auc": 0.0,
     "defense_type": "FedAvg",
-    "attack_simulated": true,
-    "attack_type": "Label Flip"
+    "attack_simulated": false,
+    "attack_type": "None"
   }
 }

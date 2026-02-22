@@ -21,7 +21,24 @@ const initDashboard = () => {
   charts.renderBenchmarkChart(comparisonStats);
   charts.renderSecurityAudit(comparisonStats?.security);
   const rep = document.getElementById('hospital-reputation-list');
-  if (rep && comparisonStats?.reputation) rep.innerHTML = Object.entries(comparisonStats.reputation).map(([n, s]) => `<div class="card" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; mb:0.5rem;"><div><b>${n}</b><br><small>Verified Node</small></div><div style="text-align:right;"><span style="font-size:1.25rem; font-weight:700; color:${s >= 0 ? 'var(--accent-green)' : '#f78166'}">${s}</span><br><small>Trust Score</small></div></div>`).join('');
+  if (rep && comparisonStats?.reputation) {
+    rep.innerHTML = Object.entries(comparisonStats.reputation).map(([n, s]) => {
+      // Logic: 100 is neutral. Below 100 means the node has been penalized for anomalies.
+      const color = s >= 100 ? 'var(--accent-green)' : '#f78166';
+      const statusText = s >= 100 ? 'Verified Node' : 'Under Investigation';
+      return `
+        <div class="card" style="padding:1rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; border-left: 4px solid ${color};">
+          <div>
+            <b>${n}</b><br>
+            <small style="color:var(--text-secondary)">${statusText}</small>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:1.25rem; font-weight:700; color:${color}">${s}</span><br>
+            <small style="color:var(--text-secondary)">Trust Score</small>
+          </div>
+        </div>`;
+    }).join('');
+  }
 };
 
 const setupViewToggle = () => {

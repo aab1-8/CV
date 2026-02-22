@@ -6,7 +6,7 @@ from flwr.common import Context
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
 from flwr.client import ClientApp
 from medshare.models import SurvivalMLP, get_parameters
-from medshare.data import load_tabular_data, create_dataloaders
+from medshare.data import load_tabular_data, create_dataloaders, get_data_cached
 from medshare.utils import weighted_average, reset_logging
 from medshare.client import FlowerSurvivalClient
 from medshare.strategy import AnomalyMonitoringStrategy
@@ -42,36 +42,93 @@ def get_centralized_performance(X, y, dim, classes, config):
     return float(acc), float(auc)
 
 DATASET_PRESETS = {
-    # --- BINARY CLASSIFICATION (Predicting 0 or 1) ---
-    "support2": {"display_name": "SUPPORT2-Death", "TARGET_COLUMN": "death", "PARTITION_COLUMN": "dzgroup"},
-    "stroke_prediction": {"display_name": "Stroke", "DATA_SOURCE": "stroke_prediction", "TARGET_COLUMN": "stroke", "DROP_COLUMNS": ["id"], "apply_rebalancing": True},
-    "cdc_diabetes_binary": {"display_name": "CDC-Diabetes-Binary", "DATA_SOURCE": "cdc_diabetes", "TARGET_COLUMN": "Diabetes_binary"},
+    # --- BINARY CLASSIFICATION ---
+    "support2": {
+        "display_name": "SUPPORT2-Death", 
+        "TARGET_COLUMN": "death", 
+        "PARTITION_COLUMN": "dzgroup",
+        "apply_rebalancing": False # 72/28 split is manageable without synthetic data
+    },
+    "stroke_prediction": {
+        "display_name": "Stroke", 
+        "DATA_SOURCE": "stroke_prediction", 
+        "TARGET_COLUMN": "stroke", 
+        "DROP_COLUMNS": ["id"], 
+        "apply_rebalancing": True # Heavy 95/5 imbalance
+    },
+    "cdc_diabetes_binary": {
+        "display_name": "CDC-Diabetes-Binary", 
+        "DATA_SOURCE": "cdc_diabetes", 
+        "TARGET_COLUMN": "Diabetes_binary"
+    },
+    "thyroid": {
+        "display_name": "Thyroid", 
+        "DATA_SOURCE": "thyroid", 
+        "TARGET_COLUMN": "target",
+        "apply_rebalancing": True # Severe 93/7 imbalance
+    },
     
-    # --- MULTI-CLASS CLASSIFICATION (Predicting Categories) ---
-    "cdc_diabetes_012": {"display_name": "CDC-Diabetes-012", "DATA_SOURCE": "cdc_diabetes", "TARGET_COLUMN": "Diabetes_012"},
-    "diabetes_hospital": {"display_name": "Diabetes-Hospitals", "DATA_SOURCE": "diabetes_hospital", "TARGET_COLUMN": "readmitted"},
-    "maternal_health": {"display_name": "Maternal-Health", "DATA_SOURCE": "maternal_health", "TARGET_COLUMN": "RiskLevel"},
-    "admin_billing": {"display_name": "Admin-Billing-Risk", "DATA_SOURCE": "hospital_admin", "TARGET_COLUMN": "high_bill", "DROP_COLUMNS": ["Patient ID", "Name", "Date of Birth", "Admit Date", "Discharge Date", "Bill Amount"]},
-    "admin_category": {"display_name": "Admin-Category", "DATA_SOURCE": "hospital_admin", "TARGET_COLUMN": "condition_category", "DROP_COLUMNS": ["Patient ID", "Name", "Date of Birth", "Admit Date", "Discharge Date", "Medical Condition"]},
-    "thyroid": {"display_name": "Thyroid", "DATA_SOURCE": "thyroid", "TARGET_COLUMN": "Class"},
-    "support2_disease": {"display_name": "SUPPORT2-DiseaseGroup", "TARGET_COLUMN": "dzgroup", "PARTITION_COLUMN": "death"},
+    # --- MULTI-CLASS CLASSIFICATION ---
+    "cdc_diabetes_012": {
+        "display_name": "CDC-Diabetes-012", 
+        "DATA_SOURCE": "cdc_diabetes", 
+        "TARGET_COLUMN": "Diabetes_012"
+    },
+    "diabetes_hospital": {
+        "display_name": "Diabetes-Hospitals", 
+        "DATA_SOURCE": "diabetes_hospital", 
+        "TARGET_COLUMN": "readmitted"
+    },
+    "maternal_health": {
+        "display_name": "Maternal-Health", 
+        "DATA_SOURCE": "maternal_health", 
+        "TARGET_COLUMN": "RiskLevel",
+        "apply_rebalancing": "auto" # Dynamic detection
+    },
+    "admin_billing": {
+        "display_name": "Admin-Billing-Risk", 
+        "DATA_SOURCE": "hospital_admin", 
+        "TARGET_COLUMN": "high_bill", 
+        "DROP_COLUMNS": ["Patient ID", "Name", "Date of Birth", "Admit Date", "Discharge Date", "Bill Amount"]
+    },
+    "admin_category": {
+        "display_name": "Admin-Category", 
+        "DATA_SOURCE": "hospital_admin", 
+        "TARGET_COLUMN": "condition_category", 
+        "DROP_COLUMNS": ["Patient ID", "Name", "Date of Birth", "Admit Date", "Discharge Date", "Medical Condition"]
+    },
+    "support2_disease": {
+        "display_name": "SUPPORT2-Disease", 
+        "TARGET_COLUMN": "dzgroup", 
+        "PARTITION_COLUMN": "death",
+        "apply_rebalancing": False # Clinical realism priority
+    },
 }
 
 def get_adaptive_experiment_config(num_records):
-    """Calibrates signal-to-noise ratios based on dataset scale and hardware."""
+    """Calibrates signal-to-noise ratios and hardware throughput based on environment."""
     use_gpu = torch.cuda.is_available()
+    import sys
+    is_colab = 'google.colab' in sys.modules
+    
+    # Premium Scaling: Use massive batches on high-end GPUs (Colab 15GB) vs Local 6GB
+    if is_colab:
+        gpu_batch = 8192
+    else:
+        gpu_batch = 2048 # Safer for 6GB GPUs to avoid OOM and high temps
+    
     if num_records < 5000: # Micro Datasets (e.g. 1k rows)
         return {
             "sigmas": [0.05, 0.1, 0.2, 0.3, 0.5],
-            "batch_size": 32,
+            "batch_size": 256 if use_gpu else 32,
             "rounds": 50,
             "epochs": 1
         }
     elif num_records < 50000: # Standard Research Datasets (e.g. 10k rows)
         return {
             "sigmas": [0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5],
-            "batch_size": 1024 if use_gpu else 128, # Optimized for GPU speed, safe for CPU
-            "rounds": 50 if use_gpu else 20, # Reduced for CPU to save time
+            "batch_size": gpu_batch if use_gpu else 128,
+            "rounds": 50 if use_gpu else 20,
             "epochs": 5 
         }
     else: # Massive Datasets (e.g. 300k rows)
@@ -85,13 +142,14 @@ def get_adaptive_experiment_config(num_records):
 def run_simulation(args, config):
     reset_logging()
     if args.sample_size: config["sample_size"] = args.sample_size
-    X, y, parts, dim, classes = load_tabular_data(config)
+    X, y, parts, dim, classes = get_data_cached(config)
     
     # Calculate REAL Centralized Baseline
     centralized_acc, centralized_auc = get_centralized_performance(X, y, dim, classes, config)
     
-    names = list(parts.unique()); scaler = MinMaxScaler()
-    print(f"[INIT] Loaded {len(X)} records across {len(names)} hospitals.")
+    original_names = list(parts.unique()); scaler = MinMaxScaler()
+    name_to_original_idx = {n: i for i, n in enumerate(original_names)}
+    print(f"[INIT] Loaded {len(X)} records across {len(original_names)} hospitals.")
     
     # Gatekeeping: Filter hospitals by reputation if blockchain is active
     bcm = None
@@ -99,7 +157,7 @@ def run_simulation(args, config):
         bcm = BlockchainManager.get_instance()
         
     authorized_names = []
-    for i, n in enumerate(names):
+    for i, n in enumerate(original_names):
         rep = bcm.get_reputation(i) if bcm else 100
         if rep >= 50:
             authorized_names.append(n)
@@ -112,8 +170,12 @@ def run_simulation(args, config):
         
     names = authorized_names
     nodes = {n: train_test_split(pd.DataFrame(scaler.fit_transform(X.loc[parts == n]), columns=X.columns), y[parts == n], test_size=0.2) for n in names}
-    # Allow command line to override adaptive rounds
-    exec_rounds = args.rounds if args.rounds != 3 else config.get("rounds", args.rounds)
+    # Allow command line to override adaptive rounds.
+    # We use a dedicated sentinel (_cli_rounds) stored on args by run_experiment() to
+    # detect whether rounds were explicitly passed by the user vs overridden internally.
+    # Fall back to adaptive calibration only when the caller has NOT set an explicit value.
+    explicit_rounds = getattr(args, '_cli_rounds', None)
+    exec_rounds = args.rounds if explicit_rounds is not None else config.get("rounds", args.rounds)
     print(f"[INIT] Starting simulation for {config.get('display_name', 'FL')} with {exec_rounds} rounds...")
     
     # Bounty Demo: Initialize Task on Blockchain (Only if enabled)
@@ -126,9 +188,11 @@ def run_simulation(args, config):
         # Reduced bounty to 0.05 ETH for simulation stability
         print("[Blockchain] Posting task with 0.05 ETH bounty...")
         created_task_id = bcm.create_task_with_bounty(f"Train {config.get('display_name', 'FL')}", len(names), exec_rounds, bounty_eth=0.05)
-        for i, _ in enumerate(names):
-            bcm.join_task(created_task_id, i)
-            initial_balances[i] = bcm.get_balance(i)
+        for i, n in enumerate(names):
+            # Use original ID for join logic to match contract checks
+            orig_idx = name_to_original_idx[n]
+            bcm.join_task(created_task_id, orig_idx)
+            initial_balances[orig_idx] = bcm.get_balance(orig_idx)
 
     from flwr.common import ndarrays_to_parameters
     def fit_agg(m, server_round=None): return weighted_average(m, server_round=server_round, log_to_csv=False)
@@ -164,8 +228,11 @@ def run_simulation(args, config):
     def client_fn(context: Context):
         # Use node_id as p_id if partition-id is missing (common in local simulation)
         p_id = int(context.node_config.get("partition-id", context.node_id))
-        print(f"[Client] Initializing client {p_id} ({names[p_id]})")
-        tr_X, te_X, tr_y, te_y = nodes[names[p_id]]
+        h_name = names[p_id]
+        orig_idx = name_to_original_idx[h_name]
+        
+        print(f"[Client] Initializing client {p_id} (Hospital: {h_name}, GlobalID: {orig_idx})")
+        tr_X, te_X, tr_y, te_y = nodes[h_name]
         # Adaptive batching to prevent 'Signal Drowning' in small cohorts
         bs = config.get("batch_size", 32)
         return FlowerSurvivalClient(
@@ -173,14 +240,16 @@ def run_simulation(args, config):
             create_dataloaders(tr_X, tr_y, batch_size=bs), 
             create_dataloaders(te_X, te_y, batch_size=bs), 
             num_classes=classes, 
-            is_malicious=(p_id < int(len(names)*0.2)), 
-            client_id=p_id, 
-            task_id=args.task_id, 
+            # Malicious detection based on ORIGINAL index to maintain attack consistency
+            is_malicious=(orig_idx < int(len(original_names)*0.2)) and (config.get("attack_type", "None") != "None"), 
+            client_id=orig_idx, 
+            task_id=created_task_id if created_task_id is not None else args.task_id, 
             local_epochs=args.epochs,
             attack_type=config.get("attack_type", "label_flip"),
             enable_dp=config.get("enable_dp", False),
             noise_multiplier=config.get("noise_multiplier", 1.0),
-            enable_blockchain=config.get("enable_blockchain", False)
+            enable_blockchain=config.get("enable_blockchain", False),
+            node_name=h_name
         ).to_client()
 
     # Clear old history before simulation
@@ -201,19 +270,34 @@ def run_simulation(args, config):
     strategy.on_fit_config_fn = common_config
     strategy.on_evaluate_config_fn = common_config
 
-    # --- Resource Configuration ---
-    # Enable parallel client execution and utilize GPU if available
+    # --- Advanced Resource Configuration ---
+    # Maximize Colab's 15GB GPU / 12GB RAM vs Local Thermal Efficiency
+    import sys, multiprocessing
+    is_colab = 'google.colab' in sys.modules
+    cpu_count = multiprocessing.cpu_count()
     use_gpu = torch.cuda.is_available()
+    
+    # In Colab, we want to run ALL clients in parallel to exhaust the 15GB GPU
+    # Local (6GB GPU/12GB RAM): We run 2 clients at a time (0.5 GPU fraction)
+    # This keeps the GPU usage high but prevents the 12GB RAM from swapping
+    client_cpu = 0.4 if is_colab else 1.5 # Higher CPU per client local = fewer parallel workers = lower heat
+    client_gpu = 0.2 if is_colab else (0.5 if use_gpu else 0) 
+
     backend_config = {
         "client_resources": {
-            "num_cpus": 0.5, 
-            "num_gpus": 0.1 if use_gpu else 0
+            "num_cpus": client_cpu,
+            "num_gpus": client_gpu
         },
         "init_args": {
-            "num_cpus": 2, 
-            "num_gpus": 1.0 if use_gpu else 0  # Register the GPU with Ray
+            "num_cpus": cpu_count, 
+            "num_gpus": 1.0 if use_gpu else 0
         }
     }
+    
+    if is_colab:
+        print(f"[Hardware] Mode: Colab MAX (15GB GPU). Running {len(names)} parallel clients.")
+    else:
+        print(f"[Hardware] Mode: Local Efficiency. Capping parallelism to protect CPU temps.")
     
     # Run Simulation and capture history
     history = flwr.simulation.run_simulation(
@@ -234,38 +318,55 @@ def run_simulation(args, config):
                     final_round = max(h, key=lambda x: x.get("round", 0))
                     fed_acc = final_round.get("accuracy", fed_acc)
                     fed_auc = final_round.get("auc", fed_auc)
+                    fed_mi_acc = final_round.get("mi_score", 0.0)
+                    fed_mi_auc = final_round.get("mi_auc_score", 0.0)
                     fed_eps = final_round.get("epsilon", 0.0)
-                    print(f"[Results] Extracted from history: Acc={fed_acc:.4f}, AUC={fed_auc:.4f}, Epsilon={fed_eps:.2f}")
+                    print(f"[Results] Extracted: Acc={fed_acc:.4f}, AUC={fed_auc:.4f}, MI-Gap={fed_mi_auc:.4f}, Eps={fed_eps:.2f}")
         except Exception as e:
             print(f"[Warning] Could not read training_history.json: {e}")
 
     # Calculate Local Baseline (Per-Node Accuracy/AUC)
     print(f"[Baseline] Calculating Local Baselines for each hospital...")
     local_metrics = []
-    for i, name in enumerate(names):
-        tr_X, te_X, tr_y, te_y = nodes[name]
-        net = SurvivalMLP(dim, classes)
-        # Train a quick local model (3 epochs) to see isolated performance
-        use_gpu = torch.cuda.is_available()
-        bs = config.get("batch_size", 1024 if use_gpu else 64)
-        device = "cuda" if use_gpu else "cpu"
-        train(net, create_dataloaders(tr_X, tr_y, batch_size=bs), epochs=3, num_classes=classes, device=device)
-        _, l_acc, l_auc = test(net, create_dataloaders(te_X, te_y, batch_size=bs), num_classes=classes, device=device)
+    
+    # Check for existing baseline cache to skip training
+    baseline_cache_f = os.path.join("test", f"baseline_{config.get('display_name', 'FL')}_{len(X)}.json")
+    if os.path.exists(baseline_cache_f):
+        print(f"[Baseline] Loading cached local baselines...")
+        with open(baseline_cache_f, "r", encoding='utf-8') as f:
+            local_metrics = json.load(f)
+            # Filter out old 'Federated' entries from cache, we want fresh ones for this run
+            local_metrics = [m for m in local_metrics if m["Type"] == "Local Baseline"]
+    else:
+        for i, name in enumerate(names):
+            tr_X, te_X, tr_y, te_y = nodes[name]
+            net = SurvivalMLP(dim, classes)
+            # Train a quick local model (3 epochs) to see isolated performance
+            use_gpu = torch.cuda.is_available()
+            bs = config.get("batch_size", 1024 if use_gpu else 64)
+            device = "cuda" if use_gpu else "cpu"
+            train(net, create_dataloaders(tr_X, tr_y, batch_size=bs), epochs=3, num_classes=classes, device=device)
+            _, l_acc, l_auc = test(net, create_dataloaders(te_X, te_y, batch_size=bs), num_classes=classes, device=device)
+            
+            # Local Baseline Entry
+            local_metrics.append({
+                "Hospital": name,
+                "Accuracy": float(l_acc),
+                "AUC-ROC": float(l_auc),
+                "Samples": int(len(tr_X) + len(te_X)),
+                "Type": "Local Baseline"
+            })
         
-        # Local Baseline Entry
+        # Save baseline cache
+        with open(baseline_cache_f, "w", encoding='utf-8') as f:
+            json.dump(local_metrics, f, indent=2)
+
+    # Add fresh Federated entries for this specific run
+    for name in names:
+        tr_X, te_X, _, _ = nodes[name]
         local_metrics.append({
             "Hospital": name,
-            "Accuracy": float(l_acc),
-            "AUC-ROC": float(l_auc),
-            "Samples": int(len(tr_X) + len(te_X)),
-            "Type": "Local Baseline"
-        })
-        
-        # We don't have per-hospital federated results easily here without more plumbing,
-        # so we'll approximate/proxy or use the final global metrics for the 'Federated' bars
-        local_metrics.append({
-            "Hospital": name,
-            "Accuracy": float(fed_acc), # Simplified: showing how the global model performs vs local
+            "Accuracy": float(fed_acc),
             "AUC-ROC": float(fed_auc),
             "Samples": int(len(tr_X) + len(te_X)),
             "Type": "Federated"
@@ -276,8 +377,12 @@ def run_simulation(args, config):
         json.dump(local_metrics, f, indent=2)
 
     # Safe division for local metrics averages
-    avg_local_acc = sum(m["Accuracy"] for m in local_metrics if m["Type"] == "Local Baseline") / len(names) if names else 0.0
-    avg_local_auc = sum(m["AUC-ROC"] for m in local_metrics if m["Type"] == "Local Baseline") / len(names) if names else 0.5
+    # Use the number of local-baseline ENTRIES (not len(names)) to avoid div-by-wrong-denominator
+    # when some hospitals are blacklisted or cached from a previous run with more nodes.
+    local_baseline_entries = [m for m in local_metrics if m["Type"] == "Local Baseline"]
+    n_local = len(local_baseline_entries) if local_baseline_entries else 1
+    avg_local_acc = sum(m["Accuracy"] for m in local_baseline_entries) / n_local
+    avg_local_auc = sum(m["AUC-ROC"] for m in local_baseline_entries) / n_local
     improvement = 0.0
     if avg_local_acc > 0:
         improvement = (fed_acc - avg_local_acc) / avg_local_acc * 100
@@ -285,7 +390,7 @@ def run_simulation(args, config):
     bcm = BlockchainManager.get_instance()
     summary = {
         "dataset_name": config.get("display_name", "FL"),
-        "reputation": {n: (bcm.get_reputation(i) if bcm else 100) for i, n in enumerate(names)},
+        "reputation": {n: (bcm.get_reputation(name_to_original_idx[n]) if bcm else 100) for n in names},
         "local_accuracy": float(avg_local_acc), 
         "local_auc": float(avg_local_auc),
         "centralized_accuracy": float(centralized_acc),
@@ -297,9 +402,11 @@ def run_simulation(args, config):
             "dp_enabled": config.get("enable_dp", False), 
             "epsilon": float(fed_eps) if config.get("enable_dp") else 0.0, 
             "delta": "1e-5", 
+            "leakage_acc": float(fed_mi_acc),
+            "leakage_auc": float(fed_mi_auc),
             "defense_type": config.get("defense_name", "FedAvg"),
-            "attack_simulated": any(i < int(len(names)*0.2) for i in range(len(names))),
-            "attack_type": config.get("attack_type", "Label Flip")
+            "attack_simulated": config.get("attack_type", "None") not in ["None", None],
+            "attack_type": config.get("attack_type", "None")
         }
     }
     with open(os.path.join("frontend", "src", "data", "comparison_stats.json"), "w", encoding='utf-8') as f: json.dump(summary, f, indent=2)
@@ -329,7 +436,7 @@ def run_experiment(args):
         if os.path.exists(path): os.remove(path)
 
     # 1. Peek at dataset size to calibrate adaptive ranges
-    X_peek, _, _, _, _ = load_tabular_data(config)
+    X_peek, _, _, _, _ = get_data_cached(config)
     num_records = len(X_peek)
     adapt = get_adaptive_experiment_config(num_records)
     config["batch_size"] = adapt["batch_size"]
@@ -350,27 +457,35 @@ def run_experiment(args):
         args.rounds = saved_rounds
     elif args.experiment == "mi":
         # Full MI Audit Sweep (Baseline vs multiple DP levels)
+        # Uses the dataset's native preset for rebalancing (True for Thyroid/Stroke)
+        
         test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test")
         mi_file = os.path.join(test_dir, "exp_mi_results.csv")
         if os.path.exists(mi_file): os.remove(mi_file)
         
-        noises = [0] + adapt["sigmas"]
+        # Consistent evaluation points
+        noises = [0, 0.5, 0.75, 1.0, 1.25, 1.5]
         saved_rounds = args.rounds
         saved_epochs = args.epochs
+        # Stability calibration for MI: Default to 30/40 for full audit, 
+        # but respect user if they pass explicit non-default values.
+        config["batch_size"] = 128
+        if args.epochs == 1 and args.rounds == 3:
+            args.epochs = 40
+            args.rounds = 30
         
-        # Use HIGH epochs for ALL runs to ensure fair comparison
-        # This proves that DP protects data even under intense training/overfitting pressure
-        args.epochs = 25
+        # Mark as explicit so run_simulation engine respects these overrides
+        args._cli_rounds = args.rounds
         
-        if args.rounds == 3: # 3 is the default value
-            args.rounds = adapt["rounds"]
         for n in noises:
             mode_name = "BASELINE (No Privacy)" if n == 0 else f"MI Audit with sigma={n}"
-            print(f"\n[Audit] Running {mode_name} ({args.rounds} rounds, {args.epochs} epochs)")
+            rebalance_status = config.get("apply_rebalancing", "Preset")
+            print(f"\n[Audit] Running {mode_name} (30 Rounds, 40 Epochs, rebalance={rebalance_status})")
             
             config["enable_dp"] = (n > 0)
             config["noise_multiplier"] = n
             run_simulation(args, config)
+            
         args.rounds = saved_rounds
         args.epochs = saved_epochs
     elif args.experiment == "mi_step":
@@ -379,19 +494,29 @@ def run_experiment(args):
     elif args.experiment == "robustness":
         # Attack types: No Attack, Label Flip, Gradient Scale
         attacks = ["None", "label_flip", "gradient_scale"]
-        defenses = ["FedAvg", "Trimmed-Avg"]
+        defenses = ["FedAvg", "Robust-MAD"]
+        # Use the user-supplied round count (or at least 5 for stable bar chart results).
+        # Previously hardcoded to 3, which was misleading when --rounds 30 was passed.
+        rob_rounds = max(args.rounds, 5)
         saved_rounds = args.rounds
-        args.rounds = 3  # Increased from 1 for stable results 
+        args.rounds = rob_rounds
+        # Store the explicit value so run_simulation() uses it, not the adaptive calibration.
+        args._cli_rounds = rob_rounds
         for atk in attacks:
             for dfns in defenses:
                 print(f"\n[Sweep] Running Attack: {atk}, Defense: {dfns}")
                 config["attack_type"] = atk
                 config["defense_name"] = dfns
+                # Reset the blockchain singleton between sweeps so reputation scores from
+                # one attack scenario do not bleed into the next scenario's gatekeeper check.
+                BlockchainManager._instance = None
                 run_simulation(args, config)
         args.rounds = saved_rounds
+        args._cli_rounds = saved_rounds
     elif args.experiment == "latency":
-        # Latency benchmark: test scaling across multiple rounds
-        args.rounds = 7 
+        # Latency benchmark: use the user-supplied round count for honest scaling measurement.
+        # Previously hardcoded to 7, which ignored --rounds.
+        args._cli_rounds = args.rounds  # Mark as explicit so run_simulation respects it.
         run_simulation(args, config)
     else:
         run_simulation(args, config)

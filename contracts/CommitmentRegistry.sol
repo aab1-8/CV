@@ -58,7 +58,7 @@ contract CommitmentRegistry {
     /**
      * @dev The aggregator posts the final model weights hash for auditability.
      */
-    function postFinalWeights(uint256 _taskId, bytes32 _weightsHash) public {
+    function postFinalWeights(uint256 _taskId, bytes32 _weightsHash) public onlyAdmin {
         // Ideally only the authorized aggregator can call this.
         finalModelWeights[_taskId] = _weightsHash;
         emit FinalModelWeightsPosted(_taskId, _weightsHash);

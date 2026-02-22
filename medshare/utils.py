@@ -31,13 +31,18 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
          print(f"[Metrics] Aggregating {len(metrics)} clients for Round {server_round}")
     
     total = sum([n for n, _ in metrics])
-    if total == 0: return {"accuracy": 0.0, "auc": 0.5, "mi_score": 0.0}
+    if total == 0: return {"accuracy": 0.0, "auc": 0.5, "mi_score": 0.0, "mi_auc_score": 0.0}
     
     # Step 1: Base Averages
     agg_acc = sum([n * m["accuracy"] for n, m in metrics]) / total
     agg_auc = sum([n * m.get("auc", 0.5) for n, m in metrics]) / total
     agg_train_acc = sum([n * m.get("train_accuracy", m["accuracy"]) for n, m in metrics]) / total
+    agg_train_auc = sum([n * m.get("train_auc", m.get("auc", 0.5)) for n, m in metrics]) / total
+
+    # MI proxy 1: Accuracy Gap (Yeom et al. 2018) — simple, fast, less robust on imbalanced data
     mi_score = max(0, agg_train_acc - agg_acc)
+    # MI proxy 2: AUC Gap (Nasr et al. 2019) — threshold-free, imbalance-robust, recommended for medical data
+    mi_auc_score = max(0, agg_train_auc - agg_auc)
 
     # Step 2: Privacy Extraction
     eps_list = [m.get("privacy_spent", 0.0) for n, m in metrics if m.get("privacy_spent", 0.0) > 0]
@@ -51,14 +56,17 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         is_fit_phase = any("train_accuracy" in m for _, m in metrics)
         
         if is_fit_phase:
-            _ROUND_CACHE[current_round] = {"epsilon": eps, "mi_score": mi_score}
-        elif current_round in _ROUND_CACHE:
-            # Inherit from Fit phase if currently in Evaluate phase
+            fit_loss = sum([n * m.get("loss", 0.0) for n, m in metrics]) / total if total > 0 else 0.0
+            _ROUND_CACHE[current_round] = {"epsilon": eps, "mi_score": mi_score, "mi_auc_score": mi_auc_score, "loss": fit_loss}
+        # Evaluation phase always tries to inherit from its corresponding Fit phase
+        if current_round in _ROUND_CACHE:
             eps = _ROUND_CACHE[current_round]["epsilon"]
             mi_score = _ROUND_CACHE[current_round]["mi_score"]
+            mi_auc_score = _ROUND_CACHE[current_round].get("mi_auc_score", mi_auc_score)
     
     # Tracking for dashboard
     hist_file = os.path.join(base_dir, "frontend", "src", "data", "training_history.json")
+    os.makedirs(os.path.dirname(hist_file), exist_ok=True)
     history = []
     if os.path.exists(hist_file):
         try:
@@ -66,7 +74,7 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         except: pass
     
     if current_round is None:
-        return {"accuracy": float(agg_acc), "auc": float(agg_auc), "mi_score": float(mi_score)}
+        return {"accuracy": float(agg_acc), "auc": float(agg_auc), "mi_score": float(mi_score), "mi_auc_score": float(mi_auc_score)}
     
     # Track last round logged for console visibility
     _LAST_LOGGED_ROUND = current_round
@@ -90,9 +98,9 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         for n, m in metrics:
             g = m.get("gas_used", 0)
             if g > 0:
-                # Use client_id if available, else cid
-                cid = m.get("client_id", "unknown")
-                f.write(f"{current_round},Hospital_{cid},{g}\n")
+                # Use node_name for clean reporting, fallback to legacy index
+                h_name = m.get("node_name", f"Hospital_{m.get('client_id', 'unknown')}")
+                f.write(f"{current_round},{h_name},{g}\n")
 
     # --- 2. LATENCY LOGGING ---
     if log_to_csv and exp_type == "latency":
@@ -122,21 +130,72 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         # Log to DP results file
         if exp_type == "dp":
             dp_file = os.path.join(target_test_dir, "exp_dp_results.csv")
+            header = "noise,accuracy,epsilon,leakage_acc,leakage_auc\n"
+            
+            # Self-healing: Reset file if header is old (backward compatibility guard)
+            if os.path.exists(dp_file):
+                with open(dp_file, "r") as f:
+                    first_line = f.readline()
+                    if "leakage_acc" not in first_line:
+                        print(f"[Logging] Rotating old DP results file (detected legacy schema)...")
+                        os.remove(dp_file)
+
             if not os.path.exists(dp_file):
-                with open(dp_file, "w", encoding='utf-8') as f: 
-                    f.write("noise,accuracy,epsilon,leakage\n")
-            with open(dp_file, "a", encoding='utf-8') as f:
-                f.write(f"{noise},{agg_acc:.4f},{eps:.2f},{mi_score:.4f}\n")
+                with open(dp_file, "w", encoding='utf-8') as f:
+                    f.write(header)
+            
+            # Prevent duplicate sigma entries in the same file
+            exists = False
+            if os.path.exists(dp_file):
+                with open(dp_file, "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        if line.startswith(f"{noise},"):
+                            exists = True
+                            break
+            
+            if not exists:
+                with open(dp_file, "a", encoding='utf-8') as f:
+                    f.write(f"{noise},{agg_acc:.4f},{eps:.2f},{mi_score:.4f},{mi_auc_score:.4f}\n")
         
-        # Log to MI results file (Always log if DP is active to enable the Privacy Audit plot)
-        if exp_type in ["mi", "dp", "mi_step"]:
+        # Log to MI results file (Only log if specific MI experiment or DP experiment requested it)
+        # This prevents the 'DP' experiment from cluttering the 'MI Audit' plot if they are run separately.
+        if exp_type in ["mi", "mi_step"]:
             mi_file = os.path.join(target_test_dir, "exp_mi_results.csv")
+            header = "Mode,leakage_acc,leakage_auc,accuracy\n"
+            
+            # Self-healing: Reset file if header is old
+            if os.path.exists(mi_file):
+                with open(mi_file, "r") as f:
+                    first_line = f.readline()
+                    if "leakage_acc" not in first_line:
+                        print(f"[Logging] Rotating old MI results file (detected legacy schema)...")
+                        os.remove(mi_file)
+
             if not os.path.exists(mi_file):
-                with open(mi_file, "w", encoding='utf-8') as f: 
-                    f.write("Mode,leakage,accuracy\n")
+                with open(mi_file, "w", encoding='utf-8') as f:
+                    f.write(header)
+            
             mode = f"With DP (sigma={noise})" if eps > 0 or noise > 0 else "No Privacy (Baseline)"
-            with open(mi_file, "a", encoding='utf-8') as f:
-                f.write(f"{mode},{mi_score:.4f},{agg_acc:.4f}\n")
+            
+            # Prevent duplicate entries
+            exists = False
+            if os.path.exists(mi_file):
+                with open(mi_file, "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        if line.startswith(f"{mode},"):
+                            exists = True
+                            break
+                
+            if not exists:
+                with open(mi_file, "a", encoding='utf-8') as f:
+                    f.write(f"{mode},{mi_score:.4f},{mi_auc_score:.4f},{agg_acc:.4f}\n")
+
+    # Compute weighted loss — inherit from fit-phase cache if this is the evaluate phase
+    agg_loss = sum([n * m.get("loss", 0.0) for n, m in metrics]) / total if total > 0 else 0.0
+    if agg_loss == 0.0 and current_round in _ROUND_CACHE:
+        agg_loss = _ROUND_CACHE[current_round].get("loss", 0.0)
 
     # Update history for frontend
     updated = False
@@ -145,8 +204,9 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
             update_data = {
                 "accuracy": float(agg_acc), 
                 "auc": float(agg_auc),
-                "loss": float(sum([n * m.get("loss", 0.69) for n, m in metrics]) / total),
-                "mi_score": float(mi_score)
+                "loss": float(agg_loss),
+                "mi_score": float(mi_score),
+                "mi_auc_score": float(mi_auc_score)
             }
             if eps > 0: update_data["epsilon"] = float(eps)
             entry.update(update_data)
@@ -157,14 +217,15 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
             "round": current_round, 
             "accuracy": float(agg_acc), 
             "auc": float(agg_auc),
-            "loss": float(sum([n * m.get("loss", 0.69) for n, m in metrics]) / total),
+            "loss": float(agg_loss),
             "mi_score": float(mi_score),
+            "mi_auc_score": float(mi_auc_score),
             "epsilon": float(eps)
         }
         history.append(entry_data)
     with open(hist_file, "w", encoding='utf-8') as f: json.dump(history, f, indent=2)
 
-    return {"accuracy": float(agg_acc), "auc": float(agg_auc), "mi_score": float(mi_score)}
+    return {"accuracy": float(agg_acc), "auc": float(agg_auc), "mi_score": float(mi_score), "mi_auc_score": float(mi_auc_score)}
 
 def generate_pairwise_masks(num_clients, net_template, scale=1e4, seed=42):
     """Generates symmetric pairwise masks for secure aggregation."""

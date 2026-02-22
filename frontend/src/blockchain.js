@@ -2,15 +2,28 @@ import { ethers } from 'ethers';
 import deployInfo from './data/deploy_info.json';
 import MedShareTaskABI from './data/MedShareTask.json';
 
-const RPC_URL = "http://127.0.0.1:8546";
-
-// Global Provider
+// Multi-Port Connection Logic: Try standard Ganache ports
+const PORTS = [8545, 8546];
 let provider;
-try {
-    provider = new ethers.JsonRpcProvider(RPC_URL);
-} catch (e) {
-    console.warn("Blockchain Provider failed to initialize:", e);
+
+async function connectToProvider() {
+    for (const port of PORTS) {
+        try {
+            const url = `http://127.0.0.1:${port}`;
+            const tempProvider = new ethers.JsonRpcProvider(url);
+            // Quick check if the network is reachable
+            await tempProvider.getNetwork(); 
+            provider = tempProvider;
+            console.log(`✅ Dashboard connected to Blockchain on port ${port}`);
+            return;
+        } catch (e) {
+            continue;
+        }
+    }
+    console.warn("Dashboard: All blockchain connection attempts failed.");
 }
+
+connectToProvider();
 
 /**
  * Lazy-loads the signer and contract instance.

@@ -13,7 +13,7 @@ This document provides a comprehensive overview of all datasets currently integr
 | **`cdc_diabetes_binary`** | CDC-Diabetes-Binary | **Binary** | 253,680 | Diabetes Status (0/1) | UCI #891 |
 | **`cdc_diabetes_012`** | CDC-Diabetes-012 | **Multi-class** | 253,680 | Status (None/Pre/Diabetic) | UCI #891 |
 | **`maternal_health`** | Maternal-Health | **Multi-class** | 1,013 | Risk (low, mid, high) | UCI #863 |
-| **`admin_billing`** | Admin-Billing | **Binary** | 1,000 | High vs Low Bill Amount | Kaggle |
+| **`admin_billing`** | Admin-Billing-Risk | **Binary** | 1,000 | High vs Low Bill Amount | Kaggle |
 | **`admin_category`** | Admin-Category | **Multi-class (4)** | 1,000 | Care Type (Emergency/Infectious/Chronic/Specialized) | Kaggle |
 | **`diabetes_hospital`** | Diabetes-Hospitals | **Multi-class** | 101,766 | Readmission (<30, >30, NO) | UCI #296 |
 | **`thyroid`** | Thyroid | **Multi-class** | 7,200 | Hypo / Hyper / Normal | UCI #102 |
@@ -35,8 +35,8 @@ This section details the **raw, unbalanced population counts** for each dataset 
 | **Admin-Billing** | 1,000 | **Low Bill:** 500 (50.0%) | **High Bill:** 500 (50.0%) |
 | **Admin-Category** | 1,000 | **Infectious:** 313 | **Specialized:** 287 | **Chronic:** 228 | **Emergency:** 172 |
 | **Diabetes-Hospitals** | 101,766 | **NO:** 54,864 | **>30 Days:** 35,545 | **<30 Days:** 11,357 |
-| **Thyroid** | 7,200 | **Negative:** 6,771 | **Hypo/Hyper:** 429 |
-| **SUPPORT2-Disease** | 9,105 | **Cancer:** 3,515 | **Sepsis:** 3,515 | **CHF:** 1,387 | **COPD:** 967 | **Other:** 2,721 |
+| **Thyroid** | 7,200 | **Negative:** 6,666 | **Hypo/Hyper:** 534 |
+| **SUPPORT2-Disease** | 9,105 | **Sepsis:** 3,515 | **Cancer:** 2,132 | **CHF:** 1,387 | **COPD:** 967 | **Other:** 1,104 |
 
 ---
 
@@ -85,3 +85,74 @@ python federated_survival.py --dataset diabetes_hospital --rounds 5
 *   For **Binary** tasks: Use standard AUC-ROC for evaluation.
 *   For **Multi-class** tasks: The system automatically uses CrossEntropyLoss and One-vs-Rest (OvR) AUC calculation.
 *   For **Large Datasets** (CDC & Hospitals): Always specify `--sample_size` to prevent excessive RAM usage on local machines.
+
+
+
+
+
+
+***
+
+### General UCI repository (optional, but nice to include)
+
+ D. Dua and C. Graff, “UCI Machine Learning Repository,” Univ. of California, Irvine, School of Information and Computer Sciences. [Online]. Available: http://archive.ics.uci.edu/ml [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/130730438/f886fb92-ed95-4c5e-b77a-654ce6be2a08/MedShare-FL-2.pdf)
+
+***
+
+### SUPPORT2 (`support2`, `support2_disease`)
+
+ W. A. Knaus *et al.*, “The SUPPORT prognostic model: Objective estimates of survival for seriously ill hospitalized adults,” *Ann. Intern. Med.*, vol. 122, no. 3, pp. 191–203, 1995. [archive.ics.uci](https://archive.ics.uci.edu/datasets?search=health)
+
+ “SUPPORT2,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/880 [archive.ics.uci](https://archive.ics.uci.edu/datasets)
+
+***
+
+### CDC Diabetes Health Indicators (`cdc_diabetes_binary`, `cdc_diabetes_012`)
+
+ Centers for Disease Control and Prevention, “CDC Diabetes Health Indicators (BRFSS 2015),” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/891
+
+(Explain in text that you use the `Diabetes_binary` and `Diabetes_012` targets.)
+
+***
+
+### Maternal Health Risk (`maternal_health`)
+
+ “Maternal Health Risk,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/863
+
+If your supervisor wants an author name, you can expand to:
+
+ A. (Dataset contributors), “Maternal Health Risk,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/863
+
+***
+
+### Diabetes 130‑US Hospitals (`diabetes_hospital`)
+
+ B. Strack *et al.*, “Impact of HbA1c measurement on hospital readmission rates: Analysis of 70,000 clinical database patient records,” *Biomed. Res. Int.*, vol. 2014, Art. ID 781670, 2014.
+
+ “Diabetes 130‑US Hospitals for Years 1999–2008,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008
+
+***
+
+### Thyroid Disease (`thyroid`)
+
+ “Thyroid Disease,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/102/thyroid+disease
+
+(If you know the exact authors from the original study, you can replace with a full article citation, but this generic UCI entry is normally acceptable.)
+
+***
+
+### Stroke Prediction (`stroke_prediction` – Kaggle)
+
+Fill in the author name exactly as it appears on Kaggle (commonly “fedesoriano”):
+
+ fedesoriano, “Stroke Prediction Dataset,” Kaggle. [Online]. Available: https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset
+
+You can optionally add an access date: “Accessed: Feb. 16, 2026.”
+
+***
+
+### Hospital Patient Records (`admin_billing`, `admin_category` – Kaggle, MIT‑licensed)
+
+ R. Patil, “Hospital Patient Records July 2021–July 2024,” Kaggle. [Online]. Available: https://www.kaggle.com/datasets/devildyno/hospital-patient-records-jan-2021-july-2024 [unidata](https://unidata.pro/blog/best-free-healthcare-ml-datasets/)
+
+The “Hospital Patient Records July 2021–July 2024” dataset is © original authors and is used under the MIT License. See LICENSE_hospital_records.txt for details.

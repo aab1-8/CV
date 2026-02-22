@@ -2,8 +2,16 @@
 pragma solidity ^0.8.20;
 
 /**
+ * @title IReputation
+ * @dev Interface for the Reputation contract to allow score querying.
+ */
+interface IReputation {
+    function getScore(address _hospital) external view returns (int256);
+}
+
+/**
  * @title MedShareTask
- * @dev Manages the creation and lifecycle of federated learning tasks.
+ * @dev Manages the creation and lifecycle of federated learning tasks with reputation-gated rewards.
  */
 contract MedShareTask {
     enum TaskStatus { Open, Training, Completed, Cancelled }
@@ -22,6 +30,7 @@ contract MedShareTask {
     mapping(uint256 => Task) public tasks;
     uint256 public taskCount;
     address public admin;
+    address public reputationContract;
 
     mapping(address => bool) public authorizedHospitals;
 
@@ -42,6 +51,13 @@ contract MedShareTask {
 
     constructor() {
         admin = msg.sender;
+    }
+
+    /**
+     * @dev Sets the reputation contract address to enable filtered payouts.
+     */
+    function setReputationContract(address _reputation) public onlyAdmin {
+        reputationContract = _reputation;
     }
 
     function authorizeHospital(address _hospital, bool _status) public onlyAdmin {
@@ -81,16 +97,41 @@ contract MedShareTask {
         }
     }
 
+    /**
+     * @dev Finalizes the task and distributes bounty to HONEST hospitals only.
+     */
     function completeTask(uint256 _taskId, string memory _finalModelHash) public onlyResearcher(_taskId) {
         require(tasks[_taskId].status == TaskStatus.Training, "Task must be in progress");
         
         tasks[_taskId].finalModelHash = _finalModelHash;
         tasks[_taskId].status = TaskStatus.Completed;
 
-        // Simple reward distribution: split bounty equally among hospitals
-        uint256 reward = tasks[_taskId].bounty / tasks[_taskId].hospitals.length;
-        for (uint i = 0; i < tasks[_taskId].hospitals.length; i++) {
-            payable(tasks[_taskId].hospitals[i]).transfer(reward);
+        address[] memory allHospitals = tasks[_taskId].hospitals;
+        address[] memory honestHospitals = new address[](allHospitals.length);
+        uint256 honestCount = 0;
+
+        // Step 1: Filter out malicious hospitals (Reputation < 0)
+        for (uint i = 0; i < allHospitals.length; i++) {
+            if (reputationContract == address(0)) {
+                // Fallback if reputation is not set: pay everyone
+                honestHospitals[honestCount++] = allHospitals[i];
+            } else {
+                int256 score = IReputation(reputationContract).getScore(allHospitals[i]);
+                if (score >= 0) {
+                    honestHospitals[honestCount++] = allHospitals[i];
+                }
+            }
+        }
+
+        // Step 2: Distribute reward among honest participants
+        if (honestCount > 0) {
+            uint256 reward = tasks[_taskId].bounty / honestCount;
+            for (uint i = 0; i < honestCount; i++) {
+                payable(honestHospitals[i]).transfer(reward);
+            }
+        } else {
+            // If No one is honest (unlikely but safe), refund researcher
+            payable(tasks[_taskId].researcher).transfer(tasks[_taskId].bounty);
         }
 
         emit TaskCompleted(_taskId, _finalModelHash);

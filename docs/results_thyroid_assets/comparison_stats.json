@@ -1,0 +1,26 @@
+{
+  "dataset_name": "Thyroid",
+  "reputation": {
+    "Hospital_5": -21,
+    "Hospital_2": 144,
+    "Hospital_1": 145,
+    "Hospital_3": 143
+  },
+  "local_accuracy": 1.1496207732782322,
+  "local_auc": 0.7265269122462149,
+  "centralized_accuracy": 0.9277777777777778,
+  "centralized_auc": 0.8074375389589835,
+  "federated_accuracy": 0.9294926913155632,
+  "federated_auc": 0.5778411953173497,
+  "improvement_local_fed": -19.14788659698248,
+  "security": {
+    "dp_enabled": true,
+    "epsilon": 12.301691480042896,
+    "delta": "1e-5",
+    "leakage_acc": 0.0,
+    "leakage_auc": 0.04273525037239945,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "Label Flip"
+  }
+}

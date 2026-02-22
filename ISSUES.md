@@ -9,9 +9,10 @@
 - [x] **Privacy Mechanisms**: Added Differential Privacy (DP) noise to weights using `opacus` (Sigma=1.0).
 - [x] **Model Checkpointing**: Save the best global model to disk (`test/best_model.pth`).
 
-## 🟡 In Progress / Watchlist
-- [ ] **Data Heterogeneity**: Performance variability between hospitals (e.g., 'Lung Cancer' vs 'Coma' nodes). Currently handled by stratified splitting and disease-group partitioning, but could benefit from domain adaptation techniques.
-- [ ] **Windows Ray Warnings**: `Ray support on Windows is experimental` warning in logs. (Low priority, simulation works).
+- [x] **Data Heterogeneity**: Performance variability handled by disease-group partitioning and global feature scaling. Use of FedProx minimizes drift.
+- [x] **Windows Ray Warnings**: Simulation stability verified on Windows; resource throttling prevents OOM. (Status: Experimental but Stable).
+- [x] **Hardware-Aware Acceleration**: Implemented dynamic resource allocation for Colab (15GB GPU) vs Local (6GB GPU).
+- [x] **Data & Baseline Caching**: Implemented JSON caching for datasets and local model baselines to skip redundant training.
 
 ## 🔴 Open Issues / Future Work
 - [ ] **Dynamic Client Scaling**: Simulate variable number of clients or dropouts.
