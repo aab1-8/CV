@@ -30,9 +30,10 @@ ganache.log
 # Node
 node_modules/
 
-# Generated Test Results (keep templates, ignore outputs)
-test/exp_*.csv
-test/fig_*.png
+# Generated Test Results (keep templates for archival)
+# test/exp_*.csv
+# test/fig_*.png
+
 test/best_model.pth
 
 # Google Drive sync temp
