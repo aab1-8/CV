@@ -30,11 +30,14 @@ ganache.log
 # Node
 node_modules/
 
-# Generated Test Results (keep templates for archival)
-# test/exp_*.csv
-# test/fig_*.png
+# Scientific Results & Visualization (MUST BE TRACKED)
+test/*.csv
+test/*.png
+test/*.json
+docs/assets/**/*.png
+docs/assets/**/*.csv
+!test/best_model.pth  # Models are still ignored as they are too large for Git
 
-test/best_model.pth
 
 # Google Drive sync temp
 .tmp.drivedownload/
