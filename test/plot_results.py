@@ -153,7 +153,7 @@ def plot_gas():
     df['Client'] = df['Client'].str.replace('_', ' ')
     
     # 2. Sort by hospital ID (number) for clean legend order
-    df['sort_key'] = df['Client'].str.extract(r'(\d+)').astype(int)
+    df['sort_key'] = df['Client'].str.extract(r'(\d+)').fillna(0).astype(int)
     df = df.sort_values('sort_key')
     
     # Enhanced visibility for individual dots
