@@ -72,7 +72,8 @@ DATASET_PRESETS = {
     "cdc_diabetes_012": {
         "display_name": "CDC-Diabetes-012", 
         "DATA_SOURCE": "cdc_diabetes", 
-        "TARGET_COLUMN": "Diabetes_012"
+        "TARGET_COLUMN": "Diabetes_012",
+        "apply_rebalancing": True
     },
     "diabetes_hospital": {
         "display_name": "Diabetes-Hospitals", 
