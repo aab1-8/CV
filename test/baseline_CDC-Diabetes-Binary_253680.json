@@ -33,40 +33,5 @@
     "AUC-ROC": 0.7807958207293123,
     "Samples": 50771,
     "Type": "Local Baseline"
-  },
-  {
-    "Hospital": "Hospital_1",
-    "Accuracy": 0.8606397445751789,
-    "AUC-ROC": 0.825914061124777,
-    "Samples": 50691,
-    "Type": "Federated"
-  },
-  {
-    "Hospital": "Hospital_2",
-    "Accuracy": 0.8606397445751789,
-    "AUC-ROC": 0.825914061124777,
-    "Samples": 50601,
-    "Type": "Federated"
-  },
-  {
-    "Hospital": "Hospital_5",
-    "Accuracy": 0.8606397445751789,
-    "AUC-ROC": 0.825914061124777,
-    "Samples": 50739,
-    "Type": "Federated"
-  },
-  {
-    "Hospital": "Hospital_4",
-    "Accuracy": 0.8606397445751789,
-    "AUC-ROC": 0.825914061124777,
-    "Samples": 50878,
-    "Type": "Federated"
-  },
-  {
-    "Hospital": "Hospital_3",
-    "Accuracy": 0.8606397445751789,
-    "AUC-ROC": 0.825914061124777,
-    "Samples": 50771,
-    "Type": "Federated"
   }
 ]
