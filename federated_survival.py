@@ -131,13 +131,15 @@ def get_adaptive_experiment_config(num_records):
             "rounds": 50 if use_gpu else 20,
             "epochs": 5 
         }
-    else: # Massive Datasets (e.g. 300k rows)
+    else: # Massive Datasets (e.g. 250k+ rows)
         return {
             "sigmas": [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0],
-            "batch_size": 1024 if use_gpu else 128,
-            "rounds": 30 if use_gpu else 15, # Reduced for CPU
+            "batch_size": 2048 if use_gpu else 128,
+            "rounds": 30 if use_gpu else 15,
             "epochs": 10 
         }
+
+
 
 def run_simulation(args, config):
     reset_logging()
@@ -469,7 +471,11 @@ def run_experiment(args):
         saved_epochs = args.epochs
         # Stability calibration for MI: Default to 30/40 for full audit, 
         # but respect user if they pass explicit non-default values.
-        config["batch_size"] = 128
+        if num_records > 50000:
+            config["batch_size"] = adapt["batch_size"] # Keep high performance for CDC
+        else:
+            config["batch_size"] = 128
+        
         if args.epochs == 1 and args.rounds == 3:
             args.epochs = 40
             args.rounds = 30
