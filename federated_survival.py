@@ -125,16 +125,16 @@ def get_adaptive_experiment_config(num_records):
             "rounds": 50,
             "epochs": 1
         }
-    elif num_records < 50000: # Standard Research Datasets (e.g. 10k rows)
+    elif num_records < 70000: # Standard Research Datasets (e.g. 10k-50k rows)
         return {
             "sigmas": [0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5],
             "batch_size": gpu_batch if use_gpu else 128,
             "rounds": 50 if use_gpu else 20,
             "epochs": 5 
         }
-    else: # Massive Datasets (e.g. 250k+ rows)
+    else: # Massive Datasets (> 70k rows, e.g. CDC/Diabetes Hospitals)
         return {
-            "sigmas": [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0],
+            "sigmas": [0.0, 0.5, 1.0, 2.0, 5.0],
             "batch_size": 2048 if use_gpu else 128,
             "rounds": 30 if use_gpu else 15,
             "epochs": 10 
