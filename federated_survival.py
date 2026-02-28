@@ -283,7 +283,7 @@ def run_simulation(args, config):
     # In Colab, we want to run ALL clients in parallel to exhaust the 15GB GPU
     # Local (6GB GPU/12GB RAM): We run 2 clients at a time (0.5 GPU fraction)
     # This keeps the GPU usage high but prevents the 12GB RAM from swapping
-    client_cpu = 0.4 if is_colab else 1.5 # Higher CPU per client local = fewer parallel workers = lower heat
+    client_cpu = 0.4 if is_colab else 2.0 # Higher CPU per client local = fewer parallel workers = lower heat
     client_gpu = 0.2 if is_colab else (0.5 if use_gpu else 0) 
 
     backend_config = {

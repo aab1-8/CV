@@ -50,3 +50,5 @@ artifacts/
 ganache_db/
 cache/
 back_up_plots/
+node-v14.21.3-linux-x64/
+node-v14.21.3-linux-x64.tar.xz
