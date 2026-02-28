@@ -1,24 +1,25 @@
 {
   "dataset_name": "CDC-Diabetes-012",
   "reputation": {
-    "Hospital_4": 188,
-    "Hospital_1": 189,
-    "Hospital_3": 187,
-    "Hospital_5": 189
+    "Hospital_2": -130,
+    "Hospital_1": 188,
+    "Hospital_5": 188,
+    "Hospital_4": 187,
+    "Hospital_3": 189
   },
   "local_accuracy": 0.5082395652683395,
   "local_auc": 0.6982022048655274,
   "centralized_accuracy": 0.5220356354462314,
   "centralized_auc": 0.7099613658037957,
-  "federated_accuracy": 0.5565082415551778,
-  "federated_auc": 0.73933009067136,
-  "improvement_local_fed": 9.497229178006531,
+  "federated_accuracy": 0.6365571476437314,
+  "federated_auc": 0.8138586351303926,
+  "improvement_local_fed": 25.24746028138188,
   "security": {
-    "dp_enabled": true,
-    "epsilon": 39.22775783923543,
+    "dp_enabled": false,
+    "epsilon": 0.0,
     "delta": "1e-5",
-    "leakage_acc": 0.005559767701147744,
-    "leakage_auc": 0.008050430409687004,
+    "leakage_acc": 0.026643503694540716,
+    "leakage_auc": 0.0223387300898098,
     "defense_type": "FedAvg",
     "attack_simulated": false,
     "attack_type": "None"
