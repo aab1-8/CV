@@ -217,6 +217,7 @@ def run_simulation(args, config):
             "attack_type": config.get("attack_type", "None"),
             "defense_name": config.get("defense_name", "FedAvg"),
             "noise_multiplier": config.get("noise_multiplier", 0.0),
+            "dataset_name": config.get("display_name", "unknown"),
         },
         on_evaluate_config_fn=lambda r: {
             "server_round": r,
@@ -225,6 +226,7 @@ def run_simulation(args, config):
             "attack_type": config.get("attack_type", "None"),
             "defense_name": config.get("defense_name", "FedAvg"),
             "noise_multiplier": config.get("noise_multiplier", 0.0),
+            "dataset_name": config.get("display_name", "unknown"),
         }
     )
 
@@ -267,7 +269,8 @@ def run_simulation(args, config):
         "attack_type": config.get("attack_type", "None"),
         "noise_multiplier": config.get("noise_multiplier", 1.0),
         "experiment": args.experiment,
-        "total_rounds": exec_rounds
+        "total_rounds": exec_rounds,
+        "dataset_name": config.get("display_name", "unknown"),
     }
     
     strategy.on_fit_config_fn = common_config

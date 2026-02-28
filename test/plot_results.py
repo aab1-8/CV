@@ -74,6 +74,9 @@ def plot_dp():
     # Try loading DP results first
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path, na_filter=False)
+        # Support both old schema (noise,...) and new timestamped schema
+        if 'noise' not in df.columns and 'timestamp_utc' in df.columns:
+            df = df.rename(columns={'noise': 'noise'})  # already correct
         df = df.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
     elif os.path.exists(mi_path):
         # Fallback to MI results which contain the same info (Accuracy vs Sigma)
@@ -120,7 +123,9 @@ def plot_robustness():
     if not os.path.exists(csv_path): 
         print(f"DEBUG: File not found: {csv_path}")
         return False
-    df = pd.read_csv(csv_path, na_filter=False).drop_duplicates(subset=['attack', 'defense'], keep='last')
+    df = pd.read_csv(csv_path, na_filter=False)
+    # Support new schema with timestamp/dataset columns - only keep what we need
+    df = df[['attack', 'defense', 'accuracy']].drop_duplicates(subset=['attack', 'defense'], keep='last')
     print(f"DEBUG: Loaded {len(df)} rows from {csv_path}")
     
     attack_map = {"None": "No Attack", "label_flip": "Label Flip", "gradient_scale": "Grad Scale"}
@@ -140,6 +145,9 @@ def plot_gas():
     csv_path = os.path.join(script_dir, "exp_gas_log.csv")
     if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0: return False
     df = pd.read_csv(csv_path).drop_duplicates(subset=['Round', 'Client'], keep='last')
+    # Support new timestamped schema
+    if 'Round' not in df.columns and 'timestamp_utc' in df.columns:
+        df = df.rename(columns={df.columns[1]: 'Round', df.columns[2]: 'Client', df.columns[3]: 'GasUsed'})
     if df.empty: return False
 
     agg_df = df.groupby('Round')['GasUsed'].agg(['mean', 'std']).reset_index()
@@ -189,6 +197,10 @@ def plot_gas():
 
 def plot_latency():
     csv_path = os.path.join(script_dir, "exp_latency_log.csv")
+    df = pd.read_csv(csv_path, na_filter=False)
+    # Support new timestamped schema
+    if 'rounds' not in df.columns and 'timestamp_utc' in df.columns:
+        df = df.rename(columns={df.columns[1]: 'rounds', df.columns[2]: 'duration_sec'})
     df = load_and_dedup(csv_path, subset_cols=['rounds'])
     if df is None or df.empty: return False
     plt.plot(df["rounds"], df["duration_sec"], marker="s", markersize=10, linewidth=3, color="teal")

@@ -90,9 +90,10 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
     # We check for gas_used regardless of log_to_csv because gas is only reported 
     # during the Fit phase (where log_to_csv might be False to avoid dual-logging accuracy).
     gas_file = os.path.join(target_test_dir, "exp_gas_log.csv")
+    ts_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     if not os.path.exists(gas_file):
         with open(gas_file, "w", encoding='utf-8') as f: 
-            f.write("Round,Client,GasUsed\n") 
+            f.write("timestamp_utc,Round,Client,GasUsed\n") 
     
     with open(gas_file, "a", encoding='utf-8') as f:
         for n, m in metrics:
@@ -100,26 +101,27 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
             if g > 0:
                 # Use node_name for clean reporting, fallback to legacy index
                 h_name = m.get("node_name", f"Hospital_{m.get('client_id', 'unknown')}")
-                f.write(f"{current_round},{h_name},{g}\n")
+                f.write(f"{ts_now},{current_round},{h_name},{g}\n")
 
     # --- 2. LATENCY LOGGING ---
     if log_to_csv and exp_type == "latency":
         lat_file = os.path.join(target_test_dir, "exp_latency_log.csv")
         if not os.path.exists(lat_file):
             with open(lat_file, "w", encoding='utf-8') as f: 
-                f.write("rounds,duration_sec\n")
+                f.write("timestamp_utc,rounds,duration_sec\n")
         with open(lat_file, "a", encoding='utf-8') as f:
             dur = time.time() - _START_TIME
-            f.write(f"{current_round},{dur:.2f}\n")
+            f.write(f"{ts_now},{current_round},{dur:.2f}\n")
 
     # --- 3. ROBUSTNESS LOGGING ---
     if log_to_csv and exp_type == "robustness" and current_round == total_rounds:
         rob_file = os.path.join(target_test_dir, "exp_robustness_results.csv")
         if not os.path.exists(rob_file):
             with open(rob_file, "w", encoding='utf-8') as f: 
-                f.write("attack,defense,accuracy\n")
+                f.write("timestamp_utc,dataset,attack,defense,rounds,accuracy\n")
         with open(rob_file, "a", encoding='utf-8') as f:
-            f.write(f"{atk_type},{dfns_name},{agg_acc:.4f}\n")
+            dataset_name = first_m.get("dataset_name", "unknown")
+            f.write(f"{ts_now},{dataset_name},{atk_type},{dfns_name},{total_rounds},{agg_acc:.4f}\n")
 
     # --- 4. DP & MI ---
     noise = first_m.get("noise_multiplier", 1.0)
@@ -130,13 +132,13 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         # Log to DP results file
         if exp_type == "dp":
             dp_file = os.path.join(target_test_dir, "exp_dp_results.csv")
-            header = "noise,accuracy,epsilon,leakage_acc,leakage_auc\n"
+            header = "timestamp_utc,dataset,noise,rounds,accuracy,epsilon,leakage_acc,leakage_auc\n"
             
             # Self-healing: Reset file if header is old (backward compatibility guard)
             if os.path.exists(dp_file):
                 with open(dp_file, "r") as f:
                     first_line = f.readline()
-                    if "leakage_acc" not in first_line:
+                    if "timestamp_utc" not in first_line:
                         print(f"[Logging] Rotating old DP results file (detected legacy schema)...")
                         os.remove(dp_file)
 
@@ -150,25 +152,27 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
                 with open(dp_file, "r") as f:
                     lines = f.readlines()
                     for line in lines:
-                        if line.startswith(f"{noise},"):
+                        parts = line.split(",")
+                        if len(parts) > 2 and parts[2].strip() == str(noise):
                             exists = True
                             break
             
             if not exists:
+                dataset_name = first_m.get("dataset_name", "unknown")
                 with open(dp_file, "a", encoding='utf-8') as f:
-                    f.write(f"{noise},{agg_acc:.4f},{eps:.2f},{mi_score:.4f},{mi_auc_score:.4f}\n")
+                    f.write(f"{ts_now},{dataset_name},{noise},{total_rounds},{agg_acc:.4f},{eps:.2f},{mi_score:.4f},{mi_auc_score:.4f}\n")
         
         # Log to MI results file (Only log if specific MI experiment or DP experiment requested it)
         # This prevents the 'DP' experiment from cluttering the 'MI Audit' plot if they are run separately.
         if exp_type in ["mi", "mi_step"]:
             mi_file = os.path.join(target_test_dir, "exp_mi_results.csv")
-            header = "Mode,leakage_acc,leakage_auc,accuracy\n"
+            header = "timestamp_utc,dataset,noise,rounds,mode,leakage_acc,leakage_auc,accuracy\n"
             
             # Self-healing: Reset file if header is old
             if os.path.exists(mi_file):
                 with open(mi_file, "r") as f:
                     first_line = f.readline()
-                    if "leakage_acc" not in first_line:
+                    if "timestamp_utc" not in first_line:
                         print(f"[Logging] Rotating old MI results file (detected legacy schema)...")
                         os.remove(mi_file)
 
@@ -184,13 +188,15 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
                 with open(mi_file, "r") as f:
                     lines = f.readlines()
                     for line in lines:
-                        if line.startswith(f"{mode},"):
+                        parts = line.split(",")
+                        if len(parts) > 4 and parts[4].strip() == mode:
                             exists = True
                             break
                 
             if not exists:
+                dataset_name = first_m.get("dataset_name", "unknown")
                 with open(mi_file, "a", encoding='utf-8') as f:
-                    f.write(f"{mode},{mi_score:.4f},{mi_auc_score:.4f},{agg_acc:.4f}\n")
+                    f.write(f"{ts_now},{dataset_name},{noise},{total_rounds},{mode},{mi_score:.4f},{mi_auc_score:.4f},{agg_acc:.4f}\n")
 
     # Compute weighted loss — inherit from fit-phase cache if this is the evaluate phase
     agg_loss = sum([n * m.get("loss", 0.0) for n, m in metrics]) / total if total > 0 else 0.0
