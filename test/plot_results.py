@@ -83,6 +83,9 @@ def plot_dp():
         print(f"DEBUG: using MI results for DP plot at: {mi_path}")
         df_mi = pd.read_csv(mi_path, na_filter=False)
         
+        # Consistent case for 'mode'
+        if 'mode' in df_mi.columns: df_mi = df_mi.rename(columns={'mode': 'Mode'})
+        
         def extract_noise(mode_str):
             if "sigma=" in str(mode_str):
                 try: return float(str(mode_str).split("sigma=")[1].rstrip(")"))
@@ -224,6 +227,8 @@ def plot_mi():
     if os.path.exists(mi_path):
         df_mi = pd.read_csv(mi_path, na_filter=False)
         if not df_mi.empty:
+            # Consistent case for 'mode'
+            if 'mode' in df_mi.columns: df_mi = df_mi.rename(columns={'mode': 'Mode'})
             # Backward compat: old CSVs had a single 'leakage' column
             if 'leakage' in df_mi.columns and 'leakage_acc' not in df_mi.columns:
                 df_mi = df_mi.rename(columns={'leakage': 'leakage_acc'})

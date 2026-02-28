@@ -56,3 +56,21 @@ nohup python federated_survival.py \
 | **Session Reset** | Persistent Storage | Move Node/Ganache into the project folder. |
 | **GPU OOM** | Batch Size 2048 | Optimized for 15GB Tesla T4 VRAM. |
 | **Data Loss** | Background (`nohup`) | Ensures completion across network drops. |
+
+
+
+echo "=== 1. BLOCKCHAIN (GANACHE/NODE) ==="
+ps aux | grep -E "ganache|node" | grep -v grep
+
+echo ""
+echo "=== 2. PYTHON (FEDERATED EXPERIMENTS) ==="
+ps aux | grep -E "python|federated_survival" | grep -v grep
+
+echo ""
+echo "=== 3. RAY (DISTRIBUTED WORKERS) ==="
+ps aux | grep ray | grep -v grep
+
+echo ""
+echo "=== 4. HARDWARE STATUS (T4 GPU Memory) ==="
+nvidia-smi
+free -h
