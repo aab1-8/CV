@@ -43,7 +43,7 @@ def fetch_thyroid():
 
     def read_url(url):
         with urllib.request.urlopen(url, context=ssl_ctx) as resp:
-            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep="\s+", header=None)
+            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep=r"\s+", header=None)
 
     train_df = read_url(f"{base_url}ann-train.data")
     test_df  = read_url(f"{base_url}ann-test.data")
@@ -219,7 +219,10 @@ def load_tabular_data(config):
     # Robust Case-Insensitive Drop: Lowercase everything for comparison but keep target alive
     col_map = {c.lower(): c for c in df.columns}
     cols_to_drop = [col_map[d] for d in drop_cols if d in col_map and col_map[d].lower() != target.lower()]
-    df = df.drop(columns=cols_to_drop, errors='ignore').replace('?', np.nan).apply(pd.to_numeric, errors='ignore')
+    df = df.drop(columns=cols_to_drop, errors='ignore').replace('?', np.nan)
+    for col in df.columns:
+        if col.lower() != target.lower():
+            df[col] = pd.to_numeric(df[col], errors='coerce')
     df = df.fillna(df.median(numeric_only=True))
     cat_cols = df.select_dtypes(include=['object', 'category']).columns
     partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None

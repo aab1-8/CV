@@ -314,7 +314,7 @@ def run_simulation(args, config):
     )
     
     # Extract real accuracy/auc from training_history.json (most reliable source)
-    fed_acc, fed_auc, fed_eps = 0.70, 0.75, 0.0  # Fallbacks only if file is missing
+    fed_acc, fed_auc, fed_eps, fed_mi_acc, fed_mi_auc = 0.70, 0.75, 0.0, 0.0, 0.0  # Fallbacks only if file is missing
     if os.path.exists(hist_f):
         try:
             with open(hist_f, 'r', encoding='utf-8') as f:
@@ -396,7 +396,7 @@ def run_simulation(args, config):
     bcm = BlockchainManager.get_instance()
     summary = {
         "dataset_name": config.get("display_name", "FL"),
-        "reputation": {n: (bcm.get_reputation(name_to_original_idx[n]) if bcm else 100) for n in names},
+        "reputation": {n: (bcm.get_reputation(name_to_original_idx[n]) if bcm else 100) for n in original_names},
         "local_accuracy": float(avg_local_acc), 
         "local_auc": float(avg_local_auc),
         "centralized_accuracy": float(centralized_acc),

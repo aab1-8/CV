@@ -46,7 +46,7 @@ The system was tested against malicious attacks (Label Flipping and Gradient Sca
 *\*Filtered by Universal Sanity Check in MedShare Strategy.*
 
 ### B. Blockchain Integrity Proof
-*   **Final Model Weights**: Saved as **`./results_thyroid_assets/best_model.pth`**.
+*   **Final Model Weights**: Saved as **`../assets/results_thyroid_assets/best_model.pth`**.
 *   **On-Chain Model Hash**: `0x7a2...f41` (SHA-256 Digest of final weights).
 
 **Blockchain Event Log**: 
@@ -69,17 +69,17 @@ The system was tested against malicious attacks (Label Flipping and Gradient Sca
 ## 🖼️ Visualizations
 ### A. Privacy-Utility Frontier
 This plot shows how Global Model Accuracy remains high even as we increase Differential Privacy noise ($\sigma$) to protect patient records.
-![DP Tradeoff](./results_thyroid_assets/fig_dp_tradeoff.png)
+![DP Tradeoff](../assets/results_thyroid_assets/fig_dp_tradeoff.png)
 
 ### B. Membership Inference Audit
 This audit measures the "Information Leakage" (AUC-Gap) between the training and validation sets. A decreasing gap confirms improved privacy.
-![MI Audit](./results_thyroid_assets/fig_mi.png)
+![MI Audit](../assets/results_thyroid_assets/fig_mi.png)
 
 ### C. Adversarial Resilience
 Comparison of the standard **FedAvg** aggregator vs. the **Robust-MAD** (Median Absolute Deviation) strategy under active poisoning attacks.
-![Robustness Comparison](./results_thyroid_assets/fig_robustness.png)
+![Robustness Comparison](../assets/results_thyroid_assets/fig_robustness.png)
 
 ### D. System Telemetry (Blockchain & Latency)
 Monitoring the operational efficiency of the Ethereum-based audit trail.
-![Gas Costs](./results_thyroid_assets/fig_gas_costs.png)
-![Latency Scaling](./results_thyroid_assets/fig_latency.png)
+![Gas Costs](../assets/results_thyroid_assets/fig_gas_costs.png)
+![Latency Scaling](../assets/results_thyroid_assets/fig_latency.png)

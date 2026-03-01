@@ -10,7 +10,7 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
         self.num_classes, self.mask_add, self.mask_sub = num_classes, mask_add, mask_sub
         self.is_malicious, self.client_id, self.task_id = is_malicious, client_id, task_id
         self.attack_type, self.enable_dp = attack_type, enable_dp
-        self.noise_multiplier, self.max_grad_norm, self.attack_scale_factor = noise_multiplier, max_grad_norm, 100.0
+        self.noise_multiplier, self.max_grad_norm, self.attack_scale_factor = noise_multiplier, max_grad_norm, attack_scale_factor
         self.local_epochs, self.enable_blockchain = local_epochs, enable_blockchain
         self.node_name = node_name or f"Hospital_{client_id}"
         

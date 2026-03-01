@@ -14,9 +14,40 @@ export const renderDistributionChart = (d) => {
 
 export const renderPerformanceComparison = (l, f) => {
     const ctx = document.getElementById('performance-chart')?.getContext('2d'); if (!ctx) return;
-    const ds = [{ label: 'Local (AUC)', data: l.map(x => x['AUC-ROC']), borderColor: '#8b949e', borderDash: [5, 5], pointRadius: 4 }];
-    if (f.length) ds.push({ label: 'Federated (AUC)', data: f.map(x => x['AUC-ROC']), borderColor: '#bc8cff', backgroundColor: 'rgba(188,140,255,0.1)', fill: true, tension: 0.4, pointRadius: 6 });
-    new Chart(ctx, { type: 'line', data: { labels: l.map(x => x.Hospital), datasets: ds }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1.0 } } } });
+
+    // 1. Sort labels numerically so Hospital_1 always comes first
+    const sortedLocal = [...l].sort((a, b) => {
+        const idA = parseInt(a.Hospital.split('_')[1] || 0);
+        const idB = parseInt(b.Hospital.split('_')[1] || 0);
+        return idA - idB;
+    });
+
+    const labels = sortedLocal.map(x => x.Hospital);
+    const ds = [{
+        label: 'Local (AUC)',
+        data: sortedLocal.map(x => x['AUC-ROC']),
+        borderColor: '#8b949e',
+        borderDash: [5, 5],
+        pointRadius: 4
+    }];
+
+    if (f.length) {
+        // 2. Correct alignment: Map federated data to the sorted locations
+        const fedData = labels.map(name => {
+            const entry = f.find(x => x.Hospital === name);
+            return entry ? entry['AUC-ROC'] : null;
+        });
+        ds.push({
+            label: 'Federated (AUC)',
+            data: fedData,
+            borderColor: '#bc8cff',
+            backgroundColor: 'rgba(188,140,255,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6
+        });
+    }
+    new Chart(ctx, { type: 'line', data: { labels, datasets: ds }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0.5, max: 1.0 } }, spanGaps: true } });
 };
 
 export const renderTrainingChart = (h) => {

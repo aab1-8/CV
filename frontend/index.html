@@ -53,15 +53,6 @@
         </div>
       </div>
 
-      <div style="margin-bottom: 2rem;">
-        <h3 style="margin-bottom: 1rem;">🛡️ Network Reputation</h3>
-        <div id="hospital-reputation-list"
-          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-          <!-- Populated by JS -->
-          <div class="empty-state">Loading network trust scores...</div>
-        </div>
-      </div>
-
       <h3 style="margin-bottom: 1rem;">📋 Available Requests</h3>
       <div id="hospital-requests-list" class="requests-grid">
         <!-- Populated by JS -->
@@ -200,9 +191,17 @@
       <div style="margin: 2rem 0; padding-bottom: 2rem;">
         <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Security & Privacy Audit</h2>
         <section class="stats-grid" id="security-grid"
-          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
           <!-- Will be populated by JS -->
         </section>
+
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-secondary);">🛡️ Network Reputation (Trust
+          Scores)</h3>
+        <div id="hospital-reputation-list"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+          <!-- Populated by JS -->
+          <div class="empty-state">Loading network trust scores...</div>
+        </div>
       </div>
 
     </section>

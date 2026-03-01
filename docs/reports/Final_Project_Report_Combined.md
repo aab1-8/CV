@@ -103,7 +103,7 @@ We tested the system's performance under various noise levels ($\sigma$) using t
 *   **DP Accuracy ($\sigma=0.3$)**: ~38.0%.
 *   **DP Accuracy ($\sigma=0.1$)**: ~62.0% (Optimized for performance).
 
-![Privacy-Utility Trade-off](./results_thyroid_assets/fig_dp_tradeoff.png)
+![Privacy-Utility Trade-off](../assets/results_thyroid_assets/fig_dp_tradeoff.png)
 
 *   **Observation**: The transition from centralized to DP-Federated learning introduces a "Privacy Tax." However, even at $\sigma=0.3$, the model performs **3x better than a random guess** (12.5%).
 
@@ -115,7 +115,7 @@ To verify the system's performance on multi-categorical medical data, we execute
 | **Accuracy** | 92.78% | **92.95%** | 91.96% |
 
 *   **Finding**: The federated model outperformed the centralized baseline, proving that the MedShare aggregation engine successfully distills a stronger global signal than isolated training or centralized aggregation on this clinical task.
-![Thyroid Accuracy Frontier](./results_thyroid_assets/fig_dp_tradeoff.png)
+![Thyroid Accuracy Frontier](../assets/results_thyroid_assets/fig_dp_tradeoff.png)
 
 ### 4.3 Security & Robustness (Raw Audit Data)
 We simulated a **30% Malicious Client Presence** using poisoning attacks.
@@ -128,7 +128,7 @@ We simulated a **30% Malicious Client Presence** using poisoning attacks.
 | **Grad Scale** | FedAvg | 92.58% | Filtered |
 
 *   **Analysis**: The **Robust-MAD** defense successfully recovered the accuracy loss caused by malicious poisoning, bringing the model back to within **0.1%** of the non-attack state. The blockchain reputation system penalized the attacker (**Hospital 5**), dropping its score to **-21** and triggering a blacklist.
-![Robustness Results](./results_thyroid_assets/fig_robustness.png)
+![Robustness Results](../assets/results_thyroid_assets/fig_robustness.png)
 
 ### 4.4 Privacy Leakage (Membership Inference Data)
 Empirical audit of information leakage (AUC-Gap) across the DP spectrum.
@@ -143,7 +143,7 @@ Empirical audit of information leakage (AUC-Gap) across the DP spectrum.
 *   **Success**: At maximum privacy ($\sigma=1.5$), leakage was reduced by nearly **50%** compared to the baseline, while accuracy remained above 93%.
 
 *   **Analysis**: This is a major success. The leakage is nearly zero, providing a verified empirical guarantee that patient records cannot be extracted from the global model.
-![MI Audit Visual](./results_thyroid_assets/fig_mi.png)
+![MI Audit Visual](../assets/results_thyroid_assets/fig_mi.png)
 
 ### 4.5 System Telemetry (Blockchain & Latency)
 | Rounds | Wall-clock Time (sec) | Avg Gas per Round |
@@ -151,8 +151,8 @@ Empirical audit of information leakage (AUC-Gap) across the DP spectrum.
 | 1 | 30.50 | 121,138 |
 | 5 | 35.61 | 121,131 |
 
-![Latency Scaling](./results_thyroid_assets/fig_latency.png)
-![Gas Consumption](./results_thyroid_assets/fig_gas_costs.png)
+![Latency Scaling](../assets/results_thyroid_assets/fig_latency.png)
+![Gas Consumption](../assets/results_thyroid_assets/fig_gas_costs.png)
 
 ### 4.6 Runtime Stability & Data Integrity
 The system is designed for high-fidelity scientific audits in a cloud environment (Google Colab):

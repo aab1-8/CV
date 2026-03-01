@@ -1,6 +1,7 @@
 {
   "dataset_name": "CDC-Diabetes-Binary",
   "reputation": {
+    "Hospital_1": -130,
     "Hospital_2": 188,
     "Hospital_4": 188,
     "Hospital_5": 187,
