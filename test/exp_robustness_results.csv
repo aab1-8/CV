@@ -1,7 +1,6 @@
 timestamp_utc,dataset,attack,defense,rounds,accuracy
-2026-02-28T12:59:38Z,CDC-Diabetes-012,None,FedAvg,30,0.6371
-2026-02-28T13:16:42Z,CDC-Diabetes-012,None,Robust-MAD,30,0.6400
-2026-02-28T13:31:07Z,CDC-Diabetes-012,label_flip,FedAvg,30,0.5164
-2026-02-28T13:45:49Z,CDC-Diabetes-012,label_flip,Robust-MAD,30,0.5277
-2026-02-28T14:02:12Z,CDC-Diabetes-012,gradient_scale,FedAvg,30,0.3160
-2026-02-28T14:18:50Z,CDC-Diabetes-012,gradient_scale,Robust-MAD,30,0.4825
+2026-02-28T22:01:02Z,CDC-Diabetes-Binary,None,FedAvg,30,0.8649
+2026-02-28T22:17:25Z,CDC-Diabetes-Binary,None,Robust-MAD,30,0.8657
+2026-02-28T22:31:47Z,CDC-Diabetes-Binary,label_flip,FedAvg,30,0.8473
+2026-02-28T22:46:23Z,CDC-Diabetes-Binary,label_flip,Robust-MAD,30,0.8166
+2026-02-28T23:09:30Z,CDC-Diabetes-Binary,gradient_scale,Robust-MAD,30,0.8616
