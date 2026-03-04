@@ -78,7 +78,8 @@ DATASET_PRESETS = {
     "diabetes_hospital": {
         "display_name": "Diabetes-Hospitals", 
         "DATA_SOURCE": "diabetes_hospital", 
-        "TARGET_COLUMN": "readmitted"
+        "TARGET_COLUMN": "readmitted",
+        "apply_rebalancing": "auto"
     },
     "maternal_health": {
         "display_name": "Maternal-Health", 
@@ -112,11 +113,17 @@ def get_adaptive_experiment_config(num_records):
     import sys
     is_colab = 'google.colab' in sys.modules
     
-    # Premium Scaling: Use massive batches on high-end GPUs (Colab 15GB) vs Local 6GB
-    if is_colab:
-        gpu_batch = 8192
-    else:
-        gpu_batch = 2048 # Safer for 6GB GPUs to avoid OOM and high temps
+    # Precise VRAM Detection: Distinguish between Local 6GB GPUs and vLab/Colab 15GB GPUs
+    vram_gb = 0
+    if use_gpu:
+        try:
+            vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+        except:
+            vram_gb = 8 # Default fallback
+    
+    # Premium Scaling: Use optimized batches for tabular convergence (High-end: 2048, Local: 512)
+    # Total VRAM usage will stay low, but 'Scientific Precision' will increase.
+    gpu_batch = 2048 if is_high_end else 512
     
     if num_records < 5000: # Micro Datasets (e.g. 1k rows)
         return {
@@ -129,14 +136,14 @@ def get_adaptive_experiment_config(num_records):
         return {
             "sigmas": [0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5],
             "batch_size": gpu_batch if use_gpu else 128,
-            "rounds": 50 if use_gpu else 20,
+            "rounds": 100 if is_high_end else 50,
             "epochs": 5 
         }
     else: # Massive Datasets (> 70k rows, e.g. CDC/Diabetes Hospitals)
         return {
             "sigmas": [0.0, 0.5, 1.0, 2.0, 5.0],
-            "batch_size": 2048 if use_gpu else 128,
-            "rounds": 30 if use_gpu else 15,
+            "batch_size": gpu_batch if use_gpu else 128,
+            "rounds": 60 if is_high_end else 30, # Increased for convergence on 100k+ rows
             "epochs": 10 
         }
 
@@ -173,13 +180,15 @@ def run_simulation(args, config):
         
     names = authorized_names
     nodes = {n: train_test_split(pd.DataFrame(scaler.fit_transform(X.loc[parts == n]), columns=X.columns), y[parts == n], test_size=0.2) for n in names}
-    # Allow command line to override adaptive rounds.
-    # We use a dedicated sentinel (_cli_rounds) stored on args by run_experiment() to
-    # detect whether rounds were explicitly passed by the user vs overridden internally.
-    # Fall back to adaptive calibration only when the caller has NOT set an explicit value.
+    # Detect whether parameters were explicitly passed via CLI vs using the default (1 epoch / 3 rounds)
+    # This allows us to apply the adaptive "Gold Standard" defaults automatically.
     explicit_rounds = getattr(args, '_cli_rounds', None)
-    exec_rounds = args.rounds if explicit_rounds is not None else config.get("rounds", args.rounds)
-    print(f"[INIT] Starting simulation for {config.get('display_name', 'FL')} with {exec_rounds} rounds...")
+    exec_rounds = args.rounds if explicit_rounds is not None else (config.get("rounds", args.rounds) if args.rounds == 3 else args.rounds)
+    
+    # Epoch Handling: If user left it at default (1), use the adaptive Gold Standard (10 for big data)
+    exec_epochs = config.get("epochs", args.epochs) if args.epochs == 1 else args.epochs
+    
+    print(f"[INIT] Starting simulation: {exec_rounds} rounds, {exec_epochs} epochs, {config.get('batch_size', 32)} batch size.")
     
     # Bounty Demo: Initialize Task on Blockchain (Only if enabled)
     bcm = None
@@ -249,7 +258,7 @@ def run_simulation(args, config):
             is_malicious=(orig_idx < int(len(original_names)*0.2)) and (config.get("attack_type", "None") != "None"), 
             client_id=orig_idx, 
             task_id=created_task_id if created_task_id is not None else args.task_id, 
-            local_epochs=args.epochs,
+            local_epochs=exec_epochs,
             attack_type=config.get("attack_type", "label_flip"),
             enable_dp=config.get("enable_dp", False),
             noise_multiplier=config.get("noise_multiplier", 1.0),
@@ -277,17 +286,17 @@ def run_simulation(args, config):
     strategy.on_evaluate_config_fn = common_config
 
     # --- Advanced Resource Configuration ---
-    # Maximize Colab's 15GB GPU / 12GB RAM vs Local Thermal Efficiency
-    import sys, multiprocessing
-    is_colab = 'google.colab' in sys.modules
-    cpu_count = multiprocessing.cpu_count()
+    # Detect high-end hardware for parallel scaling
     use_gpu = torch.cuda.is_available()
-    
-    # In Colab, we want to run ALL clients in parallel to exhaust the 15GB GPU
-    # Local (6GB GPU/12GB RAM): We run 2 clients at a time (0.5 GPU fraction)
-    # This keeps the GPU usage high but prevents the 12GB RAM from swapping
-    client_cpu = 0.4 if is_colab else 2.0 # Higher CPU per client local = fewer parallel workers = lower heat
-    client_gpu = 0.2 if is_colab else (0.5 if use_gpu else 0) 
+    vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9 if use_gpu else 0
+    import sys, multiprocessing
+    is_high_end = ('google.colab' in sys.modules) or (vram_gb > 12)
+    cpu_count = multiprocessing.cpu_count()
+
+    # vLab/Colab MAX (15GB GPU): Run ALL clients in parallel to maximize throughput
+    # Local (6GB GPU): Run 2 clients at a time to stay within thermal/RAM limits
+    client_cpu = 0.4 if is_high_end else 2.0 
+    client_gpu = 0.2 if is_high_end else (0.5 if use_gpu else 0) 
 
     backend_config = {
         "client_resources": {
@@ -446,9 +455,10 @@ def run_experiment(args):
     num_records = len(X_peek)
     adapt = get_adaptive_experiment_config(num_records)
     config["batch_size"] = adapt["batch_size"]
-    config["rounds"] = adapt["rounds"] # Store adaptive rounds in config
+    config["rounds"] = adapt["rounds"]
+    config["epochs"] = adapt["epochs"]
     print(f"[Experiment] Dataset: {config['display_name']} ({num_records} rows)")
-    print(f"[Experiment] Calibration: Batch={adapt['batch_size']}, DP-Steps={adapt['sigmas']}")
+    print(f"[Experiment] Calibration: Rounds={adapt['rounds']}, Epochs={adapt['epochs']}, Batch={adapt['batch_size']}")
 
     if args.experiment == "dp":
         # Targeted sweep for the Privacy-Utility Frontier
@@ -480,9 +490,11 @@ def run_experiment(args):
         else:
             config["batch_size"] = 128
         
-        if args.epochs == 1 and args.rounds == 3:
+        if args.rounds == 3: # If user didn't specify, use adaptive or default high-precision
+            args.rounds = adapt["rounds"]
+        
+        if args.epochs == 1: # If user didn't specify, use high-intensity for audit
             args.epochs = 40
-            args.rounds = 30
         
         # Mark as explicit so run_simulation engine respects these overrides
         args._cli_rounds = args.rounds
@@ -490,7 +502,7 @@ def run_experiment(args):
         for n in noises:
             mode_name = "BASELINE (No Privacy)" if n == 0 else f"MI Audit with sigma={n}"
             rebalance_status = config.get("apply_rebalancing", "Preset")
-            print(f"\n[Audit] Running {mode_name} (30 Rounds, 40 Epochs, rebalance={rebalance_status})")
+            print(f"\n[Audit] Running {mode_name} ({args.rounds} Rounds, {args.epochs} Epochs, rebalance={rebalance_status})")
             
             config["enable_dp"] = (n > 0)
             config["noise_multiplier"] = n
@@ -505,9 +517,8 @@ def run_experiment(args):
         # Attack types: No Attack, Label Flip, Gradient Scale
         attacks = ["None", "label_flip", "gradient_scale"]
         defenses = ["FedAvg", "Robust-MAD"]
-        # Use the user-supplied round count (or at least 5 for stable bar chart results).
-        # Previously hardcoded to 3, which was misleading when --rounds 30 was passed.
-        rob_rounds = max(args.rounds, 5)
+        # Use the adaptive round count if the user didn't specify a high enough value for robustness charts.
+        rob_rounds = max(args.rounds, adapt["rounds"] if args.rounds == 3 else 5)
         saved_rounds = args.rounds
         args.rounds = rob_rounds
         # Store the explicit value so run_simulation() uses it, not the adaptive calibration.
