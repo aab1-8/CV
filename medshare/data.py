@@ -222,22 +222,59 @@ def load_tabular_data(config):
     col_map = {c.lower(): c for c in df.columns}
     cols_to_drop = [col_map[d] for d in drop_cols if d in col_map and col_map[d].lower() != target.lower()]
     df = df.drop(columns=cols_to_drop, errors='ignore').replace('?', np.nan)
-    for col in df.columns:
-        if col.lower() != target.lower():
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-    df = df.fillna(df.median(numeric_only=True))
-    cat_cols = df.select_dtypes(include=['object', 'category']).columns
-    partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None
     
-    if partition_col and partition_col in cat_cols:
-        parts = df[partition_col].fillna("Unknown")
+    # --- Intelligent Garbage Collection (Scientific De-noising) ---
+    # 1. Identify Truly Categorical vs Truly Numeric & Drop Dead Weight
+    initial_cols = list(df.columns)
+    for col in initial_cols:
+        if col.lower() == target.lower(): continue
+        
+        # A. Drop Identifiers (if cardinality == length or it looks like an ID)
+        if df[col].nunique() >= (len(df) * 0.95) or "id" in col.lower() or "nbr" in col.lower() or "number" in col.lower():
+            df = df.drop(columns=[col])
+            continue
+
+        # B. Drop Columns with too much missing data (> 50%)
+        if df[col].isnull().sum() > (len(df) * 0.5):
+            df = df.drop(columns=[col])
+            continue
+            
+        # C. Drop Zero-Variance Columns (Single values provide no signal)
+        if df[col].nunique() <= 1:
+            df = df.drop(columns=[col])
+            continue
+
+        # D. Convert legitimate numbers
+        s = pd.to_numeric(df[col], errors='coerce')
+        if s.notnull().sum() > (len(df) * 0.5): # If >50% can be numeric
+            df[col] = s
+            
+    # 2. Robust Imputation
+    # Fill numeric with median, categorical with 'Unknown'
+    num_cols = df.select_dtypes(include=[np.number]).columns
+    cat_cols = df.select_dtypes(exclude=[np.number]).columns
+    
+    df[num_cols] = df[num_cols].fillna(df[num_cols].median())
+    df[cat_cols] = df[cat_cols].fillna("Unknown")
+    
+    # Final safety: any column still entirely NaN (no median) gets zeros
+    df = df.fillna(0)
+    
+    # 3. Handle Partition Column
+    partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None
+    if partition_col and partition_col in df.columns:
+        parts = df[partition_col].astype(str)
         df = df.drop(columns=[partition_col])
+        if partition_col in cat_cols: cat_cols = cat_cols.drop(partition_col)
     else:
         parts = pd.Series([f"Hospital_{i+1}" for i in np.random.randint(0, config.get("NUM_PARTITIONS", 5), len(df))], index=df.index)
     
     # Label encode target if it is categorical or not 0-indexed
+    # Drop rows where target is NaN (useless for training)
+    df = df.dropna(subset=[target])
+    
     target_vals = df[target].unique()
-    is_not_zero_indexed = df[target].dtype.kind in 'biufc' and (target_vals.min() != 0 or target_vals.max() != len(target_vals) - 1)
+    is_not_zero_indexed = df[target].dtype.kind in 'biufc' and (len(target_vals) > 0 and (target_vals.min() != 0 or target_vals.max() != len(target_vals) - 1))
     if df[target].dtype == 'object' or df[target].dtype.name == 'category' or is_not_zero_indexed:
         from sklearn.preprocessing import LabelEncoder
         le = LabelEncoder()

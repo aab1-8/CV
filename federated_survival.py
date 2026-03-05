@@ -79,6 +79,7 @@ DATASET_PRESETS = {
         "display_name": "Diabetes-Hospitals", 
         "DATA_SOURCE": "diabetes_hospital", 
         "TARGET_COLUMN": "readmitted",
+        "DROP_COLUMNS": ["encounter_id", "patient_nbr"],
         "apply_rebalancing": "auto"
     },
     "maternal_health": {
@@ -182,7 +183,9 @@ def run_simulation(args, config):
         return
         
     names = authorized_names
-    nodes = {n: train_test_split(pd.DataFrame(scaler.fit_transform(X.loc[parts == n]), columns=X.columns), y[parts == n], test_size=0.2) for n in names}
+    # Global Scaling: Fit on the ENTIRE dataset so features mean the same thing at every hospital.
+    scaler.fit(X)
+    nodes = {n: train_test_split(pd.DataFrame(scaler.transform(X.loc[parts == n]), columns=X.columns), y[parts == n], test_size=0.2, random_state=42) for n in names}
     # Detect whether parameters were explicitly passed via CLI vs using the default (1 epoch / 3 rounds)
     # This allows us to apply the adaptive "Gold Standard" defaults automatically.
     explicit_rounds = getattr(args, '_cli_rounds', None)
@@ -497,7 +500,8 @@ def run_experiment(args):
             args.rounds = adapt["rounds"]
         
         if args.epochs == 1: # If user didn't specify, use high-intensity for audit
-            args.epochs = 40
+            # For massive datasets, 40 epochs is too risky/slow; use adaptive max (10-20)
+            args.epochs = adapt["epochs"] if num_records > 50000 else 40
         
         # Mark as explicit so run_simulation engine respects these overrides
         args._cli_rounds = args.rounds
