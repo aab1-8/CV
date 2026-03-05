@@ -121,6 +121,9 @@ def get_adaptive_experiment_config(num_records):
         except:
             vram_gb = 8 # Default fallback
     
+    # High-end Hardware categorization (vLab/Colab with 12GB+ VRAM)
+    is_high_end = is_colab or (vram_gb > 12)
+
     # Premium Scaling: Use optimized batches for tabular convergence (High-end: 2048, Local: 512)
     # Total VRAM usage will stay low, but 'Scientific Precision' will increase.
     gpu_batch = 2048 if is_high_end else 512
