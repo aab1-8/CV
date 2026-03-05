@@ -179,7 +179,8 @@ def load_tabular_data(config):
                     y_raw = df[target]
                     X_raw = df.drop(columns=[target])
                     
-                    if y_raw.nunique() <= 10 and minority_size > 1:
+                    if y_raw.nunique() <= 10 and minority_size > 1 and len(df) < 50000:
+                        # Use SMOTE for small/medium datasets for high-quality synthetic data
                         # 1. Encode all Categoricals
                         X_encoded = pd.get_dummies(X_raw, drop_first=True).fillna(0)
                         
@@ -189,7 +190,6 @@ def load_tabular_data(config):
                         X_resampled, y_resampled = smote.fit_resample(X_encoded, y_raw)
                         
                         # 3. Post-process: Round dummy variables to preserve binary integrity
-                        # (Prevents values like 0.7 from appearing in binary flags)
                         binary_cols = [c for c in X_encoded.columns if X_encoded[c].nunique() <= 2]
                         X_resampled[binary_cols] = X_resampled[binary_cols].round()
                         
@@ -197,7 +197,9 @@ def load_tabular_data(config):
                         df[target] = y_resampled
                         print(f"[Data] Multi-class SMOTE applied ({y_raw.nunique()} classes, Ratio: {ratio:.1f}:1)")
                     else:
-                        raise ValueError("Skipping SMOTE (Too many classes or insufficient samples)")
+                        # For 100k+ rows (Diabetes-Hospital), use High-Speed Random Oversampling
+                        # This avoids the O(N^2) neighbor search that causes vLab hangs.
+                        raise ValueError("Large dataset detected: Using High-Speed Oversampling")
                 except Exception as e:
                     print(f"[Warning] Multi-class Rebalance Fallback: {e}")
                     # Intelligent Naive Fallback: Oversample EVERY minority class to match majority
