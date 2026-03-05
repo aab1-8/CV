@@ -293,10 +293,10 @@ def run_simulation(args, config):
     is_high_end = ('google.colab' in sys.modules) or (vram_gb > 12)
     cpu_count = multiprocessing.cpu_count()
 
-    # vLab/Colab MAX (15GB GPU): Run ALL clients in parallel to maximize throughput
-    # Local (6GB GPU): Run 2 clients at a time to stay within thermal/RAM limits
+    # vLab/Colab MAX (15GB GPU): Target ~10GB GPU usage (0.13 * 5 = 0.65 fraction)
+    # This leaves "Oxygen" (5GB+) for the system/Jupyter as requested.
     client_cpu = 0.4 if is_high_end else 2.0 
-    client_gpu = 0.2 if is_high_end else (0.5 if use_gpu else 0) 
+    client_gpu = 0.13 if is_high_end else (0.5 if use_gpu else 0) 
 
     backend_config = {
         "client_resources": {
@@ -309,8 +309,8 @@ def run_simulation(args, config):
         }
     }
     
-    if is_colab:
-        print(f"[Hardware] Mode: Colab MAX (15GB GPU). Running {len(names)} parallel clients.")
+    if is_high_end:
+        print(f"[Hardware] Mode: VLAB/COLAB High-End (15GB GPU). Running {len(names)} parallel clients in 10GB Safety Zone.")
     else:
         print(f"[Hardware] Mode: Local Efficiency. Capping parallelism to protect CPU temps.")
     
