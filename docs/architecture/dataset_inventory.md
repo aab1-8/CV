@@ -11,12 +11,12 @@ This document provides a comprehensive overview of all datasets currently integr
 | **`support2`** | SUPPORT2-Death | **Binary** | 9,105 | Patient Mortality (0/1) | UCI #880 |
 | **`stroke_prediction`** | Stroke | **Binary** | 5,110 | Stroke Risk (0/1) | Kaggle |
 | **`cdc_diabetes_binary`** | CDC-Diabetes-Binary | **Binary** | 253,680 | Diabetes Status (0/1) | UCI #891 |
+| **`thyroid`** | Thyroid | **Multi-class** | 7,200 | Hypo / Hyper / Normal | UCI #102 |
 | **`cdc_diabetes_012`** | CDC-Diabetes-012 | **Multi-class** | 253,680 | Status (None/Pre/Diabetic) | UCI #891 |
-| **`maternal_health`** | Maternal-Health | **Multi-class** | 1,013 | Risk (low, mid, high) | UCI #863 |
+| **`maternal_health`** | Maternal-Health | **Multi-class** | 1,014 | Risk (low, mid, high) | UCI #863 |
 | **`admin_billing`** | Admin-Billing-Risk | **Binary** | 1,000 | High vs Low Bill Amount | Kaggle |
 | **`admin_category`** | Admin-Category | **Multi-class (4)** | 1,000 | Care Type (Emergency/Infectious/Chronic/Specialized) | Kaggle |
 | **`diabetes_hospital`** | Diabetes-Hospitals | **Multi-class** | 101,766 | Readmission (<30, >30, NO) | UCI #296 |
-| **`thyroid`** | Thyroid | **Multi-class** | 7,200 | Hypo / Hyper / Normal | UCI #102 |
 | **`support2_disease`** | SUPPORT2-Disease | **Multi-class** | 9,105 | Disease Category | UCI #880 |
 
 ---
@@ -30,12 +30,12 @@ This section details the **raw, unbalanced population counts** for each dataset 
 | **SUPPORT2-Death** | 9,105 | **Dead:** 6,201 | **Alive:** 2,904 |
 | **Stroke** | 5,110 | **No Stroke:** 4,861 | **Stroke:** 249 |
 | **CDC-Diabetes-Binary** | 253,680 | **Healthy:** 218,334 | **Diabetic:** 35,346 |
+| **Thyroid** | 7,200 | **Negative:** 6,666 | **Hypo/Hyper:** 534 |
 | **CDC-Diabetes-012** | 253,680 | **Healthy:** 213,703 | **Diabetic:** 35,346 | **Pre-diabetic:** 4,631 |
 | **Maternal-Health** | 1,014 | **Low Risk:** 406 | **Mid Risk:** 336 | **High Risk:** 272 |
 | **Admin-Billing** | 1,000 | **Low Bill:** 500 (50.0%) | **High Bill:** 500 (50.0%) |
 | **Admin-Category** | 1,000 | **Infectious:** 313 | **Specialized:** 287 | **Chronic:** 228 | **Emergency:** 172 |
 | **Diabetes-Hospitals** | 101,766 | **NO:** 54,864 | **>30 Days:** 35,545 | **<30 Days:** 11,357 |
-| **Thyroid** | 7,200 | **Negative:** 6,666 | **Hypo/Hyper:** 534 |
 | **SUPPORT2-Disease** | 9,105 | **Sepsis:** 3,515 | **Cancer:** 2,132 | **CHF:** 1,387 | **COPD:** 967 | **Other:** 1,104 |
 
 ---

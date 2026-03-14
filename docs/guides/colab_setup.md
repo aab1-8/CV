@@ -14,10 +14,10 @@ This guide explains how to use the Google Colab VS Code extension to run your lo
 5.  **Provision Runtime**: Once connected, you can choose to connect to an existing runtime or create a new one (CPU, GPU, or TPU).
 
 ## Accessing Local Files
-When you connect to Colab via the VS Code extension, your **local files** are accessible to the runtime. You can import scripts from your `backend/` or `fl/` directories as if you were running locally.
+When you connect to Colab via the VS Code extension, your **local files** are accessible to the runtime. You can import scripts from your `medshare/` directory or run `federated_survival.py` from the root as if you were running locally.
 
 > [!NOTE]
-> Training data or large files should ideally be uploaded to Google Drive or a cloud bucket for faster access if they are very large, but for standard scripts, the VS Code extension handles the synchronization.
+> Training data is automatically fetched or cached in the project root. Large temporary files or logs are synced through the extension.
 
 ## Verification
 Use the provided `test_colab.ipynb` to verify your connection and environment.

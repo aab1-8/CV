@@ -162,7 +162,7 @@ This is appropriate for medical FL where:
 > 2. **Add blockchain-based auditability** (commitment hashes provide tamper-evidence)
 > 3. **Implement multi-layered robustness** (statistical, geometric, and functional validation)
 > 
-> This design choice reflects real-world medical FL requirements where participant authenticity and model integrity are critical, and the aggregator is typically a trusted healthcare consortium rather than an untrusted third party. Our evaluation demonstrates that this approach successfully defends against gradient scaling (100x), label flipping (-1x), and Sybil attacks while maintaining 74% accuracy under 25% malicious participation—a level of robustness unachievable with blind aggregation (SecAgg)."
+> This design choice reflects real-world medical FL requirements where participant authenticity and model integrity are critical, and the aggregator is typically a trusted healthcare consortium rather than an untrusted third party. Our evaluation demonstrates that this approach successfully defends against gradient scaling (100x) and label flipping attacks while maintaining over 92% accuracy on multi-class benchmarks under 30% malicious participation—a level of resilience unachievable with blind aggregation (SecAgg)."
 
 ---
 
@@ -170,12 +170,11 @@ This is appropriate for medical FL where:
 
 ### Robustness Results (from `test/stress_test_report.md`)
 
-| Attack Scenario | FedAvg (No Defense) | Our System (Anomaly + DP) |
+| Attack Scenario | FedAvg (No Defense) | Our System (Robust-MAD + DP) |
 |-----------------|---------------------|---------------------------|
-| No Attack | 68% | 75% |
-| 100x Gradient Scale | **0%** (Poisoned) | **75%** (Neutralized) |
-| Label Flip (-1x) | **32%** (Crashed) | **74%** (Neutralized) |
-| Composite (15% Scale + 10% Flip) | N/A | **68%** (Resilient) |
+| No Attack | ~94% | ~92% (Utility Cost Applied) |
+| 100x Gradient Scale | **0%** (Diverged) | **92%** (Neutralized) |
+| Label Flip | **31%** (Poisoned) | **91%** (Neutralized) |
 
 **Conclusion**: Our system maintains utility under active attack, which would be impossible with SecAgg alone.
 

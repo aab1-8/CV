@@ -19,34 +19,34 @@ Modify the execution cell in the **Infrastructure & Evaluation** section of the 
 ### Available Datasets
 | Key | Dataset | Type |
 | :--- | :--- | :--- |
-| `stroke_prediction` | Stroke Prediction (Real CSV) | **Binary** |
 | `support2` | SUPPORT2 Clinical Study | **Binary** |
-| `cdc_diabetes` | CDC Diabetes Indicators | **Binary** |
-| `cdc_diabetes_balanced` | CDC Diabetes (Balanced) | **Binary** |
-| `diabetes_hospital_binary` | Diabetes 130-US Hospitals | **Binary** |
-| `diabetic_retinopathy` | Diabetic Retinopathy Debrecen | **Binary** |
-| `cdc_diabetes_multiclass` | CDC Diabetes Multi-class | **Multi-class** |
-| `diabetes_hospital` | Diabetes 130-US Hospitals | **Multi-class** |
+| `stroke_prediction` | Stroke Prediction (Real CSV) | **Binary** |
+| `cdc_diabetes_binary` | CDC Diabetes Indicators | **Binary** |
 | `thyroid` | Thyroid Disease Dataset | **Multi-class** |
-
+| `cdc_diabetes_012` | CDC Diabetes Multi-class | **Multi-class** |
+| `diabetes_hospital` | Diabetes 130-US Hospitals | **Multi-class** |
+| `maternal_health` | Maternal Health Risk | **Multi-class** |
+| `admin_billing` | Admin-Billing-Risk | **Binary** |
+| `admin_category` | Admin-Category | **Multi-class** |
+| `support2_disease` | SUPPORT2-Disease | **Multi-class** |
+| `diabetic_retinopathy` | Diabetic Retinopathy Debrecen | **Binary** |
 ---
 
 ## 2. Modifying FL Settings (DP, Security, Epochs)
 
 ### Method A: Command-Line (Dynamic)
 Works for both Local and Colab (via the `!python` command).
-- **Epochs**: `--epochs 5`
-- **DP Noise**: `--experiment dp --dp_noise 2.0`
-- **Skip Baseline**: `--skip_baseline`
+- **Epochs**: `--epochs 20`
+- **FL Rounds**: `--rounds 100`
+- **DP Noise**: `--experiment dp --sigma 1.0 --enable_dp True`
+- **Blockchain**: `--enable_blockchain True`
 
-### Method B: Global File Edits (Persistent)
-Edit [federated_survival.py](../federated_survival.py) directly. This is the most reliable way to change defaults.
+### Method B: Code Customization (Persistent)
+Edit [federated_survival.py](../federated_survival.py) directly to change experiment logic or defaults.
 
-- **Enable/Disable Features**: Search for `GLOBAL CONFIGURATION` (approx. Line 51).
-  - `ENABLE_DP = True/False`
-  - `ENABLE_BLOCKCHAIN = True/False`
-- **Defense Mechanism**: Change `DEFENSE_TYPE` to `"trimmed_avg"`, `"fedmedian"`, or `"krum"`.
-- **Attack Simulation**: Toggle `ENABLE_ATTACK` and set `MALICIOUS_CLIENTS_RATIO`.
+- **Adaptive Calibration**: Settings are automatically calculated based on dataset size in `get_adaptive_experiment_config`.
+- **Strategy Logic**: The `AnomalyMonitoringStrategy` inside the script controls how updates are merged (FedAvg vs Robust-MAD).
+- **Network Architecture**: Modify the `SurvivalMLP` class in `medshare/models.py`.
 
 > [!IMPORTANT]
 > **Colab Users**: Since your notebook is synced with Google Drive, saving changes to the `.py` file in your local editor will automatically update the code used by Colab on the next cell run.
@@ -67,13 +67,13 @@ python federated_survival.py --heterogeneity label --dataset stroke_prediction
 ```
 
 ### 4. Model Checkpointing
-Enable automatic saving of the best global model weights:
-- Use the `--save_best` flag.
-- The model is saved to `test/best_model.pth` (or project root) as soon as a new accuracy record is hit.
+The system automatically saves the best global model weights during evaluation:
+- The model is saved to `test/best_model.pth`.
+- This happens as soon as a new accuracy record is hit during the evaluation phase of any round.
 
 Example:
 ```bash
-python federated_survival.py --save_best --rounds 20
+python federated_survival.py --rounds 20
 ```
 
 ## 5. Adding New Datasets

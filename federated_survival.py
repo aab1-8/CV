@@ -106,6 +106,12 @@ DATASET_PRESETS = {
         "PARTITION_COLUMN": "death",
         "apply_rebalancing": False # Clinical realism priority
     },
+    "diabetic_retinopathy": {
+        "display_name": "Diabetic-Retinopathy", 
+        "DATA_SOURCE": "diabetic_retinopathy", 
+        "TARGET_COLUMN": "class",
+        "apply_rebalancing": False
+    },
 }
 
 def get_adaptive_experiment_config(num_records):

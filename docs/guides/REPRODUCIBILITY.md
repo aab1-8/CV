@@ -32,17 +32,16 @@ The system uses adaptive configuration. You can run individual experiments or fu
 **Option 1: Full Comprehensive Sweep (Recommended)**
 ```bash
 # Replace 'maternal_health' with 'support2', 'stroke_prediction', etc.
-python federated_survival.py --experiment robustness --dataset maternal_health
-python federated_survival.py --experiment latency --dataset maternal_health
-python federated_survival.py --experiment gas --dataset maternal_health
-python federated_survival.py --experiment dp --dataset maternal_health
-python federated_survival.py --experiment mi --dataset maternal_health
+python federated_survival.py --experiment robustness --dataset thyroid
+python federated_survival.py --experiment latency --dataset thyroid --rounds 10
+python federated_survival.py --experiment dp --dataset thyroid
+python federated_survival.py --experiment mi --dataset thyroid
 ```
 
 **Option 2: Targeted Experiment**
 ```bash
-# Run a specific security audit
-python federated_survival.py --experiment mi --dataset maternal_health --rounds 10 --epochs 25
+# Run a specific security audit with custom parameters
+python federated_survival.py --experiment mi --dataset maternal_health --rounds 20 --epochs 25
 ```
 
 ## 📈 3. Generating Visualizations
@@ -62,11 +61,11 @@ For maximum stability on small-to-medium datasets (e.g., Maternal Health, SUPPOR
 
 | Setting | Value | Why? |
 | :--- | :--- | :--- |
-| **Local Epochs** | 10 (DP) / 25 (MI) | Allows model to recover from privacy noise. |
-| **GPU Parallelism** | 2 Workers (Local 6GB) / 5 Workers (Colab) | Calibrated for VRAM stability vs. Cloud Speed. |
-| **DP LR Decay** | 0.25 (75% reduction) | Keeps the Adam optimizer stable under noise. |
-| **Batch Size** | 2048 (Local GPU) / 8192 (Colab) | Optimized for environment-aware throughput. |
-| **Caching** | Enabled (.json) | Skips redundant SMOTE and baseline training. |
+| **Local Epochs** | 10 (DP) / 25 (MI) | High-intensity training ensures privacy leakage detection. |
+| **GPU Parallelism** | 0.2 GPU per Node | Calibrated for 5 parallel hospitals in the 15GB VRAM safety zone. |
+| **DP LR Decay** | 0.25 (75% reduction) | Critical stability anchor for Adam optimizer under noise. |
+| **Batch Size** | 2048 (GPU) / 128 (CPU) | Environment-aware scaling for throughput. |
+| **Caching** | Enabled (.json) | Prevents redundant disk I/O and Gold Standard training. |
 
 ## 📁 5. Archiving Results
 To save current results before testing a new dataset:

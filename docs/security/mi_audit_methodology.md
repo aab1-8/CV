@@ -1,7 +1,7 @@
 # Membership Inference Audit: Methodology & Proxy Selection
 
 **MedShare Project — Privacy Engineering Documentation**  
-*Last updated: 2026-02-20*
+*Last updated: 2026-03-05*
 
 ---
 
@@ -22,7 +22,7 @@ MI_attack(f, x, y) → {MEMBER, NON-MEMBER}
 
 ## 2. The Four Major Approaches
 
-### 2.1 Generalization Gap Proxy *(Current Implementation)*
+### 2.1 Generalization Gap Proxy
 
 **Formula:**
 ```
@@ -44,7 +44,7 @@ A model that has memorised its training data will score noticeably higher on tra
 
 ---
 
-### 2.2 AUC-Gap Proxy *(Recommended Upgrade)*
+### 2.2 AUC-Gap Proxy *(Selected Approach)*
 
 **Formula:**
 ```
@@ -199,7 +199,7 @@ Can you run weeks of GPU compute?
 
 ### Implementation location:
 - **`medshare/client.py`** — computes `train_auc` and sends it to the server as a metric
-- **`medshare/utils.py`** — aggregates `train_auc` across hospitals and computes `MI_score = max(0, agg_train_auc - agg_val_auc)`
+- **`medshare/strategy.py`** — aggregates `train_auc` across hospitals and computes `MI_score = max(0, agg_train_auc - agg_val_auc)`
 
 ---
 

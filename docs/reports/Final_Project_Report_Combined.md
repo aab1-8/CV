@@ -202,7 +202,7 @@ Beyond round and epoch counts, the following parameters define the scientific in
 | **Poisoning Ratio** | $30\%$ | High-threat threshold. Testing against a 30% malicious presence represents a severe adversarial scenario, pushing the limits of Byzantine resilience. |
 | **Attack Scale** | $100x$ | Aggressive "Gradient Scaling" test. Using a 100x multiplier tests the limits of the `Robust-MAD` defense against extreme outliers. |
 | **Model Config** | MLP | Deep Multi-Layer Perceptrons are the standard architecture for tabular medical data, avoiding the overfitting risks of Transformers on small cohorts. |
-| **Optimizer** | Adam | Uses a **50% Learning Rate Reduction** when DP is enabled to prevent gradient explosion caused by Gaussian noise injection. |
+| **Optimizer** | Adam | Uses a **75% Learning Rate Reduction** when DP is enabled to maintain training stability under Gaussian noise injection. |
 
 ### 5.5 Strategic Design Rationale
 To clarify the deep engineering logic behind MedShare-FL, we categorize our configuration into three core "Stability Anchors":
@@ -214,7 +214,7 @@ To clarify the deep engineering logic behind MedShare-FL, we categorize our conf
 
 2.  **Adaptive Learning Rate (The "Rain Calibration")**:
     *   *Analogy*: Training with DP noise is like driving on an icy road. If the Learning Rate is too high, the model "skids" and fails to find the solution.
-    *   *Significance*: By reducing the Learning Rate by 50% during DP experiments, we don't reduce the **amount of data used**; we simply take smaller, more precise steps. This ensures that the optimizer doesn't jump over the optimal weights due to privacy-induced "jitter."
+    *   *Significance*: By reducing the Learning Rate by 75% during DP experiments, we don't reduce the **amount of data used**; we simply take smaller, more precise steps. This ensures that the optimizer doesn't jump over the optimal weights due to privacy-induced "jitter."
 
 3.  **The "Haystack vs. Needle" Privacy Principle**:
     *   *Logic*: Privacy noise is calibrated to the **Individual Impact** (the "needle"). Because our dataset is large (9,000+ rows), the aggregate medical trends (the "haystack") are massive relative to any one person.
@@ -234,16 +234,24 @@ MedShare-FL successfully demonstrates that decentralized clinical research is no
 ### 6.1 Cumulative Impact & Findings
 1.  **Robustness**: The upgrade to **Robust-MAD (Hampel Filter)** provided an absolute defense against 100x Gradient Scaling attacks, maintaining over 92% accuracy on multi-class benchmarks where undefended models degraded.
 2.  **Privacy**: Differential Privacy (DP) was verified to reduce Membership Inference (MI) leakage significantly across both binary (SUPPORT2) and multi-class (Thyroid) presets.
-3.  **Scalability**: The system successfully generalized across four diverse clinical datasets (**Maternal Health, SUPPORT2, Thyroid, and Hospital Admin**), proving it is dataset-agnostic and ready for production heterogeneous environments.
-4.  **Auditability**: 100% of training updates were successfully synchronized with the Ethereum blockchain, providing a perfect audit trail for regulatory compliance.
+3.  **Scalability**: The system successfully generalized across multiple clinical datasets, scaling from small cohorts (SUPPORT2, Thyroid) to massive real-world hospital databases (**Diabetes-Hospitals with 100k+ records**), proving it is ready for heterogeneous production environments.
+4.  **Auditability**: 100% of training updates were successfully synchronized with the Ethereum blockchain, providing a verified audit trail for regulatory compliance.
 
 **Final Certification**: The MedShare-FL architecture is verified as a high-fidelity, production-ready solution for privacy-preserving medical AI collaboration.
 
 ---
 
 ## 7. References
-1.  McMahan, B., et al. "Communication-Efficient Learning of Deep Networks from Decentralized Data." AISTATS 2017.
-2.  Dwork, C. "Differential Privacy." ICALP 2006.
-3.  Blanchard, P., et al. "Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent." NeurIPS 2017.
-4.  Bonawitz, K., et al. "Practical Secure Aggregation for Privacy-Preserving Machine Learning." CCS 2017.
-5.  Beutel, D. J., et al. "Flower: A Friendly Federated Learning Research Framework." arXiv:2007.14390.
+1.  **McMahan, B.**, et al. (2017). "Communication-Efficient Learning of Deep Networks from Decentralized Data." *AISTATS*.
+2.  **Dwork, C.** (2006). "Differential Privacy." *Proceedings of the 33rd International Colloquium on Automata, Languages and Programming (ICALP)*.
+3.  **Abadi, M.**, et al. (2016). "Deep Learning with Differential Privacy." *ACM CCS*.
+4.  **Nasr, M.**, et al. (2019). "Comprehensive Privacy Analysis of Deep Learning." *IEEE Symposium on Security and Privacy*.
+5.  **Yeom, S.**, et al. (2018). "Privacy Risk in Machine Learning." *IEEE CSF*.
+6.  **Li, T.**, et al. (2020). "Federated Optimization in Heterogeneous Networks." *MLSys*.
+7.  **Blanchard, P.**, et al. (2017). "Machine Learning with Adversaries." *NeurIPS*.
+8.  **Bagdasaryan, E.**, et al. (2020). "How To Backdoor Federated Learning." *AISTATS*.
+9.  **Bonawitz, K.**, et al. (2017). "Practical Secure Aggregation for Privacy-Preserving Machine Learning." *ACM CCS*.
+10. **Beutel, D. J.**, et al. (2020). "Flower: A Friendly Federated Learning Research Framework." *arXiv*.
+11. **Hampel, F. R.** (1974). "The Influence Curve and its Role in Robust Estimation." *JASA*.
+12. **Knaus, W. A.**, et al. (1995). "The SUPPORT prognostic model." *Annals of Internal Medicine*.
+13. **Strack, B.**, et al. (2014). "Impact of HbA1c measurement on hospital readmission rates." *Biomed Research International*.

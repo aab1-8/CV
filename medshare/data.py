@@ -73,6 +73,11 @@ def fetch_maternal_health():
     repo = fetch_ucirepo(id=863)
     return pd.concat([repo.data.features, repo.data.targets], axis=1)
 
+def fetch_diabetic_retinopathy():
+    from ucimlrepo import fetch_ucirepo
+    repo = fetch_ucirepo(id=329)
+    return pd.concat([repo.data.features, repo.data.targets], axis=1)
+
 def fetch_hospital_admin():
     import kagglehub
     path = kagglehub.dataset_download("devildyno/hospital-patient-records-jan-2021-july-2024")
@@ -149,6 +154,8 @@ def load_tabular_data(config):
     elif source == "stroke_prediction":
         import kagglehub
         df = pd.read_csv(os.path.join(kagglehub.dataset_download("fedesoriano/stroke-prediction-dataset"), "healthcare-dataset-stroke-data.csv"))
+    elif source == "diabetic_retinopathy":
+        df = fetch_diabetic_retinopathy()
     else: df = pd.read_csv(source)
     
     # Normalize column names to lowercase for consistency

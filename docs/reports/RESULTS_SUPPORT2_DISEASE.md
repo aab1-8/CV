@@ -1,6 +1,6 @@
 # Experiment Results: SUPPORT2 Multi-Class (Disease Group)
 **Dataset**: SUPPORT2 (9,105 patients)
-**Task**: 9-Class Disease Group Classification
+**Task**: 5-Class (Consolidated) Disease Group Classification
 **Environment**: Google Colab (15GB VRAM T4 GPU)
 
 ---

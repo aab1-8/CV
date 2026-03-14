@@ -34,13 +34,13 @@ MedShare is a **Privacy-Preserving Federated Learning Marketplace** designed for
 
 ## 🛡️ Privacy & Auditing (Technical Specs)
 
-- **MIA Advantage (Information Leakage)**: Our Privacy Audit plot calculates empirical leakage using the **Membership Advantage metric (Yeom et al., 2018)**. It measures the **Generalization Gap** between Training Accuracy and Testing Accuracy.
+- **MIA Advantage (Information Leakage)**: Our Privacy Audit plot calculates empirical leakage using the **AUC-Gap metric (Nasr et al., 2019)**. It measures the discrepancy between **Training AUC** and **Testing AUC** across the hospital network.
 
 ### 🧠 Understanding the "Generalization Gap"
 In the context of Membership Inference Attacks (MIA), the model acts as a "witness" to the data. If a model behaves differently when it sees data it has been trained on versus new data, it leaks a **Membership Signature**.
 
-*   **Small/No Gap = Low Leakage**: If the model is 80% accurate on training patients AND 80% accurate on strangers, an attacker cannot distinguish between them. The model has learned general medical rules.
-*   **Large Gap = High Leakage**: If the model is 95% accurate on training patients but only 70% on strangers, it has **memorized** specific details. This allows an attacker to identify training participants with high confidence.
+*   **Small/No Gap = Low Leakage**: If the model discriminates equally well on training patients AND strangers, an attacker cannot distinguish between them. The model has learned general medical rules.
+*   **Large Gap = High Leakage**: If the model has a significantly higher AUC on training patients than on strangers, it has **memorized** specific details. This allows an attacker to identify training participants with high confidence.
 
 #### 🏥 A Clinical Example:
 Imagine a model trained to predict a rare lung disease:
@@ -50,11 +50,11 @@ Imagine a model trained to predict a rare lung disease:
 
 - **Noise Multiplier ($\sigma$)**: In the audits, $\sigma$ represents the volume of Gaussian noise added to model updates. Higher $\sigma$ values physically prevent the model from memorizing unique patient details, thereby closing the Generalization Gap.
 
-### 📊 Dataset-Specific Patterns (SUPPORT2)
+### 📊 Dataset-Specific Patterns (Clinical Audits)
 
-1.  **The 0% Baseline Paradox**: In standard federated runs, you may observe 0% leakage for the "No Privacy" baseline. This occurs because the model generalizes exceptionally well across 8 hospitals with low local epochs (1-epoch limit). The model learns general medical patterns without memorizing individual patient "secrets."
-2.  **The Instability Spike ($\sigma=0.1$)**: At very low noise levels, empirical leakage often spikes (e.g., to ~13%). This is not because the model is "less safe" than the baseline, but because the noise causes **generalization instability**. The model loses its ability to handle unseen test data while still attempting to fit training samples.
-3.  **The Privacy Gain Curve**: From $\sigma=0.1$ to $\sigma=1.25$, you will observe a consistent **decrease in leakage**. This is the intended effect of Differential Privacy: as the noise multiplier increases, the "Membership Signature" is erased, forcing the training and testing performance to converge.
+1.  **High Stability Baseline**: In standard federated runs with 5 hospitals, you may observe low baseline leakage without privacy. This occurs because the institutional cohort sizes are sufficient to allow the model to learn general medical patterns without immediate overfitting.
+2.  **The Instability Spike**: At very low noise levels, empirical leakage can occasionally fluctuate. This is not because the model is "less safe", but because the noise causes **generalization jitter**.
+3.  **The Privacy Gain Curve**: As $\sigma$ increases, you will observe a consistent **narrowing of the AUC-Gap**. This is the intended effect of Differential Privacy: it physically erases the "Membership Signature" until the training and testing performance are indistinguishable.
 
 ## 💾 Data Storage
 

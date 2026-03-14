@@ -84,11 +84,16 @@ bxp267/
 
 ## 📈 Available Datasets
 
-- `support2` - SUPPORT2 Clinical Study (mortality & multi-class disease prediction)
-- `cdc_diabetes` - CDC Diabetes Health Indicators (300k+ records)
-- `stroke_prediction` - Stroke Prediction Dataset (with oversampling)
-- `diabetes_hospital` - Diabetes 130-US Hospitals (Multi-site simulation)
-- `hospital_admin` - Synthetic Admin Risk (Multi-class benchmarking)
+- `support2` - SUPPORT2 Clinical Study (mortality)
+- `support2_disease` - SUPPORT2 Multi-class (disease group prediction)
+- `cdc_diabetes_binary` - CDC Diabetes Health Indicators (Binary)
+- `cdc_diabetes_012` - CDC Diabetes Multi-class (0/1/2)
+- `thyroid` - Thyroid Disease (Multi-class)
+- `diabetes_hospital` - Diabetes 130-US Hospitals (Readmission risk)
+- `maternal_health` - Maternal Health Risk (Multi-class)
+- `stroke_prediction` - Stroke Prediction (with SMOTE rebalancing)
+- `admin_billing` - Synthetic Admin Risk (Billing level)
+- `admin_category` - Hospital Administrative Categories
 
 ## 🖥️ Dashboard
 
@@ -102,10 +107,10 @@ Visit `http://localhost:5173` to view training metrics, gas costs, and security 
 
 ## 📚 Documentation
 
-- [**Final Project Report (Master)**](docs/Final_Project_Report_Combined.md)
-- [Architecture Overview](docs/architecture.md)
-- [Configuration Guide](docs/config_guide.md)
-- [Security Trade-offs](docs/secagg_vs_robustness_tradeoff.md)
+- [**Final Project Report (Master)**](docs/reports/Final_Project_Report_Combined.md)
+- [Architecture Overview](docs/architecture/architecture.md)
+- [Configuration Guide](docs/guides/config_guide.md)
+- [Security Trade-offs](docs/security/secagg_vs_robustness_tradeoff.md)
 
 ## 🛠️ Technologies
 
