@@ -492,7 +492,7 @@ def run_experiment(args):
         if os.path.exists(mi_file): os.remove(mi_file)
         
         # Consistent evaluation points
-        noises = adapt["sigmas"]
+        noises = [0] + adapt["sigmas"]
         saved_rounds = args.rounds
         saved_epochs = args.epochs
         # Stability calibration for MI: Default to 30/40 for full audit, 
