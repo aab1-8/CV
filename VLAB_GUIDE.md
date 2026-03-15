@@ -2,20 +2,116 @@
 
 Use this guide to ensure that results from long-running (2.5hr+) vLab experiments are never lost.
 
-## 1. The Startup Sequence
-Before starting any experiment, ensure your environment is ready:
+## 1. Fresh Session Setup (The "One-Shot" Protocol)
+Whenever you start a new vLab instance, copy and paste this **Mega-Command** to restore everything (Libraries, Node 16, GPU, and Blockchain) in one go:
+
 ```bash
+cd ~/bxp267 && \
+source venv/bin/activate && \
+pip install -r requirements.txt && \
+wget -nc https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz && \
+tar -xJf node-v16.20.2-linux-x64.tar.xz --skip-old-files && \
+export PATH=$(pwd)/node-v16.20.2-linux-x64/bin:\$PATH && \
+npm install hardhat@2.19.4 --save-dev && \
+npx hardhat compile && \
+mkdir -p build && cp artifacts/contracts/*/*.json build/ 2>/dev/null && \
+python -c "import torch, flwr; print('✅ System: READY')" && \
+python -c "import torch; print('✅ GPU: ' + torch.cuda.get_device_name(0))" && \
+echo "🚀 VLAB ENVIRONMENT FULLY RESTORED"
+```
+
+---
+
+### Alternate: Step-by-Step Manual Setup
+
+### Step A: Enter Project & Activate
+```bash
+cd ~/bxp267
 source venv/bin/activate
-# Ensure Git knows who you are
+
+# Ensure Git is configured for the session
 git config --global user.email "your-email@example.com"
-git config --global user.name "Bhuvan"
+git config --global user.name "Bh"
+
+# Install dependencies (If fresh session)
+pip install -r requirements.txt
+```
+vLab's default Node is too old. We use Node 16 for stability:
+```bash
+# 1. Download & Extract Node 16 (Only needed once per session)
+wget -nc https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz
+tar -xJf node-v16.20.2-linux-x64.tar.xz
+export PATH=$(pwd)/node-v16.20.2-linux-x64/bin:$PATH
+
+# 2. Sync Configuration (CommonJS for Node 16 compatibility)
+cat <<EOF > hardhat.config.cjs
+module.exports = {
+    solidity: "0.8.20",
+    paths: { sources: "./contracts", artifacts: "./artifacts" }
+};
+EOF
+
+# 3. Build & Sync Artifacts (Creates 'build/' folder for deployment)
+npm install hardhat@2.19.4 --save-dev
+npx hardhat compile
+mkdir -p build
+cp artifacts/contracts/MedShareTask.sol/MedShareTask.json build/
+cp artifacts/contracts/CommitmentRegistry.sol/CommitmentRegistry.json build/
+cp artifacts/contracts/Reputation.sol/Reputation.json build/
+echo "✅ Infrastructure Ready"
+```
+
+## 1.1 System Health Check (The Integrity Protocol)
+Run these commands to verify the vLab environment before launching tests:
+
+### A. Process & Memory Check
+Check for "zombie" processes from previous sessions:
+```bash
+ps aux | grep -E "python|ganache|ray"
+# If old sessions exist, clear them:
+pkill -9 -f "ray|ganache"
+```
+
+### B. Dependency Verification
+Verify Python libraries, GPU acceleration, and Blockchain engine:
+```bash
+# Combined check command
+python -c "import torch, flwr, opacus, web3; print('✅ Python Libraries: OK')" && \
+python -c "import torch; print('✅ GPU Detection: ' + torch.cuda.get_device_name(0))" && \
+npx ganache --version && echo "✅ Blockchain Engine: OK"
+```
+
+## 1.2 Monitoring Progress (The "Live View")
+Use these commands while an experiment is running to ensure it's healthy:
+
+### A. Watch the GPU
+```bash
+# Updates every 1 second (Look for 'python' using memory)
+watch -n 1 nvidia-smi
+```
+
+### B. Watch the Logs
+```bash
+# Stream the audit results as they happen
+tail -f admin_billing_test.log
 ```
 
 ## 2. Running Experiments (Background Mode)
-Use `nohup` so the experiment continues even if your browser/internet crashes:
+Use `nohup` so the experiment continues even if your browser/internet crashes.
+
+### Step A: Start & Deploy Blockchain
 ```bash
-# Example: MI Audit for 100k records
-nohup python federated_survival.py --experiment mi --dataset diabetes_hospital --rounds 30 --epochs 5 --enable_blockchain True --enable_dp True > simulation.log 2>&1 &
+# 1. Start Ganache
+npx ganache --wallet.seed federated --port 8545 --gasLimit 10000000 > ganache.log 2>&1 &
+
+# 2. Deploy Contracts
+python scripts/deploy_colab.py
+```
+
+### Step B: Launch Audit
+```bash
+# Example: MI Audit for Admin Billing
+nohup python federated_survival.py --experiment mi --dataset admin_billing --enable_blockchain True --enable_dp True > admin_billing_test.log 2>&1 &
 ```
 
 ## 3. The "Zero-Loss" Shutdown Sequence (CRITICAL)
@@ -54,4 +150,4 @@ python test/plot_results.py
 ```
 
 ---
-*Created automatically to protect Bhuvan's 100k-record research milestones.*
+*Created automatically to protect Bh's 100k-record research milestones.*
