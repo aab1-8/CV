@@ -52,3 +52,5 @@ cache/
 back_up_plots/
 node-v14.21.3-linux-x64/
 node-v14.21.3-linux-x64.tar.xz
+node-v16.20.2-linux-x64/
+build/*.dbg.json
