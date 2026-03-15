@@ -1,7 +1,2 @@
 timestamp_utc,dataset,noise,rounds,mode,leakage_acc,leakage_auc,accuracy
-2026-03-15T14:28:06Z,Admin-Billing-Risk,0,50,No Privacy (Baseline),0.0733,0.0197,0.9104
-2026-03-15T14:33:02Z,Admin-Billing-Risk,0.05,50,With DP (sigma=0.05),0.0558,0.0131,0.9254
-2026-03-15T14:37:29Z,Admin-Billing-Risk,0.1,50,With DP (sigma=0.1),0.0297,0.0085,0.9254
-2026-03-15T14:41:56Z,Admin-Billing-Risk,0.2,50,With DP (sigma=0.2),0.0184,0.0049,0.9254
-2026-03-15T14:47:25Z,Admin-Billing-Risk,0.3,50,With DP (sigma=0.3),0.0084,0.0042,0.9303
-2026-03-15T14:52:54Z,Admin-Billing-Risk,0.5,50,With DP (sigma=0.5),0.0258,0.0054,0.9154
+2026-03-15T22:54:48Z,Thyroid,0,100,No Privacy (Baseline),0.0049,0.0018,0.9944
