@@ -1,6 +1,7 @@
 timestamp_utc,dataset,attack,defense,rounds,accuracy
-2026-03-16T14:54:20Z,Thyroid,None,FedAvg,100,0.7920
-2026-03-16T15:03:26Z,Thyroid,None,Robust-MAD,100,0.7942
-2026-03-16T15:11:59Z,Thyroid,label_flip,FedAvg,100,0.7706
-2026-03-16T15:21:26Z,Thyroid,label_flip,Robust-MAD,100,0.7661
-2026-03-16T15:35:50Z,Thyroid,gradient_scale,Robust-MAD,100,0.7935
+2026-03-16T16:58:50Z,SUPPORT2-Death,None,FedAvg,20,0.6750
+2026-03-16T17:01:10Z,SUPPORT2-Death,None,Robust-MAD,20,0.6829
+2026-03-16T17:04:24Z,SUPPORT2-Death,label_flip,FedAvg,20,0.6896
+2026-03-16T17:07:14Z,SUPPORT2-Death,label_flip,Robust-MAD,20,0.7005
+2026-03-16T17:09:28Z,SUPPORT2-Death,gradient_scale,FedAvg,20,0.6902
+2026-03-16T17:11:20Z,SUPPORT2-Death,gradient_scale,Robust-MAD,20,0.6610
