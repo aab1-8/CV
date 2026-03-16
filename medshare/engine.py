@@ -38,7 +38,7 @@ def train(net, trainloader, epochs, privacy_engine=None, num_classes=1, noise_mu
                 if num_classes == 1:
                     # Precise shape sync for BCELoss
                     loss_y = labels.view(-1).float()
-                    loss_out = outputs.view(-1).clamp(1e-7, 1.0 - 1e-7)
+                    loss_out = outputs.view(-1).nan_to_num(0.5).clamp(1e-7, 1.0 - 1e-7)
                     base_loss = criterion(loss_out, loss_y)
                 else:
                     base_loss = criterion(outputs, labels.long().view(-1))

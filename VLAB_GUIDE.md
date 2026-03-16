@@ -6,7 +6,7 @@ Use this guide to ensure that results from long-running (2.5hr+) vLab experiment
 Whenever you start a new vLab instance, copy and paste this **Mega-Command** to restore everything (Libraries, Node 16, GPU, and Blockchain) in one go:
 
 ```bash
-cd ~/bxp267 && \
+cd /jupyter/work/bxp267 && \
 source venv/bin/activate && \
 pip install -r requirements.txt && \
 wget -nc https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz && \
@@ -108,10 +108,28 @@ npx ganache --wallet.seed federated --port 8545 --gasLimit 10000000 > ganache.lo
 python scripts/deploy_colab.py
 ```
 
-### Step B: Launch Audit
+### Step B: Launch Audit (Single Category)
 ```bash
 # Example: MI Audit for Admin Billing
-nohup python federated_survival.py --experiment mi --dataset admin_billing --enable_blockchain True --enable_dp True > admin_billing_test.log 2>&1 &
+nohup python federated_survival.py --experiment mi --dataset admin_billing --enable_blockchain True --enable_dp True > admin_billing_mi.log 2>&1 &
+```
+
+## 2.1 The "Master Dataset Audit" (Full 5-Test Suite)
+Use this command to run **everything** (MI, DP, Robustness, Latency, and Plotting) in one go. Ideal for finalizing a dataset for your report.
+
+```bash
+# 1. Reset & Start Blockchain
+pkill -9 -f "ganache"
+npx ganache --wallet.seed federated --port 8545 --gasLimit 10000000 > ganache.log 2>&1 &
+sleep 5 && python scripts/deploy_colab.py
+
+# 2. Launch Sequentially (approx 2-3 hours)
+nohup bash -c " \
+python federated_survival.py --experiment mi --dataset admin_billing --enable_blockchain True --enable_dp True && \
+python federated_survival.py --experiment dp --dataset admin_billing --enable_blockchain True && \
+python federated_survival.py --experiment robustness --dataset admin_billing --enable_blockchain True && \
+python federated_survival.py --experiment latency --dataset admin_billing --enable_blockchain True && \
+python test/plot_results.py " > full_audit.log 2>&1 &
 ```
 
 ## 3. The "Zero-Loss" Shutdown Sequence (CRITICAL)

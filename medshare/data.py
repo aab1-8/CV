@@ -43,7 +43,7 @@ def fetch_thyroid():
 
     def read_url(url):
         with urllib.request.urlopen(url, context=ssl_ctx) as resp:
-            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep=r"\s+", header=None)
+            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep="\s+", header=None)
 
     train_df = read_url(f"{base_url}ann-train.data")
     test_df  = read_url(f"{base_url}ann-test.data")
@@ -261,7 +261,8 @@ def load_tabular_data(config):
     num_cols = df.select_dtypes(include=[np.number]).columns
     cat_cols = df.select_dtypes(exclude=[np.number]).columns
     
-    df[num_cols] = df[num_cols].fillna(df[num_cols].median())
+    medians = df[num_cols].median().fillna(0)
+    df[num_cols] = df[num_cols].fillna(medians)
     df[cat_cols] = df[cat_cols].fillna("Unknown")
     
     # Final safety: any column still entirely NaN (no median) gets zeros
