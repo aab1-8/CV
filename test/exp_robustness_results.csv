@@ -1,6 +1,6 @@
 timestamp_utc,dataset,attack,defense,rounds,accuracy
-2026-03-15T15:06:22Z,Admin-Billing-Risk,None,FedAvg,50,0.9208
-2026-03-15T15:08:42Z,Admin-Billing-Risk,None,Robust-MAD,50,0.9208
-2026-03-15T15:10:50Z,Admin-Billing-Risk,label_flip,FedAvg,50,0.9109
-2026-03-15T15:13:09Z,Admin-Billing-Risk,label_flip,Robust-MAD,50,0.9208
-2026-03-15T15:17:33Z,Admin-Billing-Risk,gradient_scale,Robust-MAD,50,0.5891
+2026-03-16T14:54:20Z,Thyroid,None,FedAvg,100,0.7920
+2026-03-16T15:03:26Z,Thyroid,None,Robust-MAD,100,0.7942
+2026-03-16T15:11:59Z,Thyroid,label_flip,FedAvg,100,0.7706
+2026-03-16T15:21:26Z,Thyroid,label_flip,Robust-MAD,100,0.7661
+2026-03-16T15:35:50Z,Thyroid,gradient_scale,Robust-MAD,100,0.7935
