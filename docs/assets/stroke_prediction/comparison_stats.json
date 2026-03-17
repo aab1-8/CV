@@ -1,0 +1,27 @@
+{
+  "dataset_name": "Stroke",
+  "reputation": {
+    "Hospital_3": 30,
+    "Hospital_2": 127,
+    "Hospital_4": 128,
+    "Hospital_5": 128,
+    "Hospital_1": 129
+  },
+  "local_accuracy": 0.8477179816702363,
+  "local_auc": 0.9261214667772546,
+  "centralized_accuracy": 0.8868894601542416,
+  "centralized_auc": 0.9569176271544888,
+  "federated_accuracy": 0.8449711723254324,
+  "federated_auc": 0.9288584811465844,
+  "improvement_local_fed": -0.32402395657479194,
+  "security": {
+    "dp_enabled": true,
+    "epsilon": 7.53230607327611,
+    "delta": "1e-5",
+    "leakage_acc": 0.005486567008047505,
+    "leakage_auc": 0.005111400039695346,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "None"
+  }
+}
