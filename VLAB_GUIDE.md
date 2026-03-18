@@ -1,7 +1,5 @@
 # vLab High-Performance Execution Guide (Zero-Loss Protocol)
 
-Use this guide to ensure that results from long-running (2.5hr+) vLab experiments are never lost.
-
 ## 1. Fresh Session Setup (The "One-Shot" Protocol)
 Whenever you start a new vLab instance, copy and paste this **Mega-Command** to restore everything (Libraries, Node 16, GPU, and Blockchain) in one go:
 
@@ -11,7 +9,7 @@ source venv/bin/activate && \
 pip install -r requirements.txt && \
 wget -nc https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz && \
 tar -xJf node-v16.20.2-linux-x64.tar.xz --skip-old-files && \
-export PATH=$(pwd)/node-v16.20.2-linux-x64/bin:\$PATH && \
+export PATH=$(pwd)/node-v16.20.2-linux-x64/bin:$PATH && \
 npm install hardhat@2.19.4 --save-dev && \
 npx hardhat compile && \
 mkdir -p build && cp artifacts/contracts/*/*.json build/ 2>/dev/null && \
@@ -67,7 +65,7 @@ Run these commands to verify the vLab environment before launching tests:
 ### A. Process & Memory Check
 Check for "zombie" processes from previous sessions:
 ```bash
-ps aux | grep -E "python|ganache|ray"
+ps aux | grep -E "ganache|node|ray"
 # If old sessions exist, clear them:
 pkill -9 -f "ray|ganache"
 ```

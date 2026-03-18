@@ -44,10 +44,10 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
         if self.enable_dp:
             from opacus import PrivacyEngine
             pe = PrivacyEngine(accountant="rdp")
-        
+        lr_val = config.get("learning_rate", 0.001)
         eps, train_loss = train(self.net, self.trainloader, epochs=self.local_epochs, privacy_engine=pe, 
                               num_classes=self.num_classes, noise_multiplier=self.noise_multiplier, 
-                              max_grad_norm=self.max_grad_norm, device=self.device)
+                              max_grad_norm=self.max_grad_norm, lr=lr_val, device=self.device)
         
         # Weights must be on CPU for serialization back to server
         weights = get_parameters(self.net.cpu())

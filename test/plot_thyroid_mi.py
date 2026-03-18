@@ -8,7 +8,14 @@ import numpy as np
 df = pd.read_csv("test/exp_mi_results.csv").dropna()
 print(df)
 
-labels = df["Mode"]
+# Normalize column names to lowercase for robustness
+df.columns = [c.lower() for c in df.columns]
+
+# Filter for Thyroid dataset only (utils.py logs display_name which is 'Thyroid')
+if 'dataset' in df.columns:
+    df = df[df['dataset'].str.lower() == 'thyroid']
+
+labels = df["mode"] if "mode" in df.columns else df["Mode"]
 accuracy = df["accuracy"] * 100
 leakage_auc = df["leakage_auc"] * 100
 

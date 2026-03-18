@@ -292,6 +292,7 @@ def run_simulation(args, config):
         "experiment": args.experiment,
         "total_rounds": exec_rounds,
         "dataset_name": config.get("display_name", "unknown"),
+        "learning_rate": config.get("learning_rate", 0.001),
     }
     
     strategy.on_fit_config_fn = common_config
@@ -498,11 +499,14 @@ def run_experiment(args):
         # Stability calibration for MI: Default to 30/40 for full audit, 
         # but respect user if they pass explicit non-default values.
         if num_records > 50000:
-            config["batch_size"] = adapt["batch_size"] # Keep high performance for CDC
+            config["batch_size"] = adapt["batch_size"]
         else:
-            config["batch_size"] = 128
+            config["batch_size"] = args.batch_size if args.batch_size else 128
+            
+        if args.lr:
+            config["learning_rate"] = args.lr
         
-        if args.rounds == 3: # If user didn't specify, use adaptive or default high-precision
+        if args.rounds == 3:
             args.rounds = adapt["rounds"]
         
         if args.epochs == 1: # If user didn't specify, use high-intensity for audit
@@ -561,6 +565,8 @@ if __name__ == "__main__":
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--sample_size", type=int, default=None)
+    parser.add_argument("--batch_size", type=int, default=None)
+    parser.add_argument("--lr", type=float, default=None)
     def str_to_bool(v):
         if isinstance(v, bool): return v
         if v.lower() in ('yes', 'true', 't', 'y', '1'): return True

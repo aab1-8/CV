@@ -1,5 +1,12 @@
 # Problem Resolution & Technical Debugging Log
 
+## 🟢 2026-03-18: vLab PATH Corruption Fix
+*   **The Problem**: The user encountered `bash: ls: command not found` and `npm ERR! code ENOENT` after running the environment setup. This happened because the "Mega-Command" in the guide incorrectly escaped the search path (`\$PATH`), causing the shell to lose all system command locations.
+*   **The Solution**: 
+    1.  Restored the session PATH manually: `export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin`.
+    2.  Fixed the `VLAB_GUIDE.md` (Line 12) to use `$PATH` properly.
+*   **Verification**: All system tools (`ls`, `cat`, `hardhat`) are now functional in the interactive terminal.
+
 This document chronicles the technical challenges encountered during the setup of the 253,680-record CDC Diabetes audit on the vLab GPU environment and the specific engineering solutions implemented to resolve them.
 
 ## 1. Environment: Incompatible System Libraries (Glibc Error)
