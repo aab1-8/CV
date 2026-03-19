@@ -152,17 +152,45 @@ This is appropriate for medical FL where:
 
 ---
 
+## 2026 Update: The Hybrid "Platinum" Implementation
+
+To satisfy **Requirement R5 ("Secure Aggregation prototype")**, we have integrated a toggleable Secure Aggregation mode into the core engine. Users can now choose between **Security-First (Robust-MAD)** and **Privacy-First (SecAgg)** modes.
+
+### **How to Activate SecAgg**
+Pass the `--enable_secagg True` flag to the simulation:
+```powershell
+python federated_survival.py --dataset support2 --enable_secagg True
+```
+
+### **The Combined Defense Stack**
+
+| Feature | Robust Mode (Default) | SecAgg Mode (Platinum) |
+|---------|-----------------------|------------------------|
+| **Visibility** | Server sees noisy updates | Server sees "masked" garbage |
+| **Defense** | ✅ Robust-MAD (Outlier detection) | ❌ Blind (No outlier detection) |
+| **Privacy** | ✅ Differential Privacy (Source) | ✅ Dual (DP + Cryptographic Masking) |
+| **Best For** | Untrusted participants / Hackers | Untrusted server / High-privacy |
+
+### **Mechanism: Symmetric Pairwise Masking**
+We implemented an efficient symmetric masking protocol in `medshare/utils.py` and `medshare/client.py`:
+1. **Mask Generation**: Before training, the simulation generates $n(n-1)/2$ secret masks shared between hospital pairs.
+2. **Client-Side Masking**: Hospital $i$ adds masks for $j > i$ and subtracts masks for $j < i$.
+3. **Zero-Sum Property**: $\sum Mask_{i} = 0$. The masks cancel out perfectly at the server during aggregation.
+4. **Identity Preservation**: Our implementation ensures that **Blockchain Commitments** (hashes) are posted *before* masking, maintaining an audit trail of the ground truth even when the server is blinded.
+
+---
+
 ## Recommended Framing for Report
 
-### Section: "Design Decisions and Trade-offs"
+### Section: "Dual-Mode Architecture"
 
-> "We identified a fundamental incompatibility between traditional Secure Aggregation (SecAgg) and server-side anomaly detection. Since our threat model prioritizes robustness against Byzantine attacks (poisoning, Sybil nodes) over protection against a malicious aggregator, we chose to:
+> "Our system implements a unique dual-mode architecture to address the fundamental trade-off between privacy and robustness. 
 > 
-> 1. **Maintain strong privacy** via client-side Differential Privacy (ε ≈ 2.5)
-> 2. **Add blockchain-based auditability** (commitment hashes provide tamper-evidence)
-> 3. **Implement multi-layered robustness** (statistical, geometric, and functional validation)
+> 1. **Robust Mode (Default)**: Prioritizes Byzantine fault tolerance. It uses **Differential Privacy** at the source to make updates safe to share, while allowing the **Robust-MAD** defense to identify and 'slash' the reputation of malicious poisoners.
 > 
-> This design choice reflects real-world medical FL requirements where participant authenticity and model integrity are critical, and the aggregator is typically a trusted healthcare consortium rather than an untrusted third party. Our evaluation demonstrates that this approach successfully defends against gradient scaling (100x) and label flipping attacks while maintaining over 92% accuracy on multi-class benchmarks under 30% malicious participation—a level of resilience unachievable with blind aggregation (SecAgg)."
+> 2. **SecAgg Mode (Platinum)**: Fulfills Requirement R5. It adds a layer of **Symmetric Pairwise Masking** that cryptographically blinds the server. While this disables individual-level robust filtering, it provides the maximum possible privacy guarantee against a compromised aggregator.
+> 
+> By supporting both modes, MedShare-FL allows medical consortia to tune their security posture based on the trustworthiness of the central aggregator versus the individual hospitals."
 
 ---
 

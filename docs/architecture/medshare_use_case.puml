@@ -43,7 +43,7 @@ note right of U4
 end note
 
 note right of U7
-  FedTrimmedAvg / Krum
+  Robust-MAD Defense
   detects high norms
 end note
 

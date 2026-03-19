@@ -43,8 +43,8 @@ SERVER -> STRAT : aggregate_fit(results)
 activate STRAT
 
 STRAT -> STRAT : Calculate Norms
-STRAT -> STRAT : Defend (Trim Outliers / Krum)
-note right: "Drops malicious updates (e.g. Label Flip)"
+STRAT -> STRAT : Robust-MAD Defense
+note right: "Drops malicious updates (e.g. Robust-MAD)"
 
 STRAT -> CHAIN : postFinalModel(global_hash)
 CHAIN -> CONTRACT : Log Final Round Hash

@@ -1,0 +1,58 @@
+[
+  {
+    "Hospital": "COPD",
+    "Accuracy": 0.7083333333333334,
+    "AUC-ROC": 0.71875,
+    "Samples": 116,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "CHF",
+    "Accuracy": 0.53125,
+    "AUC-ROC": 0.6078431372549019,
+    "Samples": 160,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "ARF/MOSF w/Sepsis",
+    "Accuracy": 0.7272727272727273,
+    "AUC-ROC": 0.824793388429752,
+    "Samples": 381,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Lung Cancer",
+    "Accuracy": 0.9090909090909091,
+    "AUC-ROC": 0.45,
+    "Samples": 107,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Colon Cancer",
+    "Accuracy": 0.8333333333333334,
+    "AUC-ROC": 0.44999999999999996,
+    "Samples": 56,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Coma",
+    "Accuracy": 0.7142857142857143,
+    "AUC-ROC": 0.825,
+    "Samples": 66,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "MOSF w/Malig",
+    "Accuracy": 0.8666666666666667,
+    "AUC-ROC": 0.19230769230769232,
+    "Samples": 74,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Cirrhosis",
+    "Accuracy": 0.5,
+    "AUC-ROC": 0.5625,
+    "Samples": 40,
+    "Type": "Local Baseline"
+  }
+]

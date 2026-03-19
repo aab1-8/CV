@@ -53,7 +53,7 @@ end note
 
 note right of STRAT
   Filters malicious updates
-  (Trimmed Mean Defense)
+  (Robust-MAD Defense)
 end note
 
 @enduml

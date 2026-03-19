@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from .models import get_parameters, set_parameters
 from .engine import train, test
 from .blockchain import BlockchainManager
+import numpy as np
 
 class FlowerSurvivalClient(flwr.client.NumPyClient):
     def __init__(self, net, trainloader, valloader, num_classes=1, mask_add=None, mask_sub=None, is_malicious=False, client_id=0, task_id=0, attack_type="label_flip", enable_dp=False, noise_multiplier=1.0, max_grad_norm=1.5, attack_scale_factor=100.0, local_epochs=1, enable_blockchain=False, node_name=None):
@@ -65,6 +66,13 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
         
         if self.is_malicious and self.attack_type == "gradient_scale":
             weights = [w * self.attack_scale_factor for w in weights]
+        
+        # Apply Secure Aggregation - Pairwise Masking
+        # This obscures individual updates while maintaining the same global sum
+        if self.mask_add is not None:
+            weights = [float(w) + float(m) if np.isscalar(w) else w + m for w, m in zip(weights, self.mask_add)]
+        if self.mask_sub is not None:
+            weights = [float(w) - float(m) if np.isscalar(w) else w - m for w, m in zip(weights, self.mask_sub)]
         
         # Calculate training and validation metrics
         _, train_acc, train_auc = test(self.net, self.trainloader, num_classes=self.num_classes, device=self.device)

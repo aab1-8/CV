@@ -7,7 +7,7 @@ from flwr.server import ServerApp, ServerConfig, ServerAppComponents
 from flwr.client import ClientApp
 from medshare.models import SurvivalMLP, get_parameters
 from medshare.data import load_tabular_data, create_dataloaders, get_data_cached
-from medshare.utils import weighted_average, reset_logging
+from medshare.utils import weighted_average, reset_logging, generate_pairwise_masks
 from medshare.client import FlowerSurvivalClient
 from medshare.strategy import AnomalyMonitoringStrategy
 from medshare.blockchain import BlockchainManager
@@ -251,6 +251,13 @@ def run_simulation(args, config):
         }
     )
 
+    # SECURE AGGREGATION: Generate Pairwise Masks
+    # This fulfills R5: Secure aggregation prototype
+    mask_add_list, mask_sub_list = None, None
+    if config.get("enable_secagg", False) or args.enable_secagg:
+        print(f"[SEC-AGG] Initializing Pairwise Masking for {len(names)} hospitals...")
+        mask_add_list, mask_sub_list = generate_pairwise_masks(len(names), SurvivalMLP(dim, classes))
+
     def client_fn(context: Context):
         # Use node_id as p_id if partition-id is missing (common in local simulation)
         p_id = int(context.node_config.get("partition-id", context.node_id))
@@ -266,6 +273,8 @@ def run_simulation(args, config):
             create_dataloaders(tr_X, tr_y, batch_size=bs), 
             create_dataloaders(te_X, te_y, batch_size=bs), 
             num_classes=classes, 
+            mask_add=mask_add_list[p_id] if mask_add_list else None,
+            mask_sub=mask_sub_list[p_id] if mask_sub_list else None,
             # Malicious detection based on ORIGINAL index to maintain attack consistency
             is_malicious=(orig_idx < int(len(original_names)*0.2)) and (config.get("attack_type", "None") != "None"), 
             client_id=orig_idx, 
@@ -467,7 +476,7 @@ def run_experiment(args):
     X_peek, _, _, _, _ = get_data_cached(config)
     num_records = len(X_peek)
     adapt = get_adaptive_experiment_config(num_records)
-    config["batch_size"] = adapt["batch_size"]
+    config["batch_size"] = args.batch_size if getattr(args, "batch_size", None) is not None else adapt["batch_size"]
     config["rounds"] = adapt["rounds"]
     config["epochs"] = adapt["epochs"]
     print(f"[Experiment] Dataset: {config['display_name']} ({num_records} rows)")
@@ -578,5 +587,6 @@ if __name__ == "__main__":
     parser.add_argument("--enable_blockchain", type=str_to_bool, nargs='?', const=True, default=False)
     parser.add_argument("--sigma", type=float, default=1.0)
     parser.add_argument("--enable_dp", type=str_to_bool, nargs='?', const=True, default=False)
+    parser.add_argument("--enable_secagg", type=str_to_bool, nargs='?', const=True, default=False)
     args = parser.parse_args()
     run_experiment(args)

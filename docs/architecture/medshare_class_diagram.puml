@@ -3,7 +3,7 @@
 title MedShare Class Diagram
 
 ' --- Python Components ---
-package "federated_survival.py" {
+package "medshare/client.py" {
     class SurvivalMLP {
         +input_dim: int
         +num_classes: int
@@ -70,7 +70,7 @@ AnomalyMonitoringStrategy --> MedShareBlockchain : "Logs Final Model"
 WeightCaptureWrapper --> AnomalyMonitoringStrategy : "Wraps"
 MedShareBlockchain --> CommitmentRegistry : "Calls (RPC)"
 MedShareBlockchain --> MedShareTask : "Calls (RPC)"
-AnomalyMonitoringStrategy --|> flwr.server.strategy.FedTrimmedAvg : "Inherits"
+AnomalyMonitoringStrategy --|> flwr.server.strategy.FedAvg : "Inherits"
 FlowerSurvivalClient --|> flwr.client.NumPyClient : "Inherits"
 
 @enduml

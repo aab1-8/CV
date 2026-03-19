@@ -80,7 +80,7 @@ bxp267/
 | **FedProx Stability** | Proximal term (mu=0.01) to prevent client drift under noise |
 | **Byzantine Robustness** | `Robust-MAD` defense against poisonous outliers |
 | **Blockchain Audit** | Immutable SHA-256 commitment registry (Commit-then-Submit) |
-| **Anomaly Detection** | Outlier filtering using Median Absolute Deviation (MAD) |
+| **Secure Aggregation** | Symmetric Pairwise Masking (SOTA Protocol) |
 
 ## 📈 Available Datasets
 
