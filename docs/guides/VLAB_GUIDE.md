@@ -9,8 +9,11 @@ source venv/bin/activate && \
 pip install -r requirements.txt && \
 wget -nc https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz && \
 tar -xJf node-v16.20.2-linux-x64.tar.xz --skip-old-files && \
+
 export PATH=$(pwd)/node-v16.20.2-linux-x64/bin:$PATH && \
+
 npm install hardhat@2.19.4 --save-dev && \
+
 npx hardhat compile && \
 mkdir -p build && cp artifacts/contracts/*/*.json build/ 2>/dev/null && \
 python -c "import torch, flwr; print('✅ System: READY')" && \

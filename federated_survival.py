@@ -162,6 +162,7 @@ def get_adaptive_experiment_config(num_records):
 def run_simulation(args, config):
     reset_logging()
     if args.sample_size: config["sample_size"] = args.sample_size
+    if hasattr(args, "heterogeneity"): config["heterogeneity"] = args.heterogeneity
     X, y, parts, dim, classes = get_data_cached(config)
     
     # Calculate REAL Centralized Baseline
@@ -588,5 +589,6 @@ if __name__ == "__main__":
     parser.add_argument("--sigma", type=float, default=1.0)
     parser.add_argument("--enable_dp", type=str_to_bool, nargs='?', const=True, default=False)
     parser.add_argument("--enable_secagg", type=str_to_bool, nargs='?', const=True, default=False)
+    parser.add_argument("--heterogeneity", default="none", choices=["none", "label", "feature"])
     args = parser.parse_args()
     run_experiment(args)

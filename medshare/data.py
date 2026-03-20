@@ -268,14 +268,34 @@ def load_tabular_data(config):
     # Final safety: any column still entirely NaN (no median) gets zeros
     df = df.fillna(0)
     
-    # 3. Handle Partition Column
+    # 3. Handle Partition Column & Heterogeneity Skew
+    het = config.get("heterogeneity", "none").lower()
+    num_parts = config.get("NUM_PARTITIONS", 5)
+    
+    if het == "label":
+        df = df.sort_values(by=target).reset_index(drop=True)
+        print(f"[Heterogeneity] Applied Label Skew (Sorted by '{target}')")
+    elif het == "feature":
+        # Sort by the first numeric feature that isn't the target
+        feat_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target]
+        if feat_cols:
+            df = df.sort_values(by=feat_cols[0]).reset_index(drop=True)
+            print(f"[Heterogeneity] Applied Feature Skew (Sorted by '{feat_cols[0]}')")
+
     partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None
     if partition_col and partition_col in df.columns:
         parts = df[partition_col].astype(str)
         df = df.drop(columns=[partition_col])
         if partition_col in cat_cols: cat_cols = cat_cols.drop(partition_col)
     else:
-        parts = pd.Series([f"Hospital_{i+1}" for i in np.random.randint(0, config.get("NUM_PARTITIONS", 5), len(df))], index=df.index)
+        # If heterogeneity is active or we want deterministic IID, split sequentially
+        if het != "none":
+            indices = np.arange(len(df))
+            parts_arr = np.array([f"Hospital_{(i * num_parts // len(df)) + 1}" for i in indices])
+            parts = pd.Series(parts_arr, index=df.index)
+        else:
+            # Traditional Random IID
+            parts = pd.Series([f"Hospital_{i+1}" for i in np.random.randint(0, num_parts, len(df))], index=df.index)
     
     # Label encode target if it is categorical or not 0-indexed
     # Drop rows where target is NaN (useless for training)
@@ -316,7 +336,7 @@ _DATA_CACHE = {}
 
 def get_data_cached(config):
     """Prevents redundant disk I/O and SMOTE execution during sweeps."""
-    cache_key = f"{config.get('DATA_SOURCE')}_{config.get('TARGET_COLUMN')}_{config.get('sample_size')}_{config.get('apply_rebalancing')}"
+    cache_key = f"{config.get('DATA_SOURCE')}_{config.get('TARGET_COLUMN')}_{config.get('sample_size')}_{config.get('apply_rebalancing')}_{config.get('heterogeneity', 'none')}"
     if cache_key in _DATA_CACHE:
         return _DATA_CACHE[cache_key]
     
