@@ -1,2 +1,6 @@
-Mode,leakage_acc,leakage_auc,accuracy
-CDC Master Audit (sigma=1.0),0.0042,0.0047,0.5472
+timestamp_utc,dataset,noise,rounds,mode,leakage_acc,leakage_auc,accuracy
+2026-03-21T21:36:43Z,Diabetes-Hospitals,0,60,No Privacy (Baseline),0.1219,0.1148,0.5237
+2026-03-21T22:02:51Z,Diabetes-Hospitals,0.5,60,With DP (sigma=0.5),0.0186,0.0235,0.4261
+2026-03-21T22:20:17Z,Diabetes-Hospitals,1.0,60,With DP (sigma=1.0),0.0139,0.0153,0.4124
+2026-03-21T22:35:52Z,Diabetes-Hospitals,2.0,60,With DP (sigma=2.0),0.0057,0.0074,0.4102
+2026-03-21T22:51:46Z,Diabetes-Hospitals,5.0,60,With DP (sigma=5.0),0.0042,0.0038,0.3887
