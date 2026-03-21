@@ -18,6 +18,7 @@ This document provides a comprehensive overview of all datasets currently integr
 | **`admin_category`** | Admin-Category | **Multi-class (4)** | 1,000 | Care Type (Emergency/Infectious/Chronic/Specialized) | Kaggle |
 | **`diabetes_hospital`** | Diabetes-Hospitals | **Multi-class** | 101,766 | Readmission (<30, >30, NO) | UCI #296 |
 | **`support2_disease`** | SUPPORT2-Disease | **Multi-class** | 9,105 | Disease Category | UCI #880 |
+| **`diabetic_retinopathy`** | Retinopathy | **Binary** | 1,151 | Signs of DR (0/1) | UCI #329 |
 
 ---
 
@@ -37,6 +38,7 @@ This section details the **raw, unbalanced population counts** for each dataset 
 | **Admin-Category** | 1,000 | **Infectious:** 313 | **Specialized:** 287 | **Chronic:** 228 | **Emergency:** 172 |
 | **Diabetes-Hospitals** | 101,766 | **NO:** 54,864 | **>30 Days:** 35,545 | **<30 Days:** 11,357 |
 | **SUPPORT2-Disease** | 9,105 | **Sepsis:** 3,515 | **Cancer:** 2,132 | **CHF:** 1,387 | **COPD:** 967 | **Other:** 1,104 |
+| **Retinopathy** | 1,151 | **Signs Present:** 611 (53.1%) | **No Signs:** 540 (46.9%) |
 
 ---
 
@@ -66,6 +68,11 @@ This section details the **raw, unbalanced population counts** for each dataset 
 ### 5. Thyroid Disease
 *   **Role**: Classical medical classification.
 *   **Target**: Identifies thyroid dysfunction state (hypothyroid, hyperthyroid, or normal).
+
+### 6. Diabetic Retinopathy Debrecen
+*   **Role**: Binary medical classification on image-extracted features.
+*   **Target**: Predicts the presence of signs of diabetic retinopathy (0/1).
+*   **Size**: Contains **1,151** records with 19 attributes.
 
 ---
 
@@ -156,3 +163,11 @@ You can optionally add an access date: “Accessed: Feb. 16, 2026.”
  R. Patil, “Hospital Patient Records July 2021–July 2024,” Kaggle. [Online]. Available: https://www.kaggle.com/datasets/devildyno/hospital-patient-records-jan-2021-july-2024 [unidata](https://unidata.pro/blog/best-free-healthcare-ml-datasets/)
 
 The “Hospital Patient Records July 2021–July 2024” dataset is © original authors and is used under the MIT License. See LICENSE_hospital_records.txt for details.
+
+***
+
+### Diabetic Retinopathy Debrecen (`diabetic_retinopathy`)
+
+ B. Antal and A. Hajdu, “Extraction of Multiple Features from Color Fundus Images and Hierarchical Classification of Diabetic Retinopathy,” *IEEE Trans. Biomed. Eng.*, vol. 59, no. 11, pp. 3131–3139, 2012.
+
+ “Diabetic Retinopathy Debrecen,” UCI Machine Learning Repository, Univ. of California, Irvine. [Online]. Available: https://archive.ics.uci.edu/dataset/329/diabetic+retinopathy+debrecen+data+set
