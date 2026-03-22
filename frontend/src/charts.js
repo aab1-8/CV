@@ -1,21 +1,55 @@
 import Chart from 'chart.js/auto';
-Chart.defaults.color = '#c9d1d9'; Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.color = '#c9d1d9';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+
+const chartInstances = {};
+
+const renderWithCleanup = (id, config) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    if (chartInstances[id]) {
+        chartInstances[id].destroy();
+        delete chartInstances[id];
+    }
+    chartInstances[id] = new Chart(canvas, config);
+};
 
 export const renderSecurityAudit = (s) => {
-    const c = document.getElementById('security-grid'); if (!c || !s) return;
-    const card = (t, v, sub, col, i) => `<div class="card" style="padding:1.25rem; border-left:3px solid ${col};"><div style="display:flex; justify-content:space-between;"><b>${t}</b><span>${i}</span></div><div style="font-size:1.5rem; color:${col};">${v}</div><small>${sub}</small></div>`;
-    c.innerHTML = [card("Privacy", s.dp_enabled ? "ε=" + s.epsilon : "Off", s.dp_enabled ? "Delta:" + s.delta : "No DP", s.dp_enabled ? 'var(--accent-green)' : '#f78166', "🛡️"), card("Aggregator", s.defense_type, "Robust Aggregation", 'var(--accent-green)', "⚙️"), card("Security", s.attack_simulated ? "Defended" : "Stable", s.attack_simulated ? "Type:" + s.attack_type : "No Attacks", s.attack_simulated ? 'var(--accent-green)' : 'var(--text-secondary)', "🛡️")].join('');
+    const c = document.getElementById('security-grid');
+    if (!c || !s) return;
+    const card = (t, v, sub, col, i) => `
+        <div class="card" style="padding:1.25rem; border-left:3px solid ${col};">
+            <div style="display:flex; justify-content:space-between;"><b>${t}</b><span>${i}</span></div>
+            <div style="font-size:1.5rem; color:${col};">${v}</div>
+            <small>${sub}</small>
+        </div>`;
+
+    c.innerHTML = [
+        card("Privacy", s.dp_enabled ? "ε=" + parseFloat(s.epsilon).toFixed(2) : "Off", s.dp_enabled ? "Delta:" + s.delta : "No DP", s.dp_enabled ? 'var(--accent-green)' : '#f78166', "🛡️"),
+        card("Aggregator", s.defense_type, "Robust Aggregation", 'var(--accent-green)', "⚙️"),
+        card("Security", s.attack_simulated ? "Defended" : "Stable", s.attack_simulated ? "Type:" + s.attack_type : "No Attacks", s.attack_simulated ? 'var(--accent-green)' : 'var(--text-secondary)', "🛡️")
+    ].join('');
 };
 
 export const renderDistributionChart = (d) => {
-    const ctx = document.getElementById('distribution-chart')?.getContext('2d'); if (!ctx) return;
-    new Chart(ctx, { type: 'bar', data: { labels: d.map(x => x.Hospital), datasets: [{ label: 'Records', data: d.map(x => x.Samples), backgroundColor: 'rgba(88,166,255,0.4)', borderColor: '#58a6ff', borderWidth: 2, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+    renderWithCleanup('distribution-chart', {
+        type: 'bar',
+        data: {
+            labels: d.map(x => x.Hospital),
+            datasets: [{
+                label: 'Records',
+                data: d.map(x => x.Samples),
+                backgroundColor: 'rgba(88,166,255,0.4)',
+                borderColor: '#58a6ff',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
 };
 
 export const renderPerformanceComparison = (l, f) => {
-    const ctx = document.getElementById('performance-chart')?.getContext('2d'); if (!ctx) return;
-
-    // 1. Sort labels numerically so Hospital_1 always comes first
     const sortedLocal = [...l].sort((a, b) => {
         const idA = parseInt(a.Hospital.split('_')[1] || 0);
         const idB = parseInt(b.Hospital.split('_')[1] || 0);
@@ -32,7 +66,6 @@ export const renderPerformanceComparison = (l, f) => {
     }];
 
     if (f.length) {
-        // 2. Correct alignment: Map federated data to the sorted locations
         const fedData = labels.map(name => {
             const entry = f.find(x => x.Hospital === name);
             return entry ? entry['AUC-ROC'] : null;
@@ -47,17 +80,39 @@ export const renderPerformanceComparison = (l, f) => {
             pointRadius: 6
         });
     }
-    new Chart(ctx, { type: 'line', data: { labels, datasets: ds }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0.5, max: 1.0 } }, spanGaps: true } });
+
+    renderWithCleanup('performance-chart', {
+        type: 'line',
+        data: { labels, datasets: ds },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0.5, max: 1.0 } }, spanGaps: true }
+    });
 };
 
 export const renderTrainingChart = (h) => {
-    const ctx = document.getElementById('training-chart')?.getContext('2d'); if (!ctx || !h?.length) return;
-    new Chart(ctx, { type: 'line', data: { labels: h.map(x => `R${x.round}`), datasets: [{ label: 'Accuracy', data: h.map(x => x.accuracy), borderColor: '#bc8cff', yAxisID: 'y', tension: 0.3, fill: true }, { label: 'Loss', data: h.map(x => x.loss), borderColor: '#f78166', yAxisID: 'y1', tension: 0.3, borderDash: [5, 5] }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1.0 }, y1: { position: 'right' } } } });
+    if (!h?.length) return;
+    renderWithCleanup('training-chart', {
+        type: 'line',
+        data: {
+            labels: h.map(x => `R${x.round}`),
+            datasets: [
+                { label: 'Accuracy', data: h.map(x => x.accuracy), borderColor: '#bc8cff', yAxisID: 'y', tension: 0.3, fill: true },
+                { label: 'Loss', data: h.map(x => x.loss), borderColor: '#f78166', yAxisID: 'y1', tension: 0.3, borderDash: [5, 5] }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1.0 }, y1: { position: 'right' } } }
+    });
 };
 
 export const renderComparisonStats = (s) => {
-    const c = document.getElementById('comparison-grid'); if (!c || !s) return;
-    const card = (t, v, sub, col = 'var(--text-primary)') => `<div class="card" style="padding:1.25rem;"><b>${t}</b><div style="font-size:1.5rem; color:${col};">${v}</div><small>${sub}</small></div>`;
+    const c = document.getElementById('comparison-grid');
+    if (!c || !s) return;
+    const card = (t, v, sub, col = 'var(--text-primary)') => `
+        <div class="card" style="padding:1.25rem;">
+            <b>${t}</b>
+            <div style="font-size:1.5rem; color:${col};">${v}</div>
+            <small>${sub}</small>
+        </div>`;
+
     c.innerHTML = [
         card("Local Acc", (s.local_accuracy * 100).toFixed(1) + "%", "Isolated hospitals"),
         card("Local AUC", (s.local_auc || 0).toFixed(3), "Mean predictive power"),
@@ -70,8 +125,8 @@ export const renderComparisonStats = (s) => {
 };
 
 export const renderBenchmarkChart = (s) => {
-    const ctx = document.getElementById('benchmark-bar-chart')?.getContext('2d'); if (!ctx || !s) return;
-    new Chart(ctx, {
+    if (!s) return;
+    renderWithCleanup('benchmark-bar-chart', {
         type: 'bar',
         data: {
             labels: ['Local (Mean)', 'Centralized', 'Federated'],
@@ -79,11 +134,7 @@ export const renderBenchmarkChart = (s) => {
                 {
                     label: 'Accuracy',
                     data: [s.local_accuracy, s.centralized_accuracy, s.federated_accuracy],
-                    backgroundColor: [
-                        'rgba(139,148,158,0.5)', // Gray for Local
-                        'rgba(63,185,80,0.5)',   // Green for Centralized
-                        'rgba(188,140,255,0.5)'  // Purple for Federated
-                    ],
+                    backgroundColor: ['rgba(139,148,158,0.5)', 'rgba(63,185,80,0.5)', 'rgba(188,140,255,0.5)'],
                     borderColor: ['#8b949e', '#3fb950', '#bc8cff'],
                     borderWidth: 2,
                     borderRadius: 8
@@ -93,20 +144,8 @@ export const renderBenchmarkChart = (s) => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                // Custom plugin to draw values on top of bars
-                tooltip: { enabled: true }
-            },
-            scales: {
-                y: {
-                    min: 0,
-                    max: 1.0,
-                    ticks: {
-                        callback: (value) => (value * 100).toFixed(0) + '%'
-                    }
-                }
-            }
+            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+            scales: { y: { min: 0, max: 1.0, ticks: { callback: (v) => (v * 100).toFixed(0) + '%' } } }
         },
         plugins: [{
             id: 'datalabels',
@@ -117,7 +156,6 @@ export const renderBenchmarkChart = (s) => {
                 ctx.textBaseline = 'bottom';
                 ctx.font = 'bold 14px Outfit';
                 ctx.fillStyle = '#ffffff';
-
                 chart.getDatasetMeta(0).data.forEach((bar, index) => {
                     const value = (data.datasets[0].data[index] * 100).toFixed(1) + '%';
                     ctx.fillText(value, bar.x, bar.y - 5);
@@ -127,3 +165,4 @@ export const renderBenchmarkChart = (s) => {
         }]
     });
 };
+

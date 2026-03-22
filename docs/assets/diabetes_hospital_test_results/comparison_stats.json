@@ -1,0 +1,27 @@
+{
+  "dataset_name": "Diabetes-Hospitals",
+  "reputation": {
+    "Hospital_3": 100,
+    "Hospital_4": 100,
+    "Hospital_2": 100,
+    "Hospital_1": 100,
+    "Hospital_5": 100
+  },
+  "local_accuracy": 0.38244297639285885,
+  "local_auc": 0.5621565651067034,
+  "centralized_accuracy": 0.3970351468756645,
+  "centralized_auc": 0.5768843997088541,
+  "federated_accuracy": 0.3886880714437593,
+  "federated_auc": 0.5795078838569855,
+  "improvement_local_fed": 1.6329480305281505,
+  "security": {
+    "dp_enabled": true,
+    "epsilon": 0.7214879745218153,
+    "delta": "1e-5",
+    "leakage_acc": 0.004154660456953951,
+    "leakage_auc": 0.003795385094669035,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "None"
+  }
+}

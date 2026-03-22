@@ -480,3 +480,73 @@ h1 {
 .hospital-info-card {
   background: linear-gradient(135deg, rgba(63, 185, 80, 0.05), rgba(88, 166, 255, 0.05));
 }
+
+/* ============ PREMIUM PRESENTATION CLASSES ============ */
+
+/* Bounty Badge: Gold glass effect for research rewards */
+.bounty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.05);
+}
+
+/* Completed Card: Success glow for finished studies */
+.completed-card {
+  border-color: var(--accent-green) !important;
+  box-shadow: 0 0 20px rgba(63, 185, 80, 0.1) !important;
+}
+
+/* Enhanced Progress Container */
+.progress-container {
+  margin: 1rem 0;
+}
+
+.request-card .progress-bar {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Success Button Transition */
+#btn-sync-local.success-state {
+  background: var(--accent-green) !important;
+  box-shadow: 0 0 20px rgba(63, 185, 80, 0.4);
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+/* Modal Backdrop: Blurred background for asset retrieval */
+.assets-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
