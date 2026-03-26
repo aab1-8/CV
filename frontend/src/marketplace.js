@@ -93,17 +93,40 @@ window.participateRequest = async (id) => {
     if (ds === 'none') return alert('⚠️ SECURITY ACTION REQUIRED:\n\nPlease link a local dataset first to prove data locality. Federated learning requires data to remain behind your firewall.');
 
     const btn = document.getElementById(`btn-part-${id}`);
+    const activeRequest = loadRequests().find(x => x.id === id);
+
+    if (activeRequest) {
+        const studyType = activeRequest.dataType.toLowerCase();
+        const linkedType = ds.toLowerCase();
+
+        // Scientific Matching: Strict exact match to prevent CDC vs Hospital Diabetes collisions
+        let isMatch = false;
+        if (linkedType === 'diabetes' && studyType === 'diabetes classification') isMatch = true;
+        if (linkedType === 'stroke' && studyType === 'stroke prediction') isMatch = true;
+        if (linkedType === 'survival' && studyType === 'heart disease (survival)') isMatch = true;
+        if (linkedType === 'thyroid' && studyType === 'thyroid disorder aggregation') isMatch = true;
+        if (linkedType === 'maternal' && studyType === 'maternal health risk') isMatch = true;
+        if (linkedType === 'hospital' && studyType === 'diabetes hospitals (multi-site)') isMatch = true;
+        if (linkedType === 'admin' && studyType === 'admin category (security testing)') isMatch = true;
+
+        if (!isMatch) {
+            btn.disabled = false;
+            btn.innerHTML = '🔗 Link & Participate';
+            return alert(`⚠️ SCHEMA MISMATCH DETECTED!\n\nThis study requires "${activeRequest.dataType}" data features. Your linked dataset ("${ds}") is incompatible and has been rejected by the Smart Contract protocol to prevent model poisoning.`);
+        }
+    }
+
     btn.disabled = true;
     btn.innerHTML = '🧪 Training Securely...';
 
     // Simulated "Secure Cryptographic Handshake"
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(res => setTimeout(res, 1500));
 
-    const r = loadRequests();
-    const idx = r.findIndex(x => x.id === id);
+    const allRequests = loadRequests();
+    const idx = allRequests.findIndex(x => x.id === id);
     if (idx !== -1) {
-        r[idx].contributions += 1;
-        saveRequests(r);
+        allRequests[idx].contributions += 1;
+        saveRequests(allRequests);
         btn.innerHTML = '✅ Model Contributed';
         setTimeout(() => location.reload(), 800);
     }
@@ -123,12 +146,12 @@ window.viewAssets = (id) => {
             
             <div style="background: rgba(0,0,0,0.3); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--glass-border);">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
-                    <span>Best Accuracy (Fed)</span>
-                    <b style="color:var(--accent-green)">38.9%</b>
+                    <span>Final Accuracy (Audited)</span>
+                    <b style="color:var(--accent-green)">${window.currentAuditAcc || 'Verified'}</b>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
                     <span>Privacy Epsilon</span>
-                    <b style="color:var(--accent-purple)">0.72 (DP)</b>
+                    <b style="color:var(--accent-purple)">${window.currentAuditEps || '1.0 (DP)'}</b>
                 </div>
                 <div style="display:flex; justify-content:space-between;">
                     <span>Nodes Paid</span>
@@ -138,7 +161,7 @@ window.viewAssets = (id) => {
 
             <div style="display: grid; gap: 0.75rem;">
                 <button class="btn-primary" onclick="alert('Downloading weights.pth...'); this.closest('.assets-modal').remove();">📥 DownloadWeights (.pth)</button>
-                <button class="btn-secondary" onclick="document.getElementById('btn-analytics').click(); this.closest('.assets-modal').remove();">📊 View Audit</button>
+                <button class="btn-secondary" onclick="window.smartAuditJump('${r.dataType}'); this.closest('.assets-modal').remove();">📊 View Audit</button>
                 <button class="btn-secondary" style="border-color: #f78166; color: #f78166; margin-top: 0.5rem;" onclick="this.closest('.assets-modal').remove();">✕ Close</button>
             </div>
         </div>

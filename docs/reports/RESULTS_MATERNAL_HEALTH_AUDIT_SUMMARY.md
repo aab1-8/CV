@@ -3,7 +3,7 @@
 This document records the official validation results for the **Maternal Health Risk** dataset. These results serve as a benchmark for secure federated learning on multi-class medical tasks.
 
 ## 📊 1. Adversarial Robustness 
-**Plot**: `docs/assets/maternal_health/fig_robustness.png`
+**Plot**: `docs/assets/maternal_health-bad-mi/fig_robustness.png`
 
 ### Analysis:
 - **Centralized Gold Standard**: ~71%
@@ -13,7 +13,7 @@ This document records the official validation results for the **Maternal Health 
 - **Conclusion**: The multi-layered defense system (Anomaly Detection + Blockchain Reputation) effectively neutralized malicious participants without compromising the accuracy of honest hospitals.
 
 ## 🛡️ 2. Privacy & Membership Inference (MI)
-**Plot**: `docs/assets/maternal_health/fig_mi.png`
+**Plot**: `docs/assets/maternal_health-bad-mi/fig_mi.png`
 
 ### Analysis:
 - **Baseline Leakage**: **0.2152**. Without privacy protections, the model is highly vulnerable to "Membership Inference," meaning an attacker could guess if a specific patient was in the training set with 21% better accuracy than random chance.
@@ -22,7 +22,7 @@ This document records the official validation results for the **Maternal Health 
 - **Conclusion**: The project successfully proves the "Privacy-Utility Frontier"—we can achieve high medical utility while mathematically guaranteeing patient anonymity.
 
 ## 💰 3. Blockchain Gas Analysis
-**Plot**: `docs/assets/maternal_health/fig_gas_costs.png`
+**Plot**: `docs/assets/maternal_health-bad-mi/fig_gas_costs.png`
 
 ### Analysis:
 - **Consistency**: Gas costs remained stable across 50 rounds at approximately **121k - 138k gas** per transaction.
@@ -30,7 +30,7 @@ This document records the official validation results for the **Maternal Health 
 - **Efficiency**: The use of a fixed gas price (1 gwei) ensures that the security overhead remains affordable for participating hospitals.
 
 ## ⚡ 4. Latency & Scalability
-**Plot**: `docs/assets/maternal_health/fig_latency.png`
+**Plot**: `docs/assets/maternal_health-bad-mi/fig_latency.png`
 
 ### Analysis:
 - **Scaling**: The system scales linearly, from ~17 seconds for 1 round to ~44 seconds for 7 rounds.
@@ -38,7 +38,7 @@ This document records the official validation results for the **Maternal Health 
 - **Conclusion**: The network is "Production Ready"—it can handle high-frequency training rounds without exponential time degradation.
 
 ## 📉 5. Differential Privacy Trade-off
-**Plot**: `docs/assets/maternal_health/fig_dp_tradeoff.png`
+**Plot**: `docs/assets/maternal_health-bad-mi/fig_dp_tradeoff.png`
 
 ### Analysis:
 - **Privacy Spending**: The $\epsilon$ (Epsilon) budget was tracked from **15.8** (High Privacy) to **1313** (Low Privacy).
@@ -60,12 +60,12 @@ To ensure these results can be reproduced by auditors, the following parameters 
 | **Hardware** | 6GB VRAM NVIDIA GPU | Toggled 3 parallel workers |
 
 ## 🏆 7. Centralized Baseline (The Gold Standard)
-- **Baseline File**: `docs/assets/maternal_health/centralized_Maternal-Health_1014.json`
+- **Baseline File**: `docs/assets/maternal_health-bad-mi/centralized_Maternal-Health_1014.json`
 - **Result**: **71.25%**
 - **Analysis**: The Federated model reached **69.55%** accuracy. This small 1.7% "Privacy/Federation Tax" is exceptionally low, proving that the MedShare architecture is highly efficient at aggregating distributed medical knowledge.
 
 ## 🔗 8. Blockchain Proof (Audit Trail)
-- **Log File**: `docs/assets/maternal_health/exp_gas_log.csv`
+- **Log File**: `docs/assets/maternal_health-bad-mi/exp_gas_log.csv`
 - **Integrity Check**: Every model update was hashed and committed to the Ethereum contract. The gas logs confirm that 5 hospitals participated consistently across 50 rounds, with zero transaction failures.
 
 ---
@@ -74,7 +74,7 @@ To ensure these results can be reproduced by auditors, the following parameters 
 To re-run this specific test on your machine:
 ```bash
 # 1. Start Blockchain
-npx ganache --wallet.seed federated --port 8545
+npx ganache --port 8546 --mnemonic "exit taxi picnic regret brush gold vacant dignity book enable left divorce"
 
 # 2. Deploy Contracts
 python scripts/deploy_colab.py
@@ -85,7 +85,7 @@ python federated_survival.py --experiment dp --dataset maternal_health
 ```
 
 ## 📂 Artifacts Saved
-To ensure these results are not lost when testing other datasets, the following items have been archived in `docs/assets/maternal_health/`:
+To ensure these results are not lost when testing other datasets, the following items have been archived in `docs/assets/maternal_health-bad-mi/`:
 1.  **Direct CSV Logs**: Raw data for every round.
 2.  **Centralized JSON**: The baseline performance proof.
 3.  **Final Model**: `maternal_health_model.pth` (The actual trained state-dict).

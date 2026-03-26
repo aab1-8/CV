@@ -1,14 +1,14 @@
-import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-import os
+import pandas as pd                             # pandas: data manipulation library for CSV loading and analysis
+import matplotlib                             # matplotlib: the foundational plotting engine for all figures
+matplotlib.use('Agg')                        # Non-interactive backend (critical for vLab/headless servers)
+import matplotlib.pyplot as plt               # pyplot: high-level interface for creating figures and axes
+import seaborn as sns                        # seaborn: statistical data visualization with premium aesthetics
+import numpy as np                            # numpy: numerical math library for array handling
+import os                                     # os: library for file-path management and directory navigation
 
-sns.set_theme(style="whitegrid", palette="muted")
+sns.set_theme(style="whitegrid", palette="muted") # Apply high-fidelity aesthetic presets
 
-# Ensure we are in the script's directory so relative paths for data and figures work
+# Ensure we are in the script's directory so relative paths for data and figures work correctly
 script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir:
     os.chdir(script_dir)
@@ -52,11 +52,11 @@ def plot_save(name, func):
     """Wrapper for consistent plotting boilerplate."""
     print(f"--- Attempting to plot {name} ---")
     try:
-        plt.figure(figsize=(12, 7))
+        plt.figure(figsize=(12, 7))                 # Standard 12x7 figure aspect ratio
         if func():
             plt.tight_layout()
             output_path = os.path.join(script_dir, name)
-            plt.savefig(output_path, dpi=150)
+            plt.savefig(output_path, dpi=150)       # Save with high-density DPI (150)
             print(f"[OK] Generated {output_path}")
         else:
             print(f"[FAIL] Skipped {name} (func returned False)")
@@ -66,6 +66,7 @@ def plot_save(name, func):
 
 
 def plot_dp():
+    """Renders the Privacy-Utility Tradeoff figure (Accuracy vs Noise Sigma)."""
     csv_path = os.path.join(script_dir, "exp_dp_results.csv")
     mi_path = os.path.join(script_dir, "exp_mi_results.csv")
     
@@ -95,11 +96,11 @@ def plot_dp():
             return 0.0
             
         df_mi['noise'] = df_mi['Mode'].apply(extract_noise)
-        df_mi = df_mi[['noise', 'accuracy']] # Keep only relevant cols
+        df_mi = df_mi[['noise', 'accuracy']] # Keep only relevant columns
         df = df_mi.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
     else: 
         print(f"DEBUG: File does not exist!")
-        # Fallback to root
+        # Fallback to root (Crucial for vLab simulation runs)
         root_path = os.path.join(os.path.dirname(script_dir), "root_exp_dp_results.csv")
         if os.path.exists(root_path):
             csv_path = root_path
@@ -111,7 +112,7 @@ def plot_dp():
 
     if df is None or df.empty: return False
 
-    # Plot accuracy only
+    # Plot accuracy line with premium purple styling
     plt.plot(df["noise"], df["accuracy"], marker="o", markersize=12, linewidth=4, color="#bc8cff", label="Model Accuracy")
     plt.xlabel("DP Noise Multiplier ($\\sigma$)", fontsize=14)
     plt.ylabel("Global Accuracy", fontsize=14)
@@ -123,6 +124,7 @@ def plot_dp():
     return True
 
 def plot_robustness():
+    """Renders defense resilience against adversarial gradient and label attacks."""
     print("DEBUG: Entered plot_robustness")
     csv_path = os.path.join(script_dir, "exp_robustness_results.csv")
     if not os.path.exists(csv_path): 
@@ -137,6 +139,7 @@ def plot_robustness():
     df['attack'] = df['attack'].map(lambda x: attack_map.get(x, x))
     df['attack'] = pd.Categorical(df['attack'], categories=['No Attack', 'Label Flip', 'Grad Scale'], ordered=True)
     
+    # Red for vulnerable FedAvg benchmarks, Cyan/Blue for the Robust-MAD system
     colors = {"FedAvg": "#ff7b7b", "Robust-MAD": "#00d1ff"}
     sns.barplot(data=df, x="attack", y="accuracy", hue="defense", palette=colors, edgecolor='black', alpha=0.9)
     plt.title("Adversarial Robustness: Defense Strategy Comparison", fontsize=18, fontweight='bold', pad=20)
@@ -147,12 +150,23 @@ def plot_robustness():
     return True
 
 def plot_gas():
+    """Visualizes Ethereum gas consumption for on-chain verifiable training."""
     csv_path = os.path.join(script_dir, "exp_gas_log.csv")
     if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0: return False
-    df = pd.read_csv(csv_path).drop_duplicates(subset=['Round', 'Client'], keep='last')
-    # Support new timestamped schema
-    if 'Round' not in df.columns and 'timestamp_utc' in df.columns:
-        df = df.rename(columns={df.columns[1]: 'Round', df.columns[2]: 'Client', df.columns[3]: 'GasUsed'})
+    try:
+        df = pd.read_csv(csv_path, na_filter=False)
+        # Robust schema detection
+        if 'timestamp_utc' in df.columns:
+            # Map by index to handle potential rename variations
+            df = df.rename(columns={df.columns[1]: 'Round', df.columns[2]: 'Client', df.columns[3]: 'GasUsed'})
+        elif 'Round' not in df.columns:
+            # Legacy 3-column fallback
+            df = df.rename(columns={df.columns[0]: 'Round', df.columns[1]: 'Client', df.columns[2]: 'GasUsed'})
+    except Exception as e:
+        print(f"Error loading gas logs: {e}")
+        return False
+    
+    df = df.drop_duplicates(subset=['Round', 'Client'], keep='last')
     if df.empty: return False
 
     agg_df = df.groupby('Round')['GasUsed'].agg(['mean', 'std']).reset_index()
@@ -169,7 +183,7 @@ def plot_gas():
     df['sort_key'] = df['Client'].str.extract(r'(\d+)').fillna(0).astype(int)
     df = df.sort_values('sort_key')
     
-    # Enhanced visibility for individual dots
+    # Enhanced visibility for individual dots (Strip plot overlay)
     sns.stripplot(data=df, x="Round", y="GasUsed", hue="Client", 
                  palette="viridis", size=6, alpha=0.9, jitter=0.25, edgecolor="black", linewidth=1.0)
     
@@ -182,14 +196,14 @@ def plot_gas():
     abs_max = max(df['GasUsed'].max(), agg_df['high'].max())
     
     margin = (abs_max - abs_min) * 0.15 if abs_max > abs_min else abs_max * 0.1
-    plt.ylim(bottom=max(0, abs_min - margin), top=abs_max + margin)
+    plt.ylim(bottom=max(0, abs_min - margin), top=abs_max + margin) # Apply margins for clarity
     
     plt.grid(axis='y', linestyle='--', alpha=0.5)
     plt.title("Blockchain Verification: Gas Cost Analysis", fontsize=18, fontweight='bold', pad=20)
     plt.ylabel("Gas Units (EVM)", fontsize=14)
-    # Force Y-axis to plain integers (no scientific notation)
+    # Force Y-axis to plain integers (no scientific notation like 1e5)
     plt.ticklabel_format(style='plain', axis='y')
-    # CRITICAL: Disable the offset (the "+1.211e5" part)
+    # CRITICAL: Disable the offset (prevents +1.211e5 floating labels)
     plt.gca().yaxis.get_major_formatter().set_useOffset(False)
     
     # Ensure tick marks are WHOLE NUMBERS only
@@ -201,6 +215,7 @@ def plot_gas():
     return True
 
 def plot_latency():
+    """Plots rounds vs wall-clock overhead."""
     csv_path = os.path.join(script_dir, "exp_latency_log.csv")
     df = pd.read_csv(csv_path, na_filter=False)
     # Support new timestamped schema
@@ -212,9 +227,11 @@ def plot_latency():
     plt.title("System Scaling: Latency Benchmark", fontsize=18, fontweight='bold', pad=20)
     plt.ylabel("Wall-clock Time (Seconds)", fontsize=14)
     plt.xlabel("Communication Rounds", fontsize=14)
+    plt.grid(True, alpha=0.3, linestyle='--')
     return True
 
 def plot_mi():
+    """Renders the Privacy Audit: Accuracy Gap (Yeom 2018) vs AUC Gap (Nasr 2019)."""
     mi_path = os.path.join(script_dir, "exp_mi_results.csv")
     dp_path = os.path.join(script_dir, "exp_dp_results.csv")
     
@@ -231,7 +248,7 @@ def plot_mi():
         if not df_mi.empty:
             # Consistent case for 'mode'
             if 'mode' in df_mi.columns: df_mi = df_mi.rename(columns={'mode': 'Mode'})
-            # Backward compat: old CSVs had a single 'leakage' column
+            # Backward compatibility for old log schemas
             if 'leakage' in df_mi.columns and 'leakage_acc' not in df_mi.columns:
                 df_mi = df_mi.rename(columns={'leakage': 'leakage_acc'})
                 df_mi['leakage_auc'] = df_mi['leakage_acc']  # Duplicate as best guess
@@ -242,11 +259,12 @@ def plot_mi():
     if os.path.exists(dp_path):
         df_dp = pd.read_csv(dp_path, na_filter=False)
         if not df_dp.empty:
-            # Backward compat: old DP CSVs had 'leakage' instead of 'leakage_acc'
+            # Backward compatibility for old DP (Differential Privacy) logs
             if 'leakage' in df_dp.columns and 'leakage_acc' not in df_dp.columns:
                 df_dp = df_dp.rename(columns={'leakage': 'leakage_acc'})
                 df_dp['leakage_auc'] = df_dp['leakage_acc']
             if 'leakage_acc' in df_dp.columns:
+                # Assign professional display labels for noise levels
                 df_dp['Mode'] = df_dp['noise'].apply(lambda x: f"With DP (sigma={x})" if x > 0 else "No Privacy (Baseline)")
                 df_dp['source'] = 'dp'
                 dfs.append(df_dp)
@@ -279,7 +297,7 @@ def plot_mi():
                        color='#8c6fff', edgecolor='black', linewidth=1.2, alpha=0.88,
                        hatch='//')
 
-    # Annotate each bar with its percentage value
+    # Annotate each bar with its percentage value (Membership Inference Audit results)
     for bar in bars_acc:
         h = bar.get_height()
         if h > 0.001:
@@ -294,7 +312,7 @@ def plot_mi():
                      f'{h*100:.1f}%', ha='center', va='bottom',
                      fontsize=8.5, fontweight='bold', color='#5500cc')
 
-    # Annotate each group with model accuracy from the primary (mi) source
+    # Annotate each group with model accuracy metrics
     for i, (_, row) in enumerate(df.iterrows()):
         acc = row.get('accuracy', 0)
         plt.text(i, -0.012, f'Acc: {acc*100:.1f}%',
@@ -307,7 +325,7 @@ def plot_mi():
     plt.xticks(x, df['label'], fontsize=11)
 
     max_leak = max(df['leakage_acc'].max(), df['leakage_auc'].max())
-    plt.ylim(-0.025, max(0.15, max_leak * 1.40))
+    plt.ylim(-0.025, max(0.15, max_leak * 1.40)) # Safety margin for legend room
 
     plt.legend(loc='upper right', frameon=True, facecolor='white', framealpha=0.9, fontsize=10)
     plt.grid(axis='y', alpha=0.3, linestyle='--')

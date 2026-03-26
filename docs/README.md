@@ -13,7 +13,7 @@ Discover the high-level design, class structures, and technical workflow of the 
 
 ## 📊 [Experimental Reports](./reports/)
 Detailed performance audits across multiple medical tasks.
-*   **[MSc Thesis: Final Report](./reports/MSc_Final_Project_Report.md)**: **START HERE.** The comprehensive summary of all findings.
+*   **[MEng Final Project Report](./reports/MEng_Final_Project_Report.md)**: **START HERE.** The comprehensive summary of all findings.
 *   **[Verified Audit Summaries](./reports/)**:
     *   [Maternal Health](./reports/RESULTS_MATERNAL_HEALTH_AUDIT_SUMMARY.md)
     *   [Stroke Prediction](./reports/RESULTS_STROKE_AUDIT_SUMMARY.md)

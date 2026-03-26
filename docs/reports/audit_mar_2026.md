@@ -1,7 +1,7 @@
 # MedShare-FL: Final Project Audit & Security Review (March 2026)
 
 ## 1. Overview
-This report summarizes the results of a comprehensive technical audit conducted on the MedShare-FL repository to ensure all requirements for the MSc project have been met with high scientific integrity.
+This report summarizes the results of a comprehensive technical audit conducted on the MedShare-FL repository to ensure all requirements for the MEng project have been met with high scientific integrity.
 
 ## 2. Fulfillment of Key Requirements
 

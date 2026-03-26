@@ -6,7 +6,6 @@ This document serves as the exhaustive taxonomy and technical manual for the Med
 
 *   **`federated_survival.py`**: The 582-line master simulation script. It controls the `flwr` (Flower) server/client orchestration, detects high-end GPUs (15GB VRAM) to scale batch sizes (up to 2048), handles `experiment` parameters (`dp`, `mi`, `robustness`, `latency`), and executes adaptive training loops across 7 different datasets. It outputs telemetry data directly to the `/test/` directory and frontend JSONs.
 *   **`MedShare_FINAL_new.ipynb` & `MedShare_FINAL.ipynb`**: The primary Jupyter Notebooks for execution on Google Colab. They orchestrate environment setup, dependency installation, blockchain deployment (via Ganache in the background), and cell-by-cell execution of the various `federated_survival.py` experimental suites.
-*   **`test_data_health.py`**: A diagnostic script that validates the "Diamond Standard" for datasets before they hit the FL pipeline, checking for missing values (NaNs), ensuring identifiers are dropped, and checking categorical encoding formats.
 
 ## 2. Core Machine Learning Engine (`medshare/`)
 
@@ -32,7 +31,6 @@ This document serves as the exhaustive taxonomy and technical manual for the Med
     *   `fig_mi.png`: Membership Inference gap mapping (Information Leakage).
     *   `fig_gas_costs.png`: Scatter/Bar composite plotting EVM token expenditures for on-chain audits.
     *   `fig_latency.png`: Network scaling wall-clock measurements.
-*   **`plot_thyroid_mi.py`**: A specialized override plotter utilized specifically for edge-case imbalances present in the Thyroid dataset.
 
 ## 5. Web Dashboard (`frontend/`)
 
@@ -45,6 +43,4 @@ This document serves as the exhaustive taxonomy and technical manual for the Med
 ## 6. Project Architecture & Maintenance
 
 *   **`scripts/deploy_colab.py`**: Fully automates the compilation and deployment of Solidity contracts to the local Ganache network, linking them together, and seamlessly dropping the resulting ABIs and addresses into the `/frontend/src/data/` folder.
-*   **`scripts/patch_notebook_gold.py` & `scripts/clean_nb.py` & `update_notebook.py`**: A suite of automated Python scripts used to surgically alter the JSON structure of your Jupyter Notebooks—bypassing caching errors, altering column schemas, and dynamically swapping experimental targets without requiring manual rewriting.
-*   **`add_tests.py` & `run_master.sh`**: Wrappers for automated background execution of rigorous multi-phase sweeps.
 *   **`docs/`**: The permanent repository containing final exported SVGs/PNGs (in `/assets/`), PlantUML architecture diagrams, execution guides, and your final experimental audit reports.

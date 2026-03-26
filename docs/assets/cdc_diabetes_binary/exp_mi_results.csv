@@ -1,6 +1,0 @@
-timestamp_utc,dataset,noise,rounds,mode,leakage_acc,leakage_auc,accuracy
-2026-03-01T00:43:04Z,CDC-Diabetes-Binary,0.0,30,No Privacy (Baseline),0.0023,0.0082,0.8674
-2026-03-01T00:59:36Z,CDC-Diabetes-Binary,0.5,30,With DP (sigma=0.5),0.0032,0.0081,0.8614
-2026-03-01T01:15:49Z,CDC-Diabetes-Binary,1.0,30,With DP (sigma=1.0),0.0000,0.0113,0.8643
-2026-03-01T01:31:38Z,CDC-Diabetes-Binary,2.0,30,With DP (sigma=2.0),0.0000,0.0042,0.8638
-2026-03-01T01:47:49Z,CDC-Diabetes-Binary,5.0,30,With DP (sigma=5.0),0.0000,0.0054,0.8611

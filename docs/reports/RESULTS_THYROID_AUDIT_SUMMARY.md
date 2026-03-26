@@ -72,22 +72,22 @@ The system was tested against malicious attacks (**Label Flipping** and **Gradie
 The following plots verify the behavior of the MedShare engine under stress:
 
 ### A. Privacy-Utility Frontier
-![DP Tradeoff](../assets/results_thyroid_assets/fig_dp_tradeoff.png)
+![DP Tradeoff](../assets/thyroid_results-negligible-mi/fig_dp_tradeoff.png)
 
 ### B. Membership Inference Audit
-![MI Audit](../assets/results_thyroid_assets/fig_mi.png)
+![MI Audit](../assets/thyroid_results-negligible-mi/fig_mi.png)
 
 ### C. Adversarial Resilience (Robust-MAD)
-![Robustness Comparison](../assets/results_thyroid_assets/fig_robustness.png)
+![Robustness Comparison](../assets/thyroid_results-negligible-mi/fig_robustness.png)
 
 ### D. Operational Telemetry
-![Gas Costs](../assets/results_thyroid_assets/fig_gas_costs.png)
-![Latency Scaling](../assets/results_thyroid_assets/fig_latency.png)
+![Gas Costs](../assets/thyroid_results-negligible-mi/fig_gas_costs.png)
+![Latency Scaling](../assets/thyroid_results-negligible-mi/fig_latency.png)
 
 ---
 
 ## 📁 5. Artifacts Registry
-* **Raw Logs**: `exp_*.csv` in `assets/results_thyroid_assets/` (Original empirical data).
+* **Raw Logs**: `exp_*.csv` in `assets/thyroid_results-negligible-mi/` (Original empirical data).
 * **Model Weights**: `best_model.pth` (The audited global state).
 * **Metadata**: `training_history.json`, `baseline.json`, `comparison_stats.json`.
 

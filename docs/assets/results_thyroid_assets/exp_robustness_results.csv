@@ -1,6 +1,0 @@
-timestamp_utc,dataset,attack,defense,rounds,accuracy
-2026-03-18T20:21:19Z,Thyroid,None,FedAvg,15,0.7916
-2026-03-18T20:23:55Z,Thyroid,None,Robust-MAD,15,0.7935
-2026-03-18T20:25:57Z,Thyroid,label_flip,FedAvg,15,0.7706
-2026-03-18T20:29:31Z,Thyroid,label_flip,Robust-MAD,15,0.7766
-2026-03-18T20:34:03Z,Thyroid,gradient_scale,Robust-MAD,15,0.7920

@@ -137,10 +137,10 @@ def get_adaptive_experiment_config(num_records):
     
     if num_records < 5000: # Micro Datasets (e.g. 1k rows)
         return {
-            "sigmas": [0.05, 0.1, 0.2, 0.3, 0.5],
-            "batch_size": 256 if use_gpu else 32,
+            "sigmas": [0.05, 0.1, 0.2, 0.5],  # User-specified; 0 baseline added automatically by MI sweep
+            "batch_size": 256 if use_gpu else 32,  # Large batch = fewer noisy DP steps = stable convergence
             "rounds": 50,
-            "epochs": 1
+            "epochs": 40  # CRITICAL: 1 epoch caused non-convergence → noisy/non-monotonic MI
         }
     elif num_records < 70000: # Standard Research Datasets (e.g. 10k-50k rows)
         return {
@@ -539,6 +539,8 @@ def run_experiment(args):
         args.epochs = saved_epochs
     elif args.experiment == "mi_step":
         # Individual step for external loop
+        config["noise_multiplier"] = args.sigma
+        config["enable_dp"] = True if args.sigma > 0 else False
         run_simulation(args, config)
     elif args.experiment == "robustness":
         # Attack types: No Attack, Label Flip, Gradient Scale

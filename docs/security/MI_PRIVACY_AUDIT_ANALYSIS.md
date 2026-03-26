@@ -1,15 +1,16 @@
 # Privacy Audit Analysis: Membership Inference Results
 **Dataset:** CDC-Diabetes-Binary (253,680 records, 5 hospitals)  
 **Experiment Date:** 2026-03-01  
-**Audit Log Reference:** `docs/assets/cdc_diabetes_binary/final_paper_audit.log`  
-**CSV Source:** `docs/assets/cdc_diabetes_binary/exp_mi_results.csv`
+**Audit Log Reference:** `docs/assets/cdc_diabetes_binary-negligible/final_paper_audit.log`  
+**CSV Source:** `docs/assets/cdc_diabetes_binary-negligible/exp_mi_results.csv`
 
 ---
 
-## 1. Overview
+### 1. Membership Inference Risk Profile
 
-This document explains the Membership Inference (MI) privacy audit results produced
-by the MedShare federated learning system on the CDC-Diabetes-Binary dataset.
+The Membership Inference Attack (MIA) audit for the **250k-row CDC-Diabetes** dataset represents our most statistically significant privacy result.
+
+**File:** `docs/assets/cdc_diabetes_binary-negligible/fig_mi.png`
 
 The MI audit measures **how much information a trained model leaks about the specific
 individuals it was trained on**. Two scientific proxies are used, as recommended by
@@ -104,7 +105,7 @@ the final project report:
 
 ## 6. Figure Reference
 
-**File:** `docs/assets/cdc_diabetes_binary/fig_mi.png`
+**File:** `docs/assets/cdc_diabetes_binary-negligible/fig_mi.png`
 
 The Y-axis of `fig_mi.png` is scaled to 15% to make the bars visible. Given that
 all values are below 1.2%, the bars appear very small relative to the scale.

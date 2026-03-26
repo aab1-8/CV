@@ -1,4 +1,4 @@
-# MedShare: Elite Privacy-Preserving Federated Learning for Healthcare (MSc Final Audit)
+# MedShare: Elite Privacy-Preserving Federated Learning for Healthcare (MEng Final Audit)
 
 **Status: 🏆 PLATINUM / FULLY VERIFIED (2026)**
 A blockchain-audited, Byzantine-robust federated learning system for collaborative medical AI training across hospitals without sharing raw patient data.
@@ -14,7 +14,6 @@ A blockchain-audited, Byzantine-robust federated learning system for collaborati
 # Create virtual environment
 python -m venv .venv
 .venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 pip install -r requirements.txt
@@ -67,7 +66,7 @@ bxp267/
 ├── frontend/                 # Vite dashboard for visualization
 ├── test/                     # Benchmark results & plotting
 ├── docs/                     # Documentation & diagrams
-│   └── Final_Project_Report_Combined.md  # 📄 MASTER INSPECTION REPORT
+│   └── MEng_Final_Project_Report.md  # 📄 MASTER INSPECTION REPORT
 │
 └── MedShare_FINAL_new.ipynb  # Google Colab notebook
 ```
@@ -107,7 +106,7 @@ Visit `http://localhost:5173` to view training metrics, gas costs, and security 
 
 ## 📚 Documentation
 
-- [**Final Project Report (Master)**](docs/reports/Final_Project_Report_Combined.md)
+- [**MEng Final Project Report (Master)**](docs/reports/MEng_Final_Project_Report.md)
 - [Architecture Overview](docs/architecture/architecture.md)
 - [Configuration Guide](docs/guides/config_guide.md)
 - [Security Trade-offs](docs/security/secagg_vs_robustness_tradeoff.md)
@@ -121,4 +120,4 @@ Visit `http://localhost:5173` to view training metrics, gas costs, and security 
 - **Frontend**: Vite, Vanilla JS, CSS3, Chart.js
 
 ## 📝 Credits & Development
-Developed as part of an MSc Computer Science Final Project (2025-26).
+Developed as part of an MEng Computer Science Final Project (2025-26).

@@ -8,7 +8,7 @@ The project strictly follows the "Principle of Local Processing." No raw patient
 ### A. Hospital to Blockchain (The "Commitment")
 Before communicating with the FL server, the hospital interacts with the Ethereum smart contract (`CommitmentRegistry.sol`).
 - **Data Sent**: `SHA-256 Hash` of the model weights.
-- **Purpose**: Creates an immutable audit trail. The server cannot "tamper" with the hospital's contribution without invalidating the hash.
+- **Purpose**: Creates an immutable audit trail. The server cannot "tamper" with the hospital's contribution without invalidating the hash. SHA-256 is generally better for established, high-speed blockchain applications due to its maturity and efficiency and is widely supported across different platforms and programming languages.
 - **Trigger**: `medshare/client.py` -> `bcm.post_commitment()`
 
 ### B. Hospital to Central FL Server (The "Gradient/Weight Update")

@@ -1,6 +1,0 @@
-timestamp_utc,dataset,noise,rounds,accuracy,epsilon,leakage_acc,leakage_auc
-2026-03-19T00:01:32Z,Admin-Category,0.05,50,0.5369,1313.52,0.0000,0.0040
-2026-03-19T00:05:02Z,Admin-Category,0.1,50,0.4975,324.95,0.0136,0.0239
-2026-03-19T00:10:45Z,Admin-Category,0.2,50,0.3202,88.16,0.0000,0.0281
-2026-03-19T00:15:38Z,Admin-Category,0.3,50,0.3202,40.90,0.0039,0.0000
-2026-03-19T00:21:19Z,Admin-Category,0.5,50,0.3153,15.85,0.0000,0.0000

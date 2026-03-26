@@ -1,7 +1,7 @@
-attack,defense,accuracy
-None,FedAvg,0.6327
-None,Robust-MAD,0.6348
-label_flip,FedAvg,0.5235
-label_flip,Robust-MAD,0.5318
-gradient_scale,FedAvg,0.4290
-gradient_scale,Robust-MAD,0.6332
+timestamp_utc,dataset,attack,defense,rounds,accuracy
+2026-03-24T12:21:43Z,SUPPORT2-Death,None,FedAvg,5,0.6871
+2026-03-24T12:23:00Z,SUPPORT2-Death,None,Robust-MAD,5,0.6871
+2026-03-24T12:24:01Z,SUPPORT2-Death,label_flip,FedAvg,5,0.6942
+2026-03-24T12:25:01Z,SUPPORT2-Death,label_flip,Robust-MAD,5,0.6975
+2026-03-24T12:25:49Z,SUPPORT2-Death,gradient_scale,FedAvg,5,0.6871
+2026-03-24T12:26:41Z,SUPPORT2-Death,gradient_scale,Robust-MAD,5,0.6948

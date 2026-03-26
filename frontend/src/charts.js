@@ -1,5 +1,8 @@
 import Chart from 'chart.js/auto';
-Chart.defaults.color = '#c9d1d9';
+
+// Dynamically read text color from CSS variable for charts
+const getThemeColor = () => getComputedStyle(document.body).getPropertyValue('--text-primary').trim() || '#c9d1d9';
+Chart.defaults.color = getThemeColor();
 Chart.defaults.font.family = "'Outfit', sans-serif";
 
 const chartInstances = {};
@@ -11,12 +14,19 @@ const renderWithCleanup = (id, config) => {
         chartInstances[id].destroy();
         delete chartInstances[id];
     }
+
+    // Update color right before rendering to catch theme changes
+    Chart.defaults.color = getThemeColor();
     chartInstances[id] = new Chart(canvas, config);
 };
 
 export const renderSecurityAudit = (s) => {
     const c = document.getElementById('security-grid');
-    if (!c || !s) return;
+    if (!c) return;
+    if (!s || Object.keys(s).length === 0) {
+        c.innerHTML = '<div style="grid-column: 1 / -1; padding: 2rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; color: var(--text-secondary);"><b>🔒 Privacy Audit Pending</b><br><small>Global model aggregation has not been executed yet.</small></div>';
+        return;
+    }
     const card = (t, v, sub, col, i) => `
         <div class="card" style="padding:1.25rem; border-left:3px solid ${col};">
             <div style="display:flex; justify-content:space-between;"><b>${t}</b><span>${i}</span></div>
@@ -24,10 +34,22 @@ export const renderSecurityAudit = (s) => {
             <small>${sub}</small>
         </div>`;
 
+    const getEpsilonColor = (eps) => {
+        const e = parseFloat(eps);
+        if (isNaN(e) || e === 0) return 'var(--text-secondary)';
+        if (e <= 10) return 'var(--accent-green)'; // Strong Privacy
+        if (e <= 100) return '#eeb20f';            // Light Privacy (Orange)
+        return '#f78166';                          // Weak/No Privacy (Red)
+    };
+
     c.innerHTML = [
-        card("Privacy", s.dp_enabled ? "ε=" + parseFloat(s.epsilon).toFixed(2) : "Off", s.dp_enabled ? "Delta:" + s.delta : "No DP", s.dp_enabled ? 'var(--accent-green)' : '#f78166', "🛡️"),
+        card("Privacy", s.dp_enabled ? "ε=" + parseFloat(s.epsilon).toFixed(2) : "Off",
+            s.dp_enabled ? "Delta:" + s.delta : "No DP",
+            s.dp_enabled ? getEpsilonColor(s.epsilon) : 'var(--text-secondary)', "🛡️"),
         card("Aggregator", s.defense_type, "Robust Aggregation", 'var(--accent-green)', "⚙️"),
-        card("Security", s.attack_simulated ? "Defended" : "Stable", s.attack_simulated ? "Type:" + s.attack_type : "No Attacks", s.attack_simulated ? 'var(--accent-green)' : 'var(--text-secondary)', "🛡️")
+        card("Security", s.attack_simulated ? "Defended" : "Stable",
+            s.attack_simulated ? "Type:" + s.attack_type : "No Attacks",
+            s.attack_simulated ? 'var(--accent-green)' : 'var(--text-secondary)', "🛡️")
     ].join('');
 };
 
@@ -39,10 +61,10 @@ export const renderDistributionChart = (d) => {
             datasets: [{
                 label: 'Records',
                 data: d.map(x => x.Samples),
-                backgroundColor: 'rgba(88,166,255,0.4)',
+                backgroundColor: '#58a6ff', /* Solid professional fill */
                 borderColor: '#58a6ff',
-                borderWidth: 2,
-                borderRadius: 4
+                borderWidth: 1.5,
+                borderRadius: 0 /* Scientific square bars */
             }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
@@ -62,7 +84,8 @@ export const renderPerformanceComparison = (l, f) => {
         data: sortedLocal.map(x => x['AUC-ROC']),
         borderColor: '#8b949e',
         borderDash: [5, 5],
-        pointRadius: 4
+        pointRadius: 4,
+        pointBackgroundColor: '#8b949e'
     }];
 
     if (f.length) {
@@ -73,11 +96,13 @@ export const renderPerformanceComparison = (l, f) => {
         ds.push({
             label: 'Federated (AUC)',
             data: fedData,
-            borderColor: '#bc8cff',
-            backgroundColor: 'rgba(188,140,255,0.1)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 6
+            borderColor: '#2eafb2', /* Professional Teal instead of Purple */
+            backgroundColor: 'transparent',
+            fill: false,
+            tension: 0, /* Straight lines for raw data segments */
+            pointRadius: 4,
+            pointBackgroundColor: '#2eafb2',
+            borderWidth: 2.5
         });
     }
 
@@ -89,14 +114,20 @@ export const renderPerformanceComparison = (l, f) => {
 };
 
 export const renderTrainingChart = (h) => {
-    if (!h?.length) return;
+    if (!h?.length) {
+        if (chartInstances['training-chart']) {
+            chartInstances['training-chart'].destroy();
+            delete chartInstances['training-chart'];
+        }
+        return;
+    }
     renderWithCleanup('training-chart', {
         type: 'line',
         data: {
             labels: h.map(x => `R${x.round}`),
             datasets: [
-                { label: 'Accuracy', data: h.map(x => x.accuracy), borderColor: '#bc8cff', yAxisID: 'y', tension: 0.3, fill: true },
-                { label: 'Loss', data: h.map(x => x.loss), borderColor: '#f78166', yAxisID: 'y1', tension: 0.3, borderDash: [5, 5] }
+                { label: 'Accuracy', data: h.map(x => x.accuracy), borderColor: '#2eafb2', yAxisID: 'y', tension: 0.1, fill: false, pointRadius: 4, pointBackgroundColor: '#2eafb2' },
+                { label: 'Loss', data: h.map(x => x.loss), borderColor: '#f78166', yAxisID: 'y1', tension: 0.1, borderDash: [3, 3], fill: false, pointRadius: 0 }
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 1.0 }, y1: { position: 'right' } } }
@@ -105,7 +136,11 @@ export const renderTrainingChart = (h) => {
 
 export const renderComparisonStats = (s) => {
     const c = document.getElementById('comparison-grid');
-    if (!c || !s) return;
+    if (!c) return;
+    if (!s || Object.keys(s).length === 0) {
+        c.innerHTML = '<div style="grid-column: 1 / -1; padding: 2rem; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; color: var(--text-secondary);"><b>⏱️ Global Benchmarks Pending</b><br><small>Federated models have not executed full training rounds yet.</small></div>';
+        return;
+    }
     const card = (t, v, sub, col = 'var(--text-primary)') => `
         <div class="card" style="padding:1.25rem;">
             <b>${t}</b>
@@ -125,7 +160,13 @@ export const renderComparisonStats = (s) => {
 };
 
 export const renderBenchmarkChart = (s) => {
-    if (!s) return;
+    if (!s || Object.keys(s).length === 0) {
+        if (chartInstances['benchmark-bar-chart']) {
+            chartInstances['benchmark-bar-chart'].destroy();
+            delete chartInstances['benchmark-bar-chart'];
+        }
+        return;
+    }
     renderWithCleanup('benchmark-bar-chart', {
         type: 'bar',
         data: {
@@ -134,10 +175,10 @@ export const renderBenchmarkChart = (s) => {
                 {
                     label: 'Accuracy',
                     data: [s.local_accuracy, s.centralized_accuracy, s.federated_accuracy],
-                    backgroundColor: ['rgba(139,148,158,0.5)', 'rgba(63,185,80,0.5)', 'rgba(188,140,255,0.5)'],
-                    borderColor: ['#8b949e', '#3fb950', '#bc8cff'],
-                    borderWidth: 2,
-                    borderRadius: 8
+                    backgroundColor: ['#8b949e', '#3fb950', '#2eafb2'],
+                    borderColor: ['#8b949e', '#3fb950', '#2eafb2'],
+                    borderWidth: 1.5,
+                    borderRadius: 0 /* Consistent academic square bars */
                 }
             ]
         },
