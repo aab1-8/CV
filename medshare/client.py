@@ -53,10 +53,13 @@ class FlowerSurvivalClient(flwr.client.NumPyClient):
         pe = None
         # Step 2: Initialize Differential Privacy (DP) via Opacus if enabled
         if self.enable_dp:
-            # from opacus import PrivacyEngine (ORIGINAL COMMENT PRESERVED)
             from opacus import PrivacyEngine
-            # accountant="rdp" uses Renyi Differential Privacy (ORIGINAL COMMENT PRESERVED)
-            pe = PrivacyEngine(accountant="rdp")
+            try:
+                # Modern Opacus uses accountant="rdp"
+                pe = PrivacyEngine(accountant="rdp")
+            except:
+                # Fallback for older versions or custom shims
+                pe = PrivacyEngine()
         
         # Extract hyperparameters (learning rate) from the server's control message
         lr_val = config.get("learning_rate", 0.001)

@@ -22,9 +22,10 @@ def get_centralized_performance(X, y, dim, classes, config):
             return data["accuracy"], data.get("auc", 0.5)
     
     print(f"[Baseline] Training Centralized Gold Standard for {config.get('display_name', 'FL')}...")
+    tr_X_raw, te_X_raw, tr_y, te_y = train_test_split(X, y, test_size=0.2)
     scaler = MinMaxScaler()
-    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
-    tr_X, te_X, tr_y, te_y = train_test_split(X_scaled, y, test_size=0.2)
+    tr_X = pd.DataFrame(scaler.fit_transform(tr_X_raw), columns=X.columns)
+    te_X = pd.DataFrame(scaler.transform(te_X_raw), columns=X.columns)
     
     from medshare.data import create_dataloaders
     use_gpu = torch.cuda.is_available()
@@ -163,6 +164,13 @@ def run_simulation(args, config):
     reset_logging()
     if args.sample_size: config["sample_size"] = args.sample_size
     if hasattr(args, "heterogeneity"): config["heterogeneity"] = args.heterogeneity
+    
+    # Clean UI history before starting new simulation
+    hist_f = os.path.join("frontend", "src", "data", "training_history.json")
+    if os.path.exists(hist_f): 
+        try: os.remove(hist_f)
+        except: pass
+    
     X, y, parts, dim, classes = get_data_cached(config)
     
     # Calculate REAL Centralized Baseline
@@ -170,6 +178,8 @@ def run_simulation(args, config):
     
     original_names = list(parts.unique()); scaler = MinMaxScaler()
     name_to_original_idx = {n: i for i, n in enumerate(original_names)}
+    # Ensure y is numpy for safe indexing across partitions
+    y_array = np.asarray(y) if not isinstance(y, np.ndarray) else y
     print(f"[INIT] Loaded {len(X)} records across {len(original_names)} hospitals.")
     
     # Gatekeeping: Filter hospitals by reputation if blockchain is active
@@ -180,19 +190,29 @@ def run_simulation(args, config):
     authorized_names = []
     for i, n in enumerate(original_names):
         rep = bcm.get_reputation(i) if bcm else 100
-        if rep >= 50:
+        # Sync with Smart Contract: Threshold is Score >= 0 (Base 100 in Python)
+        score = rep - 100
+        if score >= 0:
             authorized_names.append(n)
         else:
-            print(f"[Gatekeeper] Hospital {n} BLOCKED (Reputation: {rep})")
+            print(f"[Gatekeeper] Hospital {n} REJECTED (Score: {score}). Minimum Honest Score required: 0.")
     
     if not authorized_names:
         print("[INIT] Error: No authorized hospitals found. Simulation aborted.")
         return
         
     names = authorized_names
-    # Global Scaling: Fit on the ENTIRE dataset so features mean the same thing at every hospital.
-    scaler.fit(X)
-    nodes = {n: train_test_split(pd.DataFrame(scaler.transform(X.loc[parts == n]), columns=X.columns), y[parts == n], test_size=0.2, random_state=42) for n in names}
+    # Global Scaling Mitigation: To prevent leakage, we fit the scaler only on a representative 
+    # sample of training indexes across the hospitals (simulating a public reference set).
+    # We then transform each hospital's local data using this fixed global reference.
+    train_indices = []
+    for n in names:
+        n_idx = X.index[parts == n]
+        n_tr_idx, _ = train_test_split(n_idx, test_size=0.2, random_state=42)
+        train_indices.extend(n_tr_idx)
+    
+    scaler.fit(X.loc[train_indices])
+    nodes = {n: train_test_split(pd.DataFrame(scaler.transform(X.loc[parts == n]), columns=X.columns, index=X.index[parts == n]), y_array[parts == n], test_size=0.2, random_state=42) for n in names}
     # Detect whether parameters were explicitly passed via CLI vs using the default (1 epoch / 3 rounds)
     # This allows us to apply the adaptive "Gold Standard" defaults automatically.
     explicit_rounds = getattr(args, '_cli_rounds', None)
@@ -213,11 +233,34 @@ def run_simulation(args, config):
         # Reduced bounty to 0.05 ETH for simulation stability
         print("[Blockchain] Posting task with 0.05 ETH bounty...")
         created_task_id = bcm.create_task_with_bounty(f"Train {config.get('display_name', 'FL')}", len(names), exec_rounds, bounty_eth=0.05)
+        print(f"[Blockchain] Created Task ID: {created_task_id} (Sync with Dashboard ETH-{created_task_id})")
         for i, n in enumerate(names):
             # Use original ID for join logic to match contract checks
             orig_idx = name_to_original_idx[n]
+            
+            # RESERVED: Skip the first hospital in the script so it can be manually joined via the Dashboard UI
+            if i == 0:
+                print(f"[Blockchain] Hospital {n} (Account {orig_idx+1}) is reserved for MANUAL joining via the dashboard.")
+                continue
+                
             bcm.join_task(created_task_id, orig_idx)
             initial_balances[orig_idx] = bcm.get_balance(orig_idx)
+            
+        import time
+        print(f"\\n{'='*60}")
+        print(f"🚨 DEMO PAUSE: WAITING FOR DASHBOARD HANDSHAKE! 🚨")
+        print(f"-> Please open the Frontend Dashboard.")
+        print(f"-> Select Hospital Node 1.")
+        print(f"-> Click 'Link & Participate' on Task ETH-{created_task_id}.")
+        print(f"{'='*60}\\n")
+        
+        while True:
+            # Index 5 in the Task Tuple is the Status Enum (0=Open, 1=Training, 2=Completed)
+            t_status = bcm.task_contract.functions.tasks(created_task_id).call()[5]
+            if t_status == 1:
+                print(f"✅ Dashboard Participation Confirmed! Task is now fully subscribed (Training Status). Resuming AI Engine...\\n")
+                break
+            time.sleep(2.0)
 
     from flwr.common import ndarrays_to_parameters
     def fit_agg(m, server_round=None): return weighted_average(m, server_round=server_round, log_to_csv=False)
@@ -227,6 +270,7 @@ def run_simulation(args, config):
         task_id=created_task_id if created_task_id is not None else args.task_id, 
         total_rounds=exec_rounds,
         enable_blockchain=config.get("enable_blockchain", False),
+        net=SurvivalMLP(dim, classes), # Enable structured state_dict checkpointing
         initial_parameters=ndarrays_to_parameters(get_parameters(SurvivalMLP(dim, classes))),
         fit_metrics_aggregation_fn=fit_agg,
         evaluate_metrics_aggregation_fn=eval_agg,
@@ -240,6 +284,7 @@ def run_simulation(args, config):
             "defense_name": config.get("defense_name", "FedAvg"),
             "noise_multiplier": config.get("noise_multiplier", 0.0),
             "dataset_name": config.get("display_name", "unknown"),
+            "learning_rate": config.get("learning_rate", 0.001), # Integrated from legacy re-assignment
         },
         on_evaluate_config_fn=lambda r: {
             "server_round": r,
@@ -249,7 +294,8 @@ def run_simulation(args, config):
             "defense_name": config.get("defense_name", "FedAvg"),
             "noise_multiplier": config.get("noise_multiplier", 0.0),
             "dataset_name": config.get("display_name", "unknown"),
-        }
+            "learning_rate": config.get("learning_rate", 0.001), # Standardized across phases
+        },
     )
 
     # SECURE AGGREGATION: Generate Pairwise Masks
@@ -287,26 +333,6 @@ def run_simulation(args, config):
             enable_blockchain=config.get("enable_blockchain", False),
             node_name=h_name
         ).to_client()
-
-    # Clear old history before simulation
-    hist_f = os.path.join("frontend", "src", "data", "training_history.json")
-    if os.path.exists(hist_f): os.remove(hist_f)
-
-    # Inject experiment info into config for weighted_average logging
-    # Use a common config for both fit and evaluate to ensure metrics like total_rounds reach the logger
-    common_config = lambda r: {
-        "server_round": r, 
-        "defense_name": config.get("defense_name", "FedAvg"),
-        "attack_type": config.get("attack_type", "None"),
-        "noise_multiplier": config.get("noise_multiplier", 1.0),
-        "experiment": args.experiment,
-        "total_rounds": exec_rounds,
-        "dataset_name": config.get("display_name", "unknown"),
-        "learning_rate": config.get("learning_rate", 0.001),
-    }
-    
-    strategy.on_fit_config_fn = common_config
-    strategy.on_evaluate_config_fn = common_config
 
     # --- Advanced Resource Configuration ---
     # Detect high-end hardware for parallel scaling
@@ -362,6 +388,13 @@ def run_simulation(args, config):
                     print(f"[Results] Extracted: Acc={fed_acc:.4f}, AUC={fed_auc:.4f}, MI-Gap={fed_mi_auc:.4f}, Eps={fed_eps:.2f}")
         except Exception as e:
             print(f"[Warning] Could not read training_history.json: {e}")
+
+    # Finalize on blockchain if needed
+    if created_task_id is not None and bcm:
+        print(f"[Blockchain] Finalizing Task {created_task_id} and distributing bounties...")
+        # Map the best local model hash to blockchain for audit
+        # For simplicity, we use a placeholder of the best accuracy achieved
+        bcm.complete_task_and_pay(created_task_id, f"acc:{fed_acc:.4f}")
 
     # Calculate Local Baseline (Per-Node Accuracy/AUC)
     print(f"[Baseline] Calculating Local Baselines for each hospital...")

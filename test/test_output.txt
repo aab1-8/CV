@@ -1,0 +1,180 @@
+﻿python : [93mWARNING [0m:   
+At line:1 char:1
++ python federated_survival.py --dataset 
+support2 --rounds 2 2>&1 | Out ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   ([93mWARNING [0m:   :String) [], Remot  
+  eException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+Setting `min_available_clients` lower than 
+`min_fit_clients` or
+`min_evaluate_clients` can cause the server 
+to fail when there are too few clients
+connected to the server. 
+`min_available_clients` must be set to a 
+value larger
+than or equal to the values of 
+`min_fit_clients` and `min_evaluate_clients`.
+
+[93mWARNING [0m:   Ray support on Windows 
+is experimental and may not work as 
+expected. On Windows, Flower Simulations run 
+best in WSL2: https://learn.microsoft.com/en-
+us/windows/wsl/about
+[92mINFO [0m:      Starting Flower 
+ServerApp, config: num_rounds=2, no 
+round_timeout
+[92mINFO [0m:      
+[92mINFO [0m:      [INIT]
+[92mINFO [0m:      Using initial global 
+parameters provided by strategy
+[92mINFO [0m:      Starting evaluation of 
+initial global parameters
+[92mINFO [0m:      Evaluation returned no 
+results (`None`)
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1]
+[92mINFO [0m:      configure_fit: strategy 
+sampled 8 clients (out of 8)
+C:\Users\bhuva\AppData\Local\Programs\Python\
+Python312\Lib\site-packages\ray\_private\work
+er.py:2051: FutureWarning: Tip: In future 
+versions of Ray, Ray will no longer override 
+accelerator visible devices env var if 
+num_gpus=0 or num_gpus=None (default). To 
+enable this behavior and turn off this error 
+message, set 
+RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[36m(ClientAppActor pid=22544)[0m C:\Users\
+bhuva\AppData\Local\Programs\Python\Python312
+\Lib\site-packages\websockets\legacy\__init__
+.py:6: DeprecationWarning: websockets.legacy 
+is deprecated; see https://websockets.readthe
+docs.io/en/stable/howto/upgrade.html for 
+upgrade instructions
+[36m(ClientAppActor pid=22544)[0m   
+warnings.warn(  # deprecated in 14.0 - 
+2024-11-09
+[92mINFO [0m:      aggregate_fit: received 
+8 results and 0 failures
+[92mINFO [0m:      configure_evaluate: 
+strategy sampled 8 clients (out of 8)
+[92mINFO [0m:      aggregate_evaluate: 
+received 8 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2]
+[92mINFO [0m:      configure_fit: strategy 
+sampled 8 clients (out of 8)
+[92mINFO [0m:      aggregate_fit: received 
+8 results and 0 failures
+[92mINFO [0m:      configure_evaluate: 
+strategy sampled 8 clients (out of 8)
+[92mINFO [0m:      aggregate_evaluate: 
+received 8 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [SUMMARY]
+[92mINFO [0m:      Run finished 2 round(s) 
+in 25.39s
+[92mINFO [0m:      	History (loss, 
+distributed):
+[92mINFO [0m:      		round 1: 
+0.5249514353819634
+[92mINFO [0m:      		round 2: 
+0.4545790357690424
+[92mINFO [0m:      	History (metrics, 
+distributed, fit):
+[92mINFO [0m:      	{'accuracy': [(1, 
+0.7803384763072939), (2, 0.803301046621164)],
+[92mINFO [0m:      	 'auc': [(1, 
+0.7889471710529317), (2, 
+0.8416578453585152)],
+[92mINFO [0m:      	 'mi_auc_score': [(1, 
+0.029836536033794214), (2, 
+0.014862466661499818)],
+[92mINFO [0m:      	 'mi_score': [(1, 
+0.01471646874765109), (2, 
+0.010709942389825033)]}
+[92mINFO [0m:      	History (metrics, 
+distributed, evaluate):
+[92mINFO [0m:      	{'accuracy': [(1, 
+0.6871232876712329), (2, 
+0.7375342465753425)],
+[92mINFO [0m:      	 'auc': [(1, 
+0.8355285270241476), (2, 
+0.8439596584911108)],
+[92mINFO [0m:      	 'mi_auc_score': [(1, 
+0.029836536033794214), (2, 
+0.014862466661499818)],
+[92mINFO [0m:      	 'mi_score': [(1, 
+0.01471646874765109), (2, 
+0.010709942389825033)]}
+[92mINFO [0m:      
+[36m(ClientAppActor pid=27896)[0m 
+[93mWARNING [0m:   Manually terminating 
+ClientAppActor
+[36m(ClientAppActor pid=8804)[0m C:\Users\b
+huva\AppData\Local\Programs\Python\Python312\
+Lib\site-packages\websockets\legacy\__init__.
+py:6: DeprecationWarning: websockets.legacy 
+is deprecated; see https://websockets.readthe
+docs.io/en/stable/howto/upgrade.html for 
+upgrade instructions[32m [repeated 5x 
+across cluster][0m
+[36m(ClientAppActor pid=8804)[0m   
+warnings.warn(  # deprecated in 14.0 - 
+2024-11-09[32m [repeated 5x across 
+cluster][0m
+[Module] Loading medshare.strategy
+[Experiment] Dataset: SUPPORT2-Death (9105 rows)
+[Experiment] Calibration: Rounds=50, Epochs=5, Batch=128
+[Logging] Experiment session state reset.
+[INIT] Loaded 9105 records across 8 hospitals.
+[INIT] Starting simulation: 2 rounds, 5 epochs, 128 batch size.
+[Hardware] Mode: Local Efficiency. Capping parallelism to protect CPU temps.
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 0 (Hospital: Lung Cancer, GlobalID: 0)
+[36m(ClientAppActor pid=22544)[0m [Client 0] Starting local training on cpu...
+[36m(ClientAppActor pid=27896)[0m [Client] Initializing client 5 (Hospital: Colon Cancer, GlobalID: 5)
+[36m(ClientAppActor pid=28988)[0m [Client] Initializing client 4 (Hospital: CHF, GlobalID: 4)
+[36m(ClientAppActor pid=316)[0m [Client] Initializing client 3 (Hospital: Coma, GlobalID: 3)
+[36m(ClientAppActor pid=14876)[0m [Client] Initializing client 2 (Hospital: ARF/MOSF w/Sepsis, GlobalID: 2)
+[36m(ClientAppActor pid=8804)[0m [Client] Initializing client 1 (Hospital: Cirrhosis, GlobalID: 1)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 6 (Hospital: COPD, GlobalID: 6)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 7 (Hospital: MOSF w/Malig, GlobalID: 7)
+[Blockchain] Initialization failed: Failed to connect to local blockchain. Tried ports: [8545, 8546]
+[36m(ClientAppActor pid=22544)[0m [Client 7] Starting local training on cpu...[32m [repeated 7x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(ClientAppActor pid=27896)[0m [Client] Initializing client 4 (Hospital: CHF, GlobalID: 4)
+[36m(ClientAppActor pid=28988)[0m [Client] Initializing client 3 (Hospital: Coma, GlobalID: 3)
+[36m(ClientAppActor pid=28988)[0m [Client] Initializing client 7 (Hospital: MOSF w/Malig, GlobalID: 7)
+[36m(ClientAppActor pid=316)[0m [Client] Initializing client 2 (Hospital: ARF/MOSF w/Sepsis, GlobalID: 2)
+[36m(ClientAppActor pid=14876)[0m [Client] Initializing client 0 (Hospital: Lung Cancer, GlobalID: 0)
+[36m(ClientAppActor pid=8804)[0m [Client] Initializing client 1 (Hospital: Cirrhosis, GlobalID: 1)
+[36m(ClientAppActor pid=8804)[0m [Client] Initializing client 6 (Hospital: COPD, GlobalID: 6)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 5 (Hospital: Colon Cancer, GlobalID: 5)
+[Strategy] New BEST Evaluation model saved (Acc: 0.6871)
+[36m(ClientAppActor pid=27896)[0m [Client] Initializing client 4 (Hospital: CHF, GlobalID: 4)
+[36m(ClientAppActor pid=316)[0m [Client] Initializing client 2 (Hospital: ARF/MOSF w/Sepsis, GlobalID: 2)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 5 (Hospital: Colon Cancer, GlobalID: 5)
+[Blockchain] Initialization failed: Failed to connect to local blockchain. Tried ports: [8545, 8546]
+[36m(ClientAppActor pid=14876)[0m [Client 7] Starting local training on cpu...[32m [repeated 8x across cluster][0m
+[36m(ClientAppActor pid=27896)[0m [Client] Initializing client 3 (Hospital: Coma, GlobalID: 3)[32m [repeated 2x across cluster][0m
+[36m(ClientAppActor pid=14876)[0m [Client] Initializing client 7 (Hospital: MOSF w/Malig, GlobalID: 7)
+[36m(ClientAppActor pid=8804)[0m [Client] Initializing client 0 (Hospital: Lung Cancer, GlobalID: 0)
+[36m(ClientAppActor pid=28988)[0m [Client] Initializing client 1 (Hospital: Cirrhosis, GlobalID: 1)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 6 (Hospital: COPD, GlobalID: 6)
+[36m(ClientAppActor pid=28988)[0m [Client] Initializing client 5 (Hospital: Colon Cancer, GlobalID: 5)
+[36m(ClientAppActor pid=316)[0m [Client] Initializing client 0 (Hospital: Lung Cancer, GlobalID: 0)
+[36m(ClientAppActor pid=14876)[0m [Client] Initializing client 2 (Hospital: ARF/MOSF w/Sepsis, GlobalID: 2)
+[36m(ClientAppActor pid=8804)[0m [Client] Initializing client 4 (Hospital: CHF, GlobalID: 4)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 1 (Hospital: Cirrhosis, GlobalID: 1)
+[Strategy] New BEST Evaluation model saved (Acc: 0.7375)
+[36m(ClientAppActor pid=27896)[0m [Client] Initializing client 7 (Hospital: MOSF w/Malig, GlobalID: 7)
+[36m(ClientAppActor pid=22544)[0m [Client] Initializing client 6 (Hospital: COPD, GlobalID: 6)
+[Results] Extracted: Acc=0.7375, AUC=0.8440, MI-Gap=0.0149, Eps=0.00
+[Baseline] Calculating Local Baselines for each hospital...
+[Baseline] Loading cached local baselines...
+[Blockchain] Initialization failed: Failed to connect to local blockchain. Tried ports: [8545, 8546]

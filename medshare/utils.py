@@ -17,6 +17,10 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
     """
     The aggregator: combines reports from all hospitals into a single Global Outcome.
     Calculates Accuracy, AUC, and Privacy Leakage (MI Scores).
+
+    Design Note: Logging uses simple atomic 'append' modes. While suitable for this 
+    single-threaded orchestration, a distributed production scale-up would require 
+    an asynchronous thread-safe logging service or a dedicated DB.
     """
     global _START_TIME, _LAST_LOGGED_ROUND
     

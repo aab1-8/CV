@@ -1,6 +1,11 @@
 import './style.css';
 import * as charts from './charts.js';
 import * as market from './marketplace.js';
+import {
+  blockchain_getPendingReward,
+  blockchain_claimReward,
+  connectToProvider
+} from './blockchain.js';
 
 let currentData = { raw: [], history: [], stats: {} };
 
@@ -123,22 +128,24 @@ const setupViewToggle = () => {
     const selector = document.getElementById('audit-selector-container');
     if (selector) selector.style.display = t === 'analytics' ? 'flex' : 'none';
 
-    if (t === 'marketplace') renderMarketplace();
+    if (t === 'marketplace') renderResearcherView();
     if (t === 'hospital') renderHospitalView();
   };
   ['hospital', 'marketplace', 'analytics'].forEach(v => document.getElementById(`btn-${v}`).addEventListener('click', () => switchView(v)));
   switchView('analytics');
 };
 
-const renderMarketplace = () => {
+const renderResearcherView = () => {
   const reqs = market.loadRequests();
   market.updateMarketplaceStats();
   document.getElementById('researcher-requests-list').innerHTML = reqs.length ? reqs.map(r => market.renderRequestCard(r, false)).join('') : '<div class="empty-state">No Active Requests</div>';
+  market.setupMarketplaceListeners();
 };
 
 const renderHospitalView = () => {
   const reqs = market.loadRequests().filter(r => r.contributions < r.hospitalsNeeded);
   document.getElementById('hospital-requests-list').innerHTML = reqs.length ? reqs.map(r => market.renderRequestCard(r, true)).join('') : '<div class="empty-state">No Pending Tasks</div>';
+  market.setupMarketplaceListeners();
 };
 
 window.switchToAudit = (dataset) => {
@@ -152,31 +159,31 @@ window.switchToAudit = (dataset) => {
 window.smartAuditJump = (dataType) => {
   let auditVal = 'comparison_stats';
   const dt = (dataType || '').toLowerCase();
-  
+
   let isReady = false;
-  
+
   // Fuzzy keyword matching for professional routing
-  if (dt.includes('support2') || dt.includes('mortality') || dt.includes('survival')) { 
-    auditVal = 'support2_audit'; 
-    isReady = true; 
-  }
-  if (dt.includes('thyroid')) { 
-    auditVal = 'thyroid_audit'; 
-    isReady = true; 
-  }
-  if (dt.includes('admin')) { 
-    auditVal = 'admin_audit'; 
-    isReady = true; 
-  }
-  if (dt.includes('cdc') || dt.includes('diabetes')) { 
-    auditVal = 'cdc_audit'; 
-    isReady = true; 
-  }
-  if (dt.includes('maternal') || dt.includes('health risk')) {
-    auditVal = 'maternal_risk_audit'; 
+  if (dt.includes('support2') || dt.includes('mortality') || dt.includes('survival')) {
+    auditVal = 'support2_audit';
     isReady = true;
   }
-  
+  if (dt.includes('thyroid')) {
+    auditVal = 'thyroid_audit';
+    isReady = true;
+  }
+  if (dt.includes('admin')) {
+    auditVal = 'admin_audit';
+    isReady = true;
+  }
+  if (dt.includes('cdc') || dt.includes('diabetes')) {
+    auditVal = 'cdc_audit';
+    isReady = true;
+  }
+  if (dt.includes('maternal') || dt.includes('health risk')) {
+    auditVal = 'maternal_risk_audit';
+    isReady = true;
+  }
+
   if (!isReady) {
     alert('⚖️ AUDIT PENDING:\n\nThe global scientific verification for this study is still in progress on the blockchain. Basic performance metrics are available in the Live Simulation view.');
   }
@@ -184,9 +191,9 @@ window.smartAuditJump = (dataType) => {
   // Set selector and load data
   const selector = document.getElementById('audit-dataset-selector');
   if (selector) selector.value = auditVal;
-  
+
   loadData(auditVal);
-  
+
   // Switch to Analytics view
   const btn = document.getElementById('btn-analytics');
   if (btn) btn.click();
@@ -196,6 +203,21 @@ window.smartAuditJump = (dataType) => {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData();
   setupViewToggle();
+
+  // Custom Reset Modal Logic (Bypass Chrome Flicker)
+  const modal = document.getElementById('custom-modal');
+  document.getElementById('dev-clear-storage')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (modal) modal.style.display = 'flex';
+  });
+  document.getElementById('modal-cancel')?.addEventListener('click', () => {
+    if (modal) modal.style.display = 'none';
+  });
+  document.getElementById('modal-confirm')?.addEventListener('click', () => {
+    console.log("🧹 Clearing local simulation progress...");
+    Object.keys(localStorage).filter(x => x.startsWith('medshare_')).forEach(k => localStorage.removeItem(k));
+    window.location.reload();
+  });
 
   // Theme Toggle Logic
   const themeToggleBtn = document.getElementById('theme-toggle');
@@ -249,11 +271,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("Blockchain sync skipped (Demonstrator Mode Active)");
   }
 
-  // Developer Progress Reset Utility
-  document.getElementById('dev-clear-storage')?.addEventListener('click', () => {
-    if (confirm('🚨 ACTION: Permanent Local Progress Reset\n\nThis will clear all created requests and local node training progress from this browser storage. This is recommended before starting a new finalized dissertation demo.')) {
-      localStorage.clear();
-      window.location.reload();
+  // REWARDS: Sync rewards balance
+  const updateRewards = async () => {
+    try {
+      const p = await connectToProvider();
+      if (!p) {
+        console.warn("Rewards Sync: Wallet provider not found.");
+        return;
+      }
+      const selector = document.getElementById('hospital-account-selector');
+      const accountIdx = parseInt(selector?.value || "1");
+
+      const signer = await p.getSigner(accountIdx);
+      const addr = await signer.getAddress();
+      const bal = await blockchain_getPendingReward(addr);
+
+      const el = document.getElementById('hospital-rewards-balance');
+      if (el) {
+        el.textContent = `${parseFloat(bal).toFixed(4)} ETH`;
+        console.log(`📡 Sync: Balance for Account #${accountIdx} (${addr.substr(0, 6)}) is ${bal} ETH`);
+      }
+    } catch (e) {
+      console.error("Rewards Sync Failure:", e);
     }
+  };
+
+  updateRewards();
+
+  // Watch for account switches to track different earnings and profiles live!
+  document.getElementById('hospital-account-selector')?.addEventListener('change', () => {
+    const accountIdx = document.getElementById('hospital-account-selector').value;
+
+    // Restore Saved Profile for this Account
+    const savedName = localStorage.getItem(`medshare_node_name_${accountIdx}`);
+    const savedLink = localStorage.getItem(`medshare_node_link_${accountIdx}`);
+    if (savedName) document.getElementById('hospital-name').value = savedName;
+    if (savedLink) document.getElementById('hospital-dataset-link').value = savedLink;
+
+    updateRewards();
+  });
+
+  // Save profile changes automatically
+  document.getElementById('hospital-name')?.addEventListener('input', (e) => {
+    const accountIdx = document.getElementById('hospital-account-selector').value;
+    localStorage.setItem(`medshare_node_name_${accountIdx}`, e.target.value);
+  });
+  document.getElementById('hospital-dataset-link')?.addEventListener('change', (e) => {
+    const accountIdx = document.getElementById('hospital-account-selector').value;
+    localStorage.setItem(`medshare_node_link_${accountIdx}`, e.target.value);
+  });
+
+  document.getElementById('btn-claim-rewards')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-claim-rewards');
+    const balanceText = document.getElementById('hospital-rewards-balance')?.textContent || "0.0 ETH";
+
+    if (balanceText === "0.0 ETH" || parseFloat(balanceText) === 0) {
+      return alert("💎 NO REWARDS PENDING:\n\nParticipation in a clinical study is required to earn bounties. Once a study you joined is 'FULFILLED', your reward will appear here ready for withdrawal.");
+    }
+
+    btn.textContent = '⛓️ Claims processing...';
+    btn.disabled = true;
+    const res = await blockchain_claimReward();
+    if (res.success) {
+      alert('✅ Reward successfully transferred to your wallet!');
+      updateRewards();
+    } else {
+      alert('❌ Claim failed. Ensure you have pending rewards.');
+    }
+    btn.textContent = '🔗 Claim Reward';
+    btn.disabled = false;
   });
 });

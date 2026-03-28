@@ -16,7 +16,7 @@ class MedShareBlockchain:
             for port in ports: # Iterate through possible Ganache networking ports
                 url = f"http://127.0.0.1:{port}"          # Build the local HTTP RPC endpoint URL
                 w3 = Web3(Web3.HTTPProvider(url))          # Create a Web3 connection to that endpoint
-                if w3.is_connected():                       # Confirm the connection is live (Ganache is running)
+                if self._check_external_w3(w3):            # Confirm the connection is live (Ganache is running)
                     self.w3 = w3                            # Save the active connection to this instance
                     print(f"[Blockchain] Connected to {url}") # Log success for terminal debugging
                     break                                   # Stop trying other ports once connected
@@ -26,7 +26,7 @@ class MedShareBlockchain:
         else: # Case for custom environments (vLab, AWS, or Infura)
             # If a custom RPC URL was provided (e.g. for vLab), connect directly to it
             self.w3 = Web3(Web3.HTTPProvider(rpc_url)) # Initialize connection to custom endpoint
-            if not self.w3.is_connected(): # Check for heartbeat signal
+            if not self._check_external_w3(self.w3): # Check for heartbeat signal
                 raise ConnectionError(f"Failed to connect to local blockchain at {rpc_url}")
 
         # --- STEP 2: Locate the compiled contract build directory ---
@@ -58,10 +58,26 @@ class MedShareBlockchain:
         # Reputation: tracks each hospital's trust score, rewarding honest contributors and penalising bad actors
         self.reputation_contract = self.w3.eth.contract(address=self.deploy_info['Reputation'], abi=load_abi('Reputation'))
 
-        # accounts[0] is the Ganache admin/deployer account; all admin transactions are sent from this address (ORIGINAL COMMENT PRESERVED)
+        # accounts[0] is the Ganache admin/deployer account; all admin transactions are sent from this address
         self.w3.eth.default_account = self.w3.eth.accounts[0] # Set standard 'sender' for the session
-        # Local cache of which hospitals have been authorized this session (avoids redundant blockchain queries)
+        
+        # Guard: Check account capacity vs expected simulation size (e.g. 10 nodes + 1 admin)
+        if len(self.w3.eth.accounts) < 2:
+            raise RuntimeError("Ganache must provide at least 2 accounts (1 Admin, 1+ Hospitals). Recommended: 10.")
+
         self.authorized_hospitals = set() # Empty set to hold string addresses
+
+    def _check_external_w3(self, w3):
+        """Web3.py v5/v6 compatibility shim for connection check."""
+        try:
+            if hasattr(w3, 'is_connected'): # v6
+                return w3.is_connected()
+            return w3.isConnected() # v5 fallback
+        except: return False
+
+    def is_connected(self):
+        """External heartbeat check."""
+        return self._check_external_w3(self.w3)
 
     def update_reputation(self, hospital_idx, change, reason="FL Contribution"):
         """
@@ -69,8 +85,9 @@ class MedShareBlockchain:
         'change' can be positive (reward) or negative (penalty for Byzantine/poisoning behaviour).
         """
         try:
-            # Offset by +1 to skip accounts[0] (the admin). Each hospital maps to a unique Ganache account.
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)] # Select target wallet
+            # Strict Mapping: Ensure hospital index does not exceed Ganache account availability
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), f"Insufficient Ganache accounts for hospital {hospital_idx}"
+            acc = self.w3.eth.accounts[hospital_idx + 1] # Direct mapping (no modulo)
             # Call the updateReputation function on the Solidity Smart Contract (ORIGINAL COMMENT PRESERVED)
             # transact() signs and broadcasts the transaction to the blockchain (ORIGINAL COMMENT PRESERVED)
             tx = self.reputation_contract.functions.updateReputation(acc, int(change), reason).transact({
@@ -88,11 +105,13 @@ class MedShareBlockchain:
         Returns score as 100 + on-chain delta (so a fresh node starts at 100, not 0).
         """
         try: # Defensive block against blockchain state errors
-            # Map index to valid wallet address
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             # .call() is a read-only query — it does NOT send a transaction or cost gas (ORIGINAL COMMENT PRESERVED)
             return 100 + self.reputation_contract.functions.getScore(acc).call() # Add base score of 100
-        except: # If the account is not registered yet on-chain
+        except Exception as e: # If the account is not registered yet on-chain
+            print(f"[Blockchain] get_reputation failed: {e}")
             return 100  # Default baseline score if the contract query fails (safe fallback)
 
     def hash_weights(self, weights):
@@ -113,8 +132,9 @@ class MedShareBlockchain:
         Checks the on-chain state first to avoid redundant (and costly) re-authorization transactions.
         """
         try: # Standard blockchain connectivity wrapper
-            # Calculate wallet address for the hospital
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             # Query the contract directly (not local cache) to handle process restarts cleanly
             is_auth = self.task_contract.functions.authorizedHospitals(acc).call() # READ CALL
             if not is_auth: # If not already authorized on-chain
@@ -136,10 +156,12 @@ class MedShareBlockchain:
     def is_authorized(self, hospital_idx):
         """Checks whether a hospital's Ethereum account is currently authorized on the MedShareTask contract."""
         try: # Query logic
-            # Map index to address
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             return self.task_contract.functions.authorizedHospitals(acc).call()  # Read-only on-chain query
-        except: # If gas or network is down
+        except Exception as e: # If gas or network is down
+            print(f"[Blockchain] is_authorized query failed: {e}")
             return False  # Safe fallback: treat as unauthorized if contract query fails
 
     def join_task(self, task_id, hospital_idx):
@@ -150,8 +172,9 @@ class MedShareBlockchain:
         try: # Task participation wrapper
             if not self.is_authorized(hospital_idx): # Check registration status
                 self.authorize_hospital(hospital_idx)   # Self-healing: authorize if not already done
-            # Select hospital's specific private wallet
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             # Call joinTask on Solidity contract
             tx = self.task_contract.functions.joinTask(task_id).transact({
                 'from': acc,                             # The hospital's own account joins the task (not admin)
@@ -170,8 +193,9 @@ class MedShareBlockchain:
         Returns the gas cost of the transaction for latency benchmarking experiments.
         """
         try: # Privacy-preserving audit wrapper
-            # Hospital wallet select
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             h = self.hash_weights(weights)  # Convert raw weight arrays to a 32-byte SHA-256 digest
             # Commit the hash to the registry
             tx = self.registry_contract.functions.postCommitment(task_id, round_num, h).transact({
@@ -187,32 +211,35 @@ class MedShareBlockchain:
     def get_balance(self, hospital_idx):
         """Returns a hospital's current ETH balance in Ether (not Wei) for the dashboard display."""
         try: # Balance check logic
-            # Map index to address
-            acc = self.w3.eth.accounts[(hospital_idx + 1) % len(self.w3.eth.accounts)]
+            # Strict Mapping Guard
+            assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
+            acc = self.w3.eth.accounts[hospital_idx + 1]
             # from_wei converts the raw Wei integer (e.g. 1000000000000000000) to a human-readable Ether float (1.0) (ORIGINAL COMMENT PRESERVED)
             return self.w3.from_wei(self.w3.eth.get_balance(acc), 'ether') # Returns floats like 100.0
-        except: # Network down case
+        except Exception as e: # Network down case
+            print(f"[Blockchain] get_balance failed: {e}")
             return 0 # Show zero if blockchain is unreachable
 
     def create_task_with_bounty(self, description, min_clients, rounds, bounty_eth=0.1):
         """
         Creates a new federated learning task on the MedShareTask Smart Contract,
         locking the specified ETH bounty into the contract's escrow for later distribution.
-        Uses a low default bounty (0.1 ETH) to prevent account drainage during repeated stress tests.
         """
         try: # Bounty funding wrapper
-            # Pre-read the current task count to predict the new task's ID before the transaction (ORIGINAL COMMENT PRESERVED)
-            expected_id = self.task_contract.functions.taskCount().call() # Get ID counter
-
             # Submit the task with ETH funding
             tx = self.task_contract.functions.createTask(description, min_clients, rounds).transact({
                 'from': self.w3.eth.accounts[0],           # Admin account creates and funds all tasks
                 'value': self.w3.to_wei(bounty_eth, 'ether'),  # Convert ETH float to Wei integer for the contract
                 'gasPrice': self.w3.to_wei(1, 'gwei') # Constant price
             })
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx) # Confirm funding tx
-            print(f"[Blockchain] Task {expected_id} created with {bounty_eth} ETH bounty. Tx: {receipt.transactionHash.hex()[:10]}...")
-            return expected_id  # Return the task ID so the caller can link hospital joins to this task
+            
+            # IMPROVED: Wait for receipt to avoid race conditions
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx)
+            
+            # Extract the actual taskId from the updated state now that it's confirmed
+            task_id = self.task_contract.functions.taskCount().call() - 1 
+            print(f"[Blockchain] Task {task_id} created with {bounty_eth} ETH bounty. Tx: {receipt.transactionHash.hex()[:10]}...")
+            return task_id
         except Exception as e: # Handle potential lack of funds in admin account
             print(f"[Blockchain] Create task failed: {e}")
             return None

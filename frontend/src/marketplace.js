@@ -1,7 +1,29 @@
 import { blockchain_createTask } from './blockchain.js';
 
-export const loadRequests = () => JSON.parse(localStorage.getItem('medshare_requests') || '[]');
-export const saveRequests = (r) => localStorage.setItem('medshare_requests', JSON.stringify(r));
+// SECURITY: Simple HTML escaper to prevent XSS in study descriptions/names
+const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
+const saveRequests = (rs) => localStorage.setItem('medshare_tasks', JSON.stringify(rs));
+
+/**
+ * Validates a request object to prevent UI corruption from tampered data.
+ */
+function validateRequest(r) {
+    if (!r || typeof r !== 'object') return false;
+    // Adjusted required fields to match existing request object structure
+    const required = ['id', 'dataType', 'modelType', 'hospitalsNeeded', 'description', 'bounty', 'contributions'];
+    return required.every(field => r.hasOwnProperty(field));
+}
+
+export const loadRequests = () => {
+    try {
+        const raw = JSON.parse(localStorage.getItem('medshare_tasks') || '[]');
+        return Array.isArray(raw) ? raw.filter(validateRequest) : [];
+    } catch (e) {
+        console.error("CRITICAL: Corrupted task storage detected. Resetting to empty state for security.");
+        return [];
+    }
+};
 
 // CUSTOM: Render a Request card with Bounty split and Model Type badge
 export function renderRequestCard(r, isHosp) {
@@ -10,22 +32,22 @@ export function renderRequestCard(r, isHosp) {
 
     // PREMIUM: Calculation for bounty per node
     const bountyTotal = parseFloat(r.bounty) || 0;
-    const perNode = (bountyTotal / r.hospitalsNeeded).toFixed(2);
+    const perNode = (bountyTotal / r.hospitalsNeeded).toFixed(4);
     const bountyText = bountyTotal > 0 ? `<div class="bounty-badge">💰 ${bountyTotal} ETH (${perNode} per node)</div>` : '';
 
     return `
-    <div class="request-card ${comp ? 'completed-card' : ''}" data-id="${r.id}">
+    <div class="request-card ${comp ? 'completed-card' : ''}" data-id="${esc(r.id)}">
         <div class="request-header">
-            <b>${(r.dataType || 'SURVIVAL').toUpperCase()} Study</b>
+            <b>${esc(r.dataType || 'SURVIVAL').toUpperCase()} Study</b>
             <span class="status-badge ${comp ? 'completed' : 'open'}">${comp ? 'FINALIZED' : 'ACTIVE'}</span>
         </div>
         <div style="margin: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             ${bountyText}
             <div class="badge" style="background: rgba(188, 140, 255, 0.1); color: var(--accent-purple); border-color: rgba(188, 140, 255, 0.2); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--accent-purple);">
-                ${(r.modelType || 'MLP Model').toUpperCase()}
+                ${esc(r.modelType || 'MLP Model').toUpperCase()}
             </div>
         </div>
-        <p style="color:var(--text-secondary); font-size:0.85rem; margin: 0.5rem 0;">${r.description || 'Global federated learning request for clinical analysis.'}</p>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin: 0.5rem 0;">${esc(r.description || 'Global federated learning request for clinical analysis.')}</p>
         
         <div class="progress-container">
             <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
@@ -36,10 +58,24 @@ export function renderRequestCard(r, isHosp) {
         </div>
 
         <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-            ${isHosp && !comp ? `<button class="btn-secondary" id="btn-part-${r.id}" onclick="window.participateRequest('${r.id}')">🔗 Link & Participate</button>` : ''}
-            ${!isHosp && comp ? `<button class="btn-primary" onclick="window.viewAssets('${r.id}')">📥 Assets</button>` : ''}
+            ${isHosp && !comp ? `<button class="btn-participate" data-id="${esc(r.id)}">🔗 Link & Participate</button>` : ''}
+            ${!isHosp && comp ? `<button class="btn-view-assets" data-id="${esc(r.id)}">📊 View Study Assets</button>` : ''}
+            ${comp ? '<span class="status-badge badge-green">✅ Study Fulfilled</span>' : ''}
         </div>
-    </div>`;
+    </div>
+`;
+}
+
+/**
+ * Modern Event listener setup (replaces insecure inline onclick handlers)
+ */
+export function setupMarketplaceListeners() {
+    document.querySelectorAll('.btn-participate').forEach(btn => {
+        btn.addEventListener('click', (e) => participateRequest(e.target.dataset.id));
+    });
+    document.querySelectorAll('.btn-view-assets').forEach(btn => {
+        btn.addEventListener('click', (e) => viewAssets(e.target.dataset.id));
+    });
 }
 
 export function updateMarketplaceStats() {
@@ -92,42 +128,76 @@ window.participateRequest = async (id) => {
     const ds = document.getElementById('hospital-dataset-link').value;
     if (ds === 'none') return alert('⚠️ SECURITY ACTION REQUIRED:\n\nPlease link a local dataset first to prove data locality. Federated learning requires data to remain behind your firewall.');
 
-    const btn = document.getElementById(`btn-part-${id}`);
+    const btn = document.querySelector(`.btn-participate[data-id="${id}"]`);
+    if (btn) { // Ensure button exists before trying to modify it
+        btn.disabled = true;
+        btn.innerHTML = '🧪 Training Securely...';
+    }
+
     const activeRequest = loadRequests().find(x => x.id === id);
+    const accountIdx = document.getElementById('hospital-account-selector')?.value || "1";
+    const joinedKey = `medshare_joined_${id}_node_${accountIdx}`;
+
+    // CHECK: Have we already joined this specific study with THIS account?
+    if (localStorage.getItem(joinedKey)) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🔗 Link & Participate';
+        }
+        return alert(`⚠️ ACCESS DENIED:\n\nHospital Node ${accountIdx} has already finalized its participation in Study ${id}. Decentralized protocol permits only ONE training slot per unique wallet identity.`);
+    }
 
     if (activeRequest) {
         const studyType = activeRequest.dataType.toLowerCase();
         const linkedType = ds.toLowerCase();
 
-        // Scientific Matching: Strict exact match to prevent CDC vs Hospital Diabetes collisions
+        // Scientific Matching: Robust keyword matching to prevent CDC vs Hospital Diabetes collisions
         let isMatch = false;
-        if (linkedType === 'diabetes' && studyType === 'diabetes classification') isMatch = true;
-        if (linkedType === 'stroke' && studyType === 'stroke prediction') isMatch = true;
-        if (linkedType === 'survival' && studyType === 'heart disease (survival)') isMatch = true;
-        if (linkedType === 'thyroid' && studyType === 'thyroid disorder aggregation') isMatch = true;
-        if (linkedType === 'maternal' && studyType === 'maternal health risk') isMatch = true;
-        if (linkedType === 'hospital' && studyType === 'diabetes hospitals (multi-site)') isMatch = true;
-        if (linkedType === 'admin' && studyType === 'admin category (security testing)') isMatch = true;
+        if (linkedType === 'diabetes' && (studyType.includes('diabetes') && !studyType.includes('hospital'))) isMatch = true;
+        if (linkedType === 'stroke' && studyType.includes('stroke')) isMatch = true;
+        if (linkedType === 'survival' && (studyType.includes('survival') || studyType.includes('heart') || studyType.includes('support2'))) isMatch = true;
+        if (linkedType === 'thyroid' && studyType.includes('thyroid')) isMatch = true;
+        if (linkedType === 'maternal' && (studyType.includes('maternal') || studyType.includes('maternal health risk'))) isMatch = true;
+        if (linkedType === 'hospital' && (studyType.includes('hospital') || studyType.includes('multi-site'))) isMatch = true;
+        if (linkedType === 'admin' && (studyType.includes('admin') || studyType.includes('security'))) isMatch = true;
 
         if (!isMatch) {
-            btn.disabled = false;
-            btn.innerHTML = '🔗 Link & Participate';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '🔗 Link & Participate';
+            }
             return alert(`⚠️ SCHEMA MISMATCH DETECTED!\n\nThis study requires "${activeRequest.dataType}" data features. Your linked dataset ("${ds}") is incompatible and has been rejected by the Smart Contract protocol to prevent model poisoning.`);
         }
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '🧪 Training Securely...';
-
-    // Simulated "Secure Cryptographic Handshake"
-    await new Promise(res => setTimeout(res, 1500));
+    // Finalize participation on blockchain if IDs match
+    if (activeRequest.onChain && id.startsWith('ETH-')) {
+        const taskId = parseInt(id.replace('ETH-', ''));
+        const { blockchain_joinTask } = await import('./blockchain.js');
+        const bResult = await blockchain_joinTask(taskId);
+        if (!bResult.success) {
+            alert(`⚠️ Blockchain Handshake Failed:\n\n${bResult.error}`);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '🔗 Link & Participate';
+            }
+            return;
+        }
+        alert(`✅ PARTICIPATION RECORDED:\n\nStudy #${taskId} handshake successful on the blockchain. Your hospital node is now an authorized contributor!`);
+    }
 
     const allRequests = loadRequests();
     const idx = allRequests.findIndex(x => x.id === id);
     if (idx !== -1) {
         allRequests[idx].contributions += 1;
         saveRequests(allRequests);
-        btn.innerHTML = '✅ Model Contributed';
+        
+        // Finalize: Track this join permanently for this account in this study
+        localStorage.setItem(joinedKey, "true");
+
+        if (btn) {
+            btn.innerHTML = '✅ Model Contributed';
+        }
         setTimeout(() => location.reload(), 800);
     }
 };
@@ -142,7 +212,7 @@ window.viewAssets = (id) => {
     modal.innerHTML = `
         <div class="modal-content card" style="max-width: 500px; margin: 100px auto; animation: fadeInUp 0.5s ease-out;">
             <h2 style="color:var(--accent-blue); margin-bottom: 0.5rem;">📦 Final Model Assets</h2>
-            <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Study ID: ${id} | Architecture: ${r.modelType || 'MLP'}</p>
+            <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Study ID: ${esc(id)} | Architecture: ${esc(r.modelType || 'MLP')}</p>
             
             <div style="background: rgba(0,0,0,0.3); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--glass-border);">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
@@ -160,11 +230,53 @@ window.viewAssets = (id) => {
             </div>
 
             <div style="display: grid; gap: 0.75rem;">
-                <button class="btn-primary" onclick="alert('Downloading weights.pth...'); this.closest('.assets-modal').remove();">📥 DownloadWeights (.pth)</button>
-                <button class="btn-secondary" onclick="window.smartAuditJump('${r.dataType}'); this.closest('.assets-modal').remove();">📊 View Audit</button>
-                <button class="btn-secondary" style="border-color: #f78166; color: #f78166; margin-top: 0.5rem;" onclick="this.closest('.assets-modal').remove();">✕ Close</button>
+                <button class="btn-primary btn-modal-download">📥 DownloadWeights (.pth)</button>
+                <button class="btn-secondary btn-modal-audit">📊 View Audit</button>
+                <button class="btn-secondary btn-modal-close" style="border-color: #f78166; color: #f78166; margin-top: 0.5rem;">✕ Close</button>
             </div>
         </div>
     `;
+    modal.querySelector('.btn-modal-download').addEventListener('click', () => { alert('Downloading weights.pth...'); modal.remove(); });
+    modal.querySelector('.btn-modal-audit').addEventListener('click', () => { window.smartAuditJump(r.dataType); modal.remove(); });
+    modal.querySelector('.btn-modal-close').addEventListener('click', () => modal.remove());
     document.body.appendChild(modal);
 };
+
+// SYNC: Pull real tasks from Blockchain to augment local view
+export async function syncBlockchainTasks() {
+    const { blockchain_getTaskCount, blockchain_getTask } = await import('./blockchain.js');
+    try {
+        const count = await blockchain_getTaskCount();
+        if (count > 0) {
+            const current = loadRequests();
+            const synced = [];
+            for (let i = 0; i < count; i++) {
+                const t = await blockchain_getTask(i);
+                if (t) {
+                    const { blockchain_getHospitals } = await import('./blockchain.js');
+                    const hospitals = await blockchain_getHospitals(i);
+
+                    synced.push({
+                        id: `ETH-${t.id}`,
+                        dataType: t.description.includes('Study') ? t.description : `${t.description} Study`,
+                        modelType: 'Collaborative Model',
+                        hospitalsNeeded: t.minClients,
+                        description: t.description,
+                        bounty: t.bounty,
+                        contributions: hospitals.length,
+                        onChain: true,
+                        status: t.status // 0: Open, 1: Training, 2: Completed
+                    });
+                }
+            }
+            // Merge unique on-chain tasks into the view
+            const merged = [...synced, ...current.filter(x => !x.onChain)];
+            saveRequests(merged);
+            console.log(`Synced ${synced.length} blockchain tasks.`);
+        }
+    } catch (e) {
+        console.warn("Blockchain sync unavailable - Local Storage only.");
+    }
+}
+
+

@@ -358,17 +358,17 @@ h1 {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 0 10px rgba(88, 166, 255, 0.4);
 }
 
-/* Audit Selector Container: Bold Solid Blue */
+/* Audit Selector Container: Subtle Panel Style */
 .audit-selector-box {
-  background: #0969da !important; /* Solid Premium Action Blue */
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .audit-selector-box span, 
 .audit-selector-box #live-indicator + span {
-  color: #ffffff !important; /* Force white text for readability on blue */
+  color: var(--text-secondary) !important;
 }
 
 .audit-selector-box:hover {
@@ -635,6 +635,61 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ============ MARKETPLACE BUTTON UPGRADES ============ */
+
+.btn-participate {
+  flex: 1;
+  background: var(--accent-teal);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  color: white;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-participate:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-participate:disabled {
+  background: var(--glass-border);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-view-assets {
+  flex: 1;
+  background: var(--accent-blue);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  color: white;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-view-assets:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes pulse {

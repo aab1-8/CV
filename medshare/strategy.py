@@ -8,7 +8,7 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
     A Secure & Robust Strategy that monitors hospitals for malicious updates.
     Extends standard FedAvg with Robust-MAD (Median Absolute Deviation).
     """
-    def __init__(self, task_id=0, total_rounds=3, enable_blockchain=False, fit_metrics_aggregation_fn=None, evaluate_metrics_aggregation_fn=None, *args, **kwargs):
+    def __init__(self, task_id=0, total_rounds=3, enable_blockchain=False, net=None, fit_metrics_aggregation_fn=None, evaluate_metrics_aggregation_fn=None, *args, **kwargs):
         # Initialize standard Flower FedAvg parameters
         super().__init__(
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn, 
@@ -18,6 +18,7 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
         self.task_id = task_id # Used to link results to the Blockchain study
         self.total_rounds = total_rounds # When to finalize the Ethereum Bounty
         self.enable_blockchain = enable_blockchain # Toggle for decentralized audit mode
+        self.net = net # Reference to the model architecture for state_dict checkpointing
         self.latest_weights = None # Keeps best global model in memory for checkpointing
         self.best_acc = 0.0 # Track best accuracy for checkpointing logic
 
@@ -95,6 +96,7 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
                 if filtered_results: results = filtered_results
                 else:
                     closest_idx = np.argmin([abs(n - med_norm) for n in norms])
+                    print(f"[Defense] Warning: All clients flagged as outliers. Using client {closest_idx} (closest to median norm {med_norm:.2f}).")
                     results = [results[closest_idx]]
 
             # Step 5: Perform the actual FedAvg (Weighting updates by dataset size)
@@ -138,7 +140,16 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
                             checkpoint_dir = os.path.join(os.getcwd(), "test")
                             os.makedirs(checkpoint_dir, exist_ok=True)
                             checkpoint_path = os.path.join(checkpoint_dir, "best_model.pth")
-                            torch.save(self.latest_weights, checkpoint_path)
+                            
+                            # Standardised state_dict saving 
+                            if self.net is not None:
+                                # Map the List[np.ndarray] back to the model's named parameters
+                                params_dict = zip(self.net.state_dict().keys(), self.latest_weights)
+                                state_dict = {k: torch.tensor(v) for k, v in params_dict}
+                                torch.save(state_dict, checkpoint_path)
+                            else:
+                                torch.save(self.latest_weights, checkpoint_path) # Fallback to raw weights
+                            
                             print(f"[Strategy] New BEST Evaluation model saved (Acc: {current_acc:.4f})")
                     except Exception as e:
                         print(f"[Strategy] Checkpoint failed: {e}")

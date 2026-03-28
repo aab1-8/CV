@@ -6,6 +6,7 @@ def train(net, trainloader, epochs, privacy_engine=None, num_classes=1, noise_mu
     """
     Main local training loop that executes backpropagation on each batch of patient data.
     """
+    if trainloader is None: return # Robustness: avoid crash on empty slice
     # Step 1: Resource Setup - move model to GPU/CPU and set to 'train mode'
     net.to(device)
     net.train()
@@ -93,6 +94,7 @@ def test(net, testloader, num_classes=1, device="cpu"):
     Evaluation engine used to calculate accuracy and AUC on validation clinical records.
     """
     # Evaluate metrics on validation set (ORIGINAL COMMENT PRESERVED)
+    if testloader is None: return 0.0, 0.0, 0.0 # Robustness: avoid crash on empty slice
     # Set to 'eval' mode: disables Dropout and BatchNormalization if present
     net.to(device)
     net.eval()

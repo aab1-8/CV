@@ -65,6 +65,31 @@ def deploy():
         w3.eth.wait_for_transaction_receipt(tx_hash)
         print("✅ Linking complete.")
 
+        # --- NEW: Pre-authorize Hospital Accounts for Demo ---
+        print("Pre-authorizing hospital nodes (Accounts 1-5)...")
+        # Load CommitmentRegistry ABI to authorize there too
+        with open("build/CommitmentRegistry.json", "r") as f:
+            registry_abi = json.load(f)['abi']
+        registry_contract = w3.eth.contract(address=commitment_addr, abi=registry_abi)
+
+        for i in range(1, 6):
+            if i < len(w3.eth.accounts):
+                acc = w3.eth.accounts[i]
+                # Authorize for Task joining
+                tx_auth1 = task_contract.functions.authorizeHospital(acc, True).transact({
+                    'from': w3.eth.accounts[0],
+                    'gasPrice': w3.to_wei(1, 'gwei')
+                })
+                w3.eth.wait_for_transaction_receipt(tx_auth1)
+                
+                # Authorize for Commitment posting
+                tx_auth2 = registry_contract.functions.authorizeHospital(acc, True).transact({
+                    'from': w3.eth.accounts[0],
+                    'gasPrice': w3.to_wei(1, 'gwei')
+                })
+                w3.eth.wait_for_transaction_receipt(tx_auth2)
+        print("✅ Authorization complete.")
+
         # Save to build directory (for backend/clients)
         with open("build/deploy_info.json", "w") as f:
             json.dump(deploy_info, f, indent=2)

@@ -31,8 +31,10 @@ contract MedShareTask {
     uint256 public taskCount;
     address public admin;
     address public reputationContract;
+    mapping(address => uint256) public pendingWithdrawals;
 
     mapping(address => bool) public authorizedHospitals;
+    mapping(uint256 => mapping(address => bool)) public hasJoined; // O(1) Scalable check
 
     event TaskCreated(uint256 taskId, address researcher, uint256 bounty);
     event HospitalAuthorized(address hospital, bool status);
@@ -81,15 +83,14 @@ contract MedShareTask {
     }
 
     function joinTask(uint256 _taskId) public {
+        require(_taskId < taskCount, "Task does not exist");
         require(authorizedHospitals[msg.sender], "Hospital is not authorized");
+        require(!hasJoined[_taskId][msg.sender], "Hospital already joined");
         require(tasks[_taskId].status == TaskStatus.Open, "Task is not open for registration");
         
-        // Check if already joined
-        for (uint i = 0; i < tasks[_taskId].hospitals.length; i++) {
-            require(tasks[_taskId].hospitals[i] != msg.sender, "Hospital already joined");
-        }
 
         tasks[_taskId].hospitals.push(msg.sender);
+        hasJoined[_taskId][msg.sender] = true;
         emit HospitalRegistered(_taskId, msg.sender);
 
         if (tasks[_taskId].hospitals.length >= tasks[_taskId].minClients) {
@@ -123,24 +124,44 @@ contract MedShareTask {
             }
         }
 
-        // Step 2: Distribute reward among honest participants
+        // Step 2: Credit reward to honest participants (Withdrawal Pattern to avoid DoS)
         if (honestCount > 0) {
             uint256 reward = tasks[_taskId].bounty / honestCount;
+            uint256 distributed = 0;
             for (uint i = 0; i < honestCount; i++) {
-                payable(honestHospitals[i]).transfer(reward);
+                pendingWithdrawals[honestHospitals[i]] += reward;
+                distributed += reward;
+            }
+            // Return any "Dust" (remainders) to researcher to prevent locked ETH
+            uint256 dust = tasks[_taskId].bounty - distributed;
+            if (dust > 0) {
+                pendingWithdrawals[tasks[_taskId].researcher] += dust;
             }
         } else {
-            // If No one is honest (unlikely but safe), refund researcher
-            payable(tasks[_taskId].researcher).transfer(tasks[_taskId].bounty);
+            // If No one is honest (unlikely but safe), credit researcher
+            pendingWithdrawals[tasks[_taskId].researcher] += tasks[_taskId].bounty;
         }
 
         emit TaskCompleted(_taskId, _finalModelHash);
     }
 
     function cancelTask(uint256 _taskId) public onlyResearcher(_taskId) {
+        require(_taskId < taskCount, "Task does not exist");
         require(tasks[_taskId].status == TaskStatus.Open, "Can only cancel before training starts");
         tasks[_taskId].status = TaskStatus.Cancelled;
-        payable(msg.sender).transfer(tasks[_taskId].bounty);
+        pendingWithdrawals[msg.sender] += tasks[_taskId].bounty;
+    }
+
+    /**
+     * @dev Securely claim accumulated rewards using the Pull Pattern.
+     */
+    function claimReward() public {
+        uint256 amount = pendingWithdrawals[msg.sender];
+        require(amount > 0, "No funds to claim");
+
+        pendingWithdrawals[msg.sender] = 0;
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Transfer failed");
     }
 
     function getHospitals(uint256 _taskId) public view returns (address[] memory) {

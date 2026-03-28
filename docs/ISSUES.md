@@ -13,6 +13,12 @@
 - [x] **Windows Ray Warnings**: Simulation stability verified on Windows; resource throttling prevents OOM. (Status: Experimental but Stable).
 - [x] **Hardware-Aware Acceleration**: Implemented dynamic resource allocation for Colab (15GB GPU) vs Local (6GB GPU).
 - [x] **Data & Baseline Caching**: Implemented JSON caching for datasets and local model baselines to skip redundant training.
+- [x] **Platinum Technical Audit**: Fixed fundamental flaws:
+    - **Data Leakage**: Scaling fit now occurs *strictly* after train/test split.
+    - **Smart Contract DoS**: Implemented Withdrawal pattern to secure payouts.
+    - **Frontend XSS**: Card/Modal data is now fully escaped.
+    - **Blockchain Reliability**: Hardened provider race-condition handling.
+    - **Insecure TLS**: Restored SSL certificate verification for data ingestion.
 
 ## 🔴 Open Issues / Future Work
 - [ ] **Dynamic Client Scaling**: Simulate variable number of clients or dropouts.

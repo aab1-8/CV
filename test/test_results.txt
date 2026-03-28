@@ -1,0 +1,64 @@
+﻿
+============================================================
+TEST 1: MODULE IMPORTS
+============================================================
+  [PASS] medshare.models
+  [PASS] medshare.data
+  [PASS] medshare.engine
+  [PASS] medshare.utils
+[Module] Loading medshare.strategy
+  [PASS] medshare.strategy
+  [PASS] medshare.blockchain
+  [PASS] federated_survival.py syntax
+
+============================================================
+TEST 2: DATA PIPELINE & TYPE SAFETY
+============================================================
+  [PASS] Data loaded: 400 rows, 53 features, 1 classes
+  [PASS] y_array type: numpy.ndarray, dtype=float32
+  [PASS] All 8 hospital partitions aligned (no index mismatch)
+
+============================================================
+TEST 3: MODEL TRAIN / EVAL / ROUND-TRIP
+============================================================
+  [PASS] Training 1 epoch: loss=0.6685
+  [PASS] Evaluation: acc=0.6167, auc=0.4219
+  [PASS] get_parameters / set_parameters round-trip
+
+============================================================
+TEST 4: STATE_DICT CHECKPOINT (Platinum Fix)
+============================================================
+  [PASS] Checkpoint is valid state_dict: 6 named keys
+  [PASS] load_state_dict() into fresh model: success
+
+============================================================
+TEST 5: UTILS - weighted_average & MI SCORES
+============================================================
+[Logging] Experiment session state reset.
+  [PASS] reset_logging()
+  [PASS] weighted_average: acc=0.8667 (expected 0.8667)
+  [PASS] MI metrics present: mi_score=0.0133, mi_auc_score=0.0133
+
+============================================================
+TEST 6: SECAGG PAIRWISE MASKS
+============================================================
+  [PASS] SecAgg masks: correct count and shapes
+  [PASS] SecAgg mask shapes internally consistent
+
+============================================================
+TEST 7: UI DATA FILES EXIST
+============================================================
+  [PASS] comparison_stats.json
+  [PASS] baseline.json
+  [PASS] best_model.pth
+
+============================================================
+TEST 8: STRATEGY INSTANTIATION
+============================================================
+  [PASS] AnomalyMonitoringStrategy instantiated with net attribute
+  [PASS] on_fit_config_fn keys correct: ['server_round', 'total_rounds', 'experiment', 'attack_type', 'defense_name', 'noise_multiplier', 'dataset_name', 'learning_rate']
+  [PASS] on_evaluate_config_fn keys correct
+
+============================================================
+FINAL: 26 passed, 0 failed
+============================================================

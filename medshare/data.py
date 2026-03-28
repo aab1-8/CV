@@ -34,11 +34,10 @@ def fetch_thyroid():
     base_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/thyroid-disease/"
     # Fetches the ANN-Train and ANN-Test data from UCI archives (ORIGINAL COMMENT PRESERVED)
     ssl_ctx = ssl.create_default_context()
-    ssl_ctx.check_hostname, ssl_ctx.verify_mode = False, ssl.CERT_NONE
 
     def read_url(url):
         with urllib.request.urlopen(url, context=ssl_ctx) as resp:
-            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep="\s+", header=None)
+            return pd.read_csv(io.StringIO(resp.read().decode("utf-8")), sep=r"\s+", header=None)
     # Concatenate training and testing instances
     train_df, test_df = read_url(f"{base_url}ann-train.data"), read_url(f"{base_url}ann-test.data")
     df = pd.concat([train_df, test_df], axis=0).reset_index(drop=True)
@@ -257,12 +256,13 @@ def load_tabular_data(config):
 
 def create_dataloaders(X, y, batch_size=1024):
     """Utility for creating batches of clinical tensors for GPU/CPU training."""
+    if len(X) == 0: return None # Robustness: avoid crash on empty slice
     return DataLoader(TensorDataset(torch.tensor(X.values if hasattr(X, 'values') else X).float(), torch.tensor(y).float()), 
                       batch_size=batch_size, shuffle=True, pin_memory=torch.cuda.is_available())
 
 _DATA_CACHE = {}
 def get_data_cached(config):
     """Memory Cache: Prevents re-running preprocessing/SMOTE during multiple sweep rounds."""
-    key = f"{config.get('DATA_SOURCE')}_{config.get('TARGET_COLUMN')}_{config.get('sample_size')}_{config.get('apply_rebalancing')}_{config.get('heterogeneity', 'none')}"
+    key = f"{config.get('DATA_SOURCE')}_{config.get('TARGET_COLUMN')}_{config.get('PARTITION_COLUMN', 'none')}_{config.get('sample_size')}_{config.get('apply_rebalancing')}_{config.get('heterogeneity', 'none')}_{config.get('NUM_PARTITIONS', 5)}_{''.join(config.get('DROP_COLUMNS', []))}"
     if key not in _DATA_CACHE: _DATA_CACHE[key] = load_tabular_data(config)
     return _DATA_CACHE[key]
