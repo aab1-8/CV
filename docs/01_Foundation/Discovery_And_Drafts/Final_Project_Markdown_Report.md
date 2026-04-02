@@ -154,10 +154,10 @@ The following table summarizes the primary technical findings across the benchma
 
 | Dataset | Accuracy (Fed) | Accuracy (Cent) | Recall (Minority) | MI-Gap ($\sigma=1.0$) |
 | :--- | :--- | :--- | :--- | :--- |
-| **SUPPORT2** | 91.2% | 90.8% | 88.5% | 0.42% |
-| **Thyroid** | 93.0% | 92.8% | 92.1% | 1.09% |
-| **Stroke** | 89.6% | 88.2% | 84.3% | 0.00% |
-| **CDC-Diabetes** | 86.5% | 86.6% | 85.2% | 1.39% |
+| **SUPPORT2** | 73.89% | 60.00% | 88.50% | 0.49% |
+| **Thyroid** | 76.35% | 82.37% | 92.10% | 0.89% |
+| **Stroke** | 89.26% | 88.69% | 84.30% | 0.00% |
+| **CDC-Diab (M)** | 54.55% | 63.15% | 61.20% | 0.37% |
 
 *Note: All "Federated" (Fed) models were trained with $\sigma=1.0$ and 100x Gradient Scaling defense enabled.*
 
@@ -208,14 +208,14 @@ Minority groups are often under-represented in medical data, leading to biased A
 To facilitate the project inspection and demonstrate the **rigorous evaluation** required for the 80-100 marking band, the following "Gold Standard" supporting materials are provided:
 
 ### 9.1 Core Logic & Pipeline
-*   **[`federated_survival.py`](file:///c:/Users/bhuva/bxp267/federated_survival.py)**: The primary entry point. It contains the `Adaptive Scaling` logic and experiment orchestration.
-*   **[`medshare/data.py`](file:///c:/Users/bhuva/bxp267/medshare/data.py)**: The clinical data pipeline, including SMOTE rebalancing and UCI/Kaggle fetchers.
-*   **[`medshare/engine.py`](file:///c:/Users/bhuva/bxp267/medshare/engine.py)**: The training/testing core, containing the 75% LR reduction logic for DP stability.
+*   **[`federated_survival.py`](../../federated_survival.py)**: The primary entry point. It contains the `Adaptive Scaling` logic and experiment orchestration.
+*   **[`medshare/data.py`](../../medshare/data.py)**: The clinical data pipeline, including SMOTE rebalancing and UCI/Kaggle fetchers.
+*   **[`medshare/engine.py`](../../medshare/engine.py)**: The training/testing core, containing the 75% LR reduction logic for DP stability.
 
 ### 9.2 Security & Trust
-*   **[`medshare/strategy.py`](file:///c:/Users/bhuva/bxp267/medshare/strategy.py)**: Implementation of the **Robust-MAD (Hampel Filter)** and blockchain synchronization.
-*   **[`contracts/CommitmentRegistry.sol`](file:///c:/Users/bhuva/bxp267/contracts/CommitmentRegistry.sol)**: The Solidity smart contract used for update hashing and audits.
-*   **[`medshare/utils.py`](file:///c:/Users/bhuva/bxp267/medshare/utils.py)**: The Membership Inference auditor and the mathematical implementation of Accuracy-Gap and AUC-Gap metrics.
+*   **[`medshare/strategy.py`](../../medshare/strategy.py)**: Implementation of the **Robust-MAD (Hampel Filter)** and blockchain synchronization.
+*   **[`contracts/CommitmentRegistry.sol`](../../contracts/CommitmentRegistry.sol)**: The Solidity smart contract used for update hashing and audits.
+*   **[`medshare/utils.py`](../../medshare/utils.py)**: The Membership Inference auditor and the mathematical implementation of Accuracy-Gap and AUC-Gap metrics.
 
 ---
 
@@ -256,12 +256,12 @@ Future extensions include **Layer-2 Rollups** for gas scaling, **Trusted Executi
 9.  **Bonawitz, K.**, et al. (2017). "Practical Secure Aggregation." *ACM CCS*.
 10. **Hampel, F. R.** (1974). "The Influence Curve and its Role in Robust Estimation." *JASA*.
 11. **Knaus, W. A.**, et al. (1995). "The SUPPORT prognostic model." *Annals of Internal Medicine*.
-12. **Strack, B.**, et al. (2014). "Impact of HbA1c measurement." *Biomed Research International*.
-13. **Beutel, D. J.**, et al. (2020). "Flower: A Friendly Federated Learning Research Framework." *arXiv*.
-14. **Quinlan, J. R.** (1987). "Simplifying Decision Trees." (Original Thyroid Dataset Citation).
+12. **Centers for Disease Control and Prevention.** (2015). "Behavioral Risk Factor Surveillance System Survey Data." *U.S. Department of Health and Human Services*.
+13. **Beutel, D. J.**, et al. (2022). "Flower: A Friendly Federated Learning Research Framework." *arXiv*.
+14. **Quinlan, J. R.** (1987). "Simplifying Decision Trees." (Garvan Institute Thyroid Dataset).
 15. **Dwork, C.**, & **Roth, A.** (2014). "The Algorithmic Foundations of Differential Privacy."
 16. **Chawla, N. V.**, et al. (2002). "SMOTE: Synthetic Minority Over-sampling Technique." *JAIR*.
 17. **Hardt, M.**, et al. (2016). "Train faster, generalize better: Stability of stochastic gradient descent." *ICML*.
 18. **Geyer, R. C.**, et al. (2017). "Differentially Private Federated Learning: A Client Level Perspective." *arXiv*.
 19. **Kairouz, P.**, et al. (2021). "Advances and Open Problems in Federated Learning." *Foundations and Trends in Machine Learning*.
-20. **So, S.**, et al. (2020). "Byzantine-Resilient Secure Aggregation for Federated Learning." *IEEE Communications Letters*.
+20. **So, J.**, et al. (2021). "Byzantine-Resilient Secure Federated Learning." *IEEE Journal on Selected Areas in Communications*.

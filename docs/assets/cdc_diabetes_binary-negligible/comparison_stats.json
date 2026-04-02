@@ -1,0 +1,27 @@
+{
+  "dataset_name": "CDC-Diabetes-Binary",
+  "reputation": {
+    "Hospital_1": 128,
+    "Hospital_2": 128,
+    "Hospital_3": 128,
+    "Hospital_4": 128,
+    "Hospital_5": 128
+  },
+  "local_accuracy": 0.72037495937,
+  "local_auc": 0.800,
+  "centralized_accuracy": 0.880378420043,
+  "centralized_auc": 0.840,
+  "federated_accuracy": 0.8674,
+  "federated_auc": 0.8327,
+  "improvement_local_fed": 14.7,
+  "security": {
+    "dp_enabled": true,
+    "epsilon": 1.0,
+    "delta": "1e-5",
+    "leakage_acc": 0.0023,
+    "leakage_auc": 0.0082,
+    "defense_type": "Robust-MAD",
+    "attack_simulated": true,
+    "attack_type": "Label Flip"
+  }
+}

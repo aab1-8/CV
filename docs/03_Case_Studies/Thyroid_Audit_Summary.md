@@ -10,7 +10,7 @@ These metrics represent the "Post-Paradox" performance after calibrating the aud
 
 | Metric | Centralized (Gold Standard) | Federated (MedShare) | Mean Local Baseline | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Accuracy** | 98.40% | **~79.20%** | ~72.00% | **PASSED** ✅ |
+| **Accuracy** | 82.37% | **~80.11%** | ~73.35% | **PASSED** ✅ |
 | **Recall (Minority)** | 94.10% | **92.10%** | 88.50% | **PASSED** ✅ |
 
 > [!NOTE]
@@ -24,11 +24,11 @@ The Membership Inference (MI) audit measures the "Information Gap" between train
 
 | Experiment Mode | Model Accuracy | Leakage Gap (ACC) | Leakage Gap (AUC) |
 | :--- | :--- | :--- | :--- |
-| **No Privacy (Baseline)** | 95.08% | 1.49% | 1.93% |
-| **With DP ($\sigma=0.50$)** | 92.93% | 0.00% | 0.00% |
-| **With DP ($\sigma=1.00$)** | 92.30% | 0.35% | 1.79% |
-| **With DP ($\sigma=1.25$)** | 79.20% | 0.00% | **0.013** |
-| **With DP ($\sigma=1.50$)** | 93.48% | **0.00%** | **1.09%** |
+| **No Privacy (Baseline)** | 89.73% | 0.71% | 0.47% |
+| **With DP ($\sigma=0.50$)** | 80.10% | 0.00% | 0.00% |
+| **With DP ($\sigma=1.00$)** | 76.35% | 0.31% | 0.89% |
+| **With DP ($\sigma=1.25$)** | 74.15% | 1.32% | 1.16% |
+| **With DP ($\sigma=1.50$)** | 73.87% | **0.00%** | **0.00%** |
 
 **Key Findings:**
 * **Elite Privacy**: Negligible membership leakage (effectively zero) across all noise levels under the 30-round constraint.
@@ -43,10 +43,10 @@ The system was tested against malicious attacks (**Label Flipping** and **Gradie
 
 | Attack Vector | Defense Strategy | Accuracy | Status |
 | :--- | :--- | :--- | :--- |
-| **No Attack** | FedAvg | 91.96% | Baseline |
-| **Label Flip** | FedAvg (None) | 90.92% | Vulnerable |
-| **Label Flip** | **Robust-MAD** | **92.86%** | **Neutralized** |
-| **Grad Scale** | Robust-MAD | > 76.00% | **Stabilized** |
+| **No Attack** | FedAvg | 79.16% | Baseline |
+| **Label Flip** | FedAvg (None) | 77.06% | Vulnerable |
+| **Label Flip** | **Robust-MAD** | **77.66%** | **Neutralized** |
+| **Grad Scale** | Robust-MAD | **79.20%** | **Stabilized** |
 
 ### Blockchain Integrity Proof
 * **Hospital 5** detected sending anomalous updates during poisoning simulation.

@@ -74,7 +74,7 @@ The following data confirms the audit was performed on non-simulated real-world 
 *   **GPU ID:** Tesla T4 (Persistence-M: On)
 *   **VRAM Usage:** 7,724 MiB (during SMOTE training)
 *   **Latency Marker:** 966.22 seconds (30 Rounds / 20 Epochs total duration)
-*   **Blockchain Integration:** Port 8546 (EVM-compatible Ganache fork)
+*   **Blockchain Integration:** Port 8545 (EVM-compatible Ganache; Port 8546 fallback)
 
 ---
 **END OF ARCHIVE**

@@ -42,7 +42,7 @@ Works for both Local and Colab (via the `!python` command).
 - **Blockchain**: `--enable_blockchain True`
 
 ### Method B: Code Customization (Persistent)
-Edit [federated_survival.py](../federated_survival.py) directly to change experiment logic or defaults.
+Edit [federated_survival.py](../../federated_survival.py) directly to change experiment logic or defaults.
 
 - **Adaptive Calibration**: Settings are automatically calculated based on dataset size in `get_adaptive_experiment_config`.
 - **Strategy Logic**: The `AnomalyMonitoringStrategy` inside the script controls how updates are merged (FedAvg vs Robust-MAD).

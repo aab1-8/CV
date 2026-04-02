@@ -66,7 +66,7 @@ bxp267/
 ├── frontend/                 # Vite dashboard for visualization
 ├── test/                     # Benchmark results & plotting
 ├── docs/                     # Documentation & diagrams
-│   └── MEng_Final_Project_Report.md  # 📄 MASTER INSPECTION REPORT
+│   └── MEng_Final_Report_v2.tex      # 📄 MASTER INSPECTION REPORT (LaTeX)
 │
 └── MedShare_FINAL_new.ipynb  # Google Colab notebook
 ```
@@ -106,10 +106,11 @@ Visit `http://localhost:5173` to view training metrics, gas costs, and security 
 
 ## 📚 Documentation
 
-- [**MEng Final Project Report (Master)**](docs/reports/MEng_Final_Project_Report.md)
-- [Architecture Overview](docs/architecture/architecture.md)
-- [Configuration Guide](docs/guides/config_guide.md)
-- [Security Trade-offs](docs/security/secagg_vs_robustness_tradeoff.md)
+- [**MEng Final Project Report (Master)**](docs/01_Foundation/MEng_Final_Report_v2.tex)
+- [Architecture Overview](docs/01_Foundation/Discovery_And_Drafts/System_Overview.md)
+- [Configuration Guide](docs/01_Foundation/Discovery_And_Drafts/Master_File_Manifest.md)
+- [Project Verification (Final Audit)](docs/01_Foundation/Discovery_And_Drafts/Project_State_Verification.md)
+- [Security Trade-offs & Critical Decisions](docs/01_Foundation/MEng_Final_Report_v2.tex#L344)
 
 ## 🛠️ Technologies
 

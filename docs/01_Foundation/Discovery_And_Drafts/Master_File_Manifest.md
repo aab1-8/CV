@@ -18,3 +18,6 @@
 *   **On-Chain Commitment**: `medshare/client.py`, Line **80** (Handshake logic).
 *   **Label Poisoning Attack**: `medshare/client.py`, Line **29** (The Flip logic).
 *   **Reputation Penalty Logic**: `medshare/strategy.py`, Line **83** (Docking points).
+
+### Supervision & Agile Workflow Tracking
+This repository employs an Agile-inspired engineering workflow to track technical challenges and time-management. Formal minutes for supervision meetings were historically eschewed in favor of real-time, technical event-tracking. The **`Issues_Log.md`** file serves as the definitive timeline of the project's progression. It documents all major architectural pivots (such as overcoming the SMOTE memory crashes) and statistical roadblocks (such as the Robustness Paradox), demonstrating the continuous evolution and problem-solving process evaluated in the inspection.

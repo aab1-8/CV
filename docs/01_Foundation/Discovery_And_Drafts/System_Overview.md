@@ -7,7 +7,7 @@ The **MedShare Dashboard** is a high-fidelity interactive demonstrator designed 
 
 ## **🎯 I. Why This Dashboard Context Matters**
 In traditional medical research, data is pooled centrally, creating **massive privacy risks.** 
-**The MedShare Solution:** This dashboard proves that we can train high-accuracy models (e.g., our **38.9% Accuracy Diabetes Run**) without the data ever leaving the hospital’s firewall.
+**The MedShare Solution:** This dashboard proves that we can train high-accuracy models (e.g., our **78.8% Accuracy Gold Standard Run**) without the data ever leaving the hospital’s firewall.
 
 ### **Core Pillars:**
 1.  **Data Sovereignty**: Prove that hospitals maintain 100% control of their records.
@@ -187,14 +187,14 @@ To prevent a researcher from performing a **Gradient Inversion Attack** (reconst
 To facilitate the project inspection, the following core materials are linked below:
 
 ### **1. Core Logic & Pipeline**
-*   **[`federated_survival.py`](../federated_survival.py)**: The primary entry point. It contains the `Adaptive Scaling` logic and experiment orchestration.
-*   **[`medshare/data.py`](../medshare/data.py)**: The clinical data pipeline, including SMOTE rebalancing and UCI/Kaggle fetchers.
-*   **[`medshare/engine.py`](../medshare/engine.py)**: The training/testing core, containing the 75% LR reduction logic for DP stability.
+*   **[`federated_survival.py`](../../federated_survival.py)**: The primary entry point. It contains the `Adaptive Scaling` logic and experiment orchestration.
+*   **[`medshare/data.py`](../../medshare/data.py)**: The clinical data pipeline, including SMOTE rebalancing and UCI/Kaggle fetchers.
+*   **[`medshare/engine.py`](../../medshare/engine.py)**: The training/testing core, containing the 75% LR reduction logic for DP stability.
 
 ### **2. Security & Trust**
-*   **[`medshare/strategy.py`](../medshare/strategy.py)**: Implementation of the **Robust-MAD (Hampel Filter)** and blockchain synchronization.
-*   **[`contracts/CommitmentRegistry.sol`](../contracts/CommitmentRegistry.sol)**: The Solidity smart contract used for update hashing and audits.
-*   **[`medshare/utils.py`](../medshare/utils.py)**: The Membership Inference auditor and the mathematical implementation of Accuracy-Gap and AUC-Gap metrics.
+*   **[`medshare/strategy.py`](../../medshare/strategy.py)**: Implementation of the **Robust-MAD (Hampel Filter)** and blockchain synchronization.
+*   **[`contracts/CommitmentRegistry.sol`](../../contracts/CommitmentRegistry.sol)**: The Solidity smart contract used for update hashing and audits.
+*   **[`medshare/utils.py`](../../medshare/utils.py)**: The Membership Inference auditor and the mathematical implementation of Accuracy-Gap and AUC-Gap metrics.
 
 ---
 
@@ -231,7 +231,7 @@ To ensure absolute cross-domain reliability, the **MedShare-FL** system has been
 
 ### **MEng Final Report (LaTeX Version)**
 The project's formal academic report is located at:
-*   📄 **[MEng_Final_Report_v2.tex](../reports/MEng_Final_Report_v2.tex)**
+*   📄 **[MEng_Final_Report_v2.tex](MEng_Final_Report_v2.tex)**
 
 This report contains the **Mathematical Proofs**, **Software Design Patterns**, and **High-Fidelity Experimental Results** required for the **80-100% (Outstanding)** marking bracket.
 

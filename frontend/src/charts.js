@@ -81,11 +81,13 @@ export const renderPerformanceComparison = (l, f) => {
     const labels = sortedLocal.map(x => x.Hospital);
     const ds = [{
         label: 'Local (AUC)',
+        type: 'bar',
         data: sortedLocal.map(x => x['AUC-ROC']),
+        backgroundColor: '#8b949e', /* Solid scientific fill */
         borderColor: '#8b949e',
-        borderDash: [5, 5],
-        pointRadius: 4,
-        pointBackgroundColor: '#8b949e'
+        borderWidth: 1,
+        borderRadius: 0, /* Square corners for technical precision */
+        order: 2
     }];
 
     if (f.length) {
@@ -95,21 +97,34 @@ export const renderPerformanceComparison = (l, f) => {
         });
         ds.push({
             label: 'Federated (AUC)',
+            type: 'line',
             data: fedData,
-            borderColor: '#2eafb2', /* Professional Teal instead of Purple */
-            backgroundColor: 'transparent',
+            borderColor: '#2eafb2',
+            backgroundColor: '#2eafb2',
             fill: false,
-            tension: 0, /* Straight lines for raw data segments */
-            pointRadius: 4,
+            tension: 0,
+            pointRadius: 6,
             pointBackgroundColor: '#2eafb2',
-            borderWidth: 2.5
+            borderWidth: 3,
+            order: 1 /* Ensure line is layered on top */
         });
     }
 
     renderWithCleanup('performance-chart', {
-        type: 'line',
+        type: 'bar',
         data: { labels, datasets: ds },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0.5, max: 1.0 } }, spanGaps: true }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 1.0,
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                }
+            },
+            spanGaps: true
+        }
     });
 };
 

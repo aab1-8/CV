@@ -1,7 +1,0 @@
-attack,defense,accuracy
-None,FedAvg,0.3947
-None,Robust-MAD,0.3909
-label_flip,FedAvg,0.3986
-label_flip,Robust-MAD,0.3657
-gradient_scale,FedAvg,0.3953
-gradient_scale,Robust-MAD,0.3882
