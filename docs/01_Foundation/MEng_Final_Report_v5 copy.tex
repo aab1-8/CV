@@ -50,7 +50,7 @@
 
 
 \title{\textbf{MedShare-FL: A Decentralized, Privacy-Preserving Health Data Marketplace} \\ \Large MEng Computer Science Final Year Project Report}
-\author{Bu Pa [bxp267]}
+\author{Bhuvan Praveen Kumar [bxp267]}
 \date{}
 \begin{document}
 \maketitle
@@ -490,7 +490,7 @@ The Vite dashboard provides options for different model types (MLP, Linear, etc.
 \subsection{The Interactive Dashboard as a Demonstrable Artifact}
 The \textbf{Vite.js Clinical Dashboard} (\texttt{frontend/}) is a fully runnable artifact that can be demonstrated during the inspection. It is started with \texttt{npm run dev} from the \texttt{frontend/} directory and is accessible at \texttt{http://localhost:5173}.
 
-The dashboard is not a cosmetic addition. It provides three technically significant features: (1) the \textbf{Audit Switcher} dynamically loads JSON telemetry from any completed experiment run, proving the pipeline from Python simulation to visual evidence is end-to-end; (2) the \textbf{Reputation Ledger} makes live Web3.py calls to the \texttt{Reputation.sol} contract to display real-time hospital trust scores; and (3) the \textbf{Schema Handshake Guard} enforces cross-domain rejection (e.g., a hospital linking a ``Stroke'' dataset to a ``Diabetes'' study is blocked before any blockchain gas is consumed). The dashboard's ``Demonstrator Mode'' fail-safe also ensures a stable presentation if the Ganache blockchain is offline.
+The dashboard provides three technically significant features: (1) the \textbf{Audit Switcher} dynamically loads JSON telemetry from any completed experiment run, proving the pipeline from Python simulation to visual evidence is end-to-end; (2) the \textbf{Reputation Ledger} makes live Web3.py calls to the \texttt{Reputation.sol} contract to display real-time hospital trust scores; and (3) the \textbf{Schema Handshake Guard} enforces cross-domain rejection (e.g., a hospital linking a ``Stroke'' dataset to a ``Diabetes'' study is blocked before any blockchain gas is consumed). The dashboard's ``Demonstrator Mode'' fail-safe also ensures a stable presentation if the Ganache blockchain is offline.
 
 \section{Conclusions \& Results}
 \label{sec:conclusions}
