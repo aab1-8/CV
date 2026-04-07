@@ -79,7 +79,7 @@ def plot_dp():
         df = pd.read_csv(csv_path, na_filter=False)
         # Support both old schema (noise,...) and new timestamped schema
         if 'noise' not in df.columns and 'timestamp_utc' in df.columns:
-            df = df.rename(columns={'noise': 'noise'})  # already correct
+            df['noise'] = 0.0  # Fallback to zero noise if column missing
         df = df.drop_duplicates(subset=['noise'], keep='last').sort_values("noise")
     elif os.path.exists(mi_path):
         # Fallback to MI results which contain the same info (Accuracy vs Sigma)
@@ -244,25 +244,33 @@ def plot_mi():
         return 0.0
 
     if os.path.exists(mi_path):
-        df_mi = pd.read_csv(mi_path, na_filter=False)
+        try:
+            df_mi = pd.read_csv(mi_path, na_filter=False)
+        except pd.errors.EmptyDataError:
+            df_mi = pd.DataFrame()
+            
         if not df_mi.empty:
             # Consistent case for 'mode'
             if 'mode' in df_mi.columns: df_mi = df_mi.rename(columns={'mode': 'Mode'})
             # Backward compatibility for old log schemas
             if 'leakage' in df_mi.columns and 'leakage_acc' not in df_mi.columns:
                 df_mi = df_mi.rename(columns={'leakage': 'leakage_acc'})
-                df_mi['leakage_auc'] = df_mi['leakage_acc']  # Duplicate as best guess
+                df_mi['leakage_auc'] = 0.0  # Scientific Integrity: do not duplicate
             df_mi['noise'] = df_mi['Mode'].apply(extract_noise)
             df_mi['source'] = 'mi'
             dfs.append(df_mi)
 
     if os.path.exists(dp_path):
-        df_dp = pd.read_csv(dp_path, na_filter=False)
+        try:
+            df_dp = pd.read_csv(dp_path, na_filter=False)
+        except pd.errors.EmptyDataError:
+            df_dp = pd.DataFrame()
+            
         if not df_dp.empty:
             # Backward compatibility for old DP (Differential Privacy) logs
             if 'leakage' in df_dp.columns and 'leakage_acc' not in df_dp.columns:
                 df_dp = df_dp.rename(columns={'leakage': 'leakage_acc'})
-                df_dp['leakage_auc'] = df_dp['leakage_acc']
+                df_dp['leakage_auc'] = 0.0  # Scientific Integrity: do not duplicate
             if 'leakage_acc' in df_dp.columns:
                 # Assign professional display labels for noise levels
                 df_dp['Mode'] = df_dp['noise'].apply(lambda x: f"With DP (sigma={x})" if x > 0 else "No Privacy (Baseline)")

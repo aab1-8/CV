@@ -113,8 +113,16 @@ try:
     loader_tr = create_dataloaders(tr_X, tr_y, batch_size=64)
     loader_te = create_dataloaders(te_X, te_y, batch_size=64)
 
+    # Save original parameters to verify gradients apply
+    old_params = [p.clone() for p in net.parameters()]
+
     eps, loss = train(net, loader_tr, epochs=1, num_classes=classes)
     ok(f"Training 1 epoch: loss={loss:.4f}")
+    
+    new_params = list(net.parameters())
+    changed = any(not torch.equal(o, n) for o, n in zip(old_params, new_params))
+    assert changed, "Model weights did not update during training! Gradient freezing detected."
+    ok("Model weight gradients applied successfully")
 
     _, acc, auc = test(net, loader_te, num_classes=classes)
     ok(f"Evaluation: acc={acc:.4f}, auc={auc:.4f}")
@@ -207,7 +215,8 @@ try:
     for p_idx in range(len(adds[0])):
         net_sum = adds[0][p_idx] + adds[1][p_idx] + adds[2][p_idx] - subs[0][p_idx] - subs[1][p_idx] - subs[2][p_idx]
         # Pairwise: adds[i] to j's subs[j] — total sum should be zero
-    ok("SecAgg mask shapes internally consistent")
+        assert np.allclose(net_sum, 0, atol=1e-7), "Masks do not cancel out algebraically!"
+    ok("SecAgg mask shapes and cancellation verified")
 
 except Exception as e:
     fail("SecAgg masks", e)
@@ -228,8 +237,12 @@ for path, required_keys in ui_files:
         if path.endswith(".json") and required_keys:
             with open(path) as f:
                 data = json.load(f)
+            import math
             for k in required_keys:
                 assert k in data, f"Key '{k}' missing in {path}"
+                v = data[k]
+                if isinstance(v, float):
+                    assert not math.isnan(v) and not math.isinf(v), f"JSON contains invalid numeric value (NaN/Inf) at key: {k}"
         ok(f"{os.path.basename(path)}")
     except Exception as e:
         fail(os.path.basename(path), e)

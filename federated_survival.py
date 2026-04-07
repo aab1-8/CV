@@ -14,7 +14,7 @@ from medshare.blockchain import BlockchainManager
 from medshare.engine import train, test
 import torch.nn as nn
 
-def get_centralized_performance(X, y, dim, classes, config):
+def get_centralized_performance(X, y, dim, classes, config, fitted_scaler=None):
     cache_path = os.path.join("test", f"centralized_{config.get('display_name', 'FL')}_{len(X)}.json")
     if os.path.exists(cache_path):
         with open(cache_path, 'r') as f:
@@ -23,8 +23,15 @@ def get_centralized_performance(X, y, dim, classes, config):
     
     print(f"[Baseline] Training Centralized Gold Standard for {config.get('display_name', 'FL')}...")
     tr_X_raw, te_X_raw, tr_y, te_y = train_test_split(X, y, test_size=0.2)
-    scaler = MinMaxScaler()
-    tr_X = pd.DataFrame(scaler.fit_transform(tr_X_raw), columns=X.columns)
+    
+    # Global scale unification
+    if fitted_scaler:
+        scaler = fitted_scaler
+    else:
+        scaler = MinMaxScaler()
+        scaler.fit(tr_X_raw)
+        
+    tr_X = pd.DataFrame(scaler.transform(tr_X_raw), columns=X.columns)
     te_X = pd.DataFrame(scaler.transform(te_X_raw), columns=X.columns)
     
     from medshare.data import create_dataloaders
@@ -171,12 +178,25 @@ def run_simulation(args, config):
         try: os.remove(hist_f)
         except: pass
     
+    # Global Scaler Unification
     X, y, parts, dim, classes = get_data_cached(config)
     
-    # Calculate REAL Centralized Baseline
-    centralized_acc, centralized_auc = get_centralized_performance(X, y, dim, classes, config)
+    # To prevent 'Ghost Leakage' and ensure a fair comparison, we fit the scaler 
+    # ONCE on a representative global sample before any models are trained.
+    original_names = list(parts.unique())
+    scaler = MinMaxScaler()
+    train_indices = []
+    # Identify training indexes across all hospitals to create a 'Public Reference Set'
+    for n in original_names:
+        n_idx = X.index[parts == n]
+        n_tr_idx, _ = train_test_split(n_idx, test_size=0.2, random_state=42)
+        train_indices.extend(n_tr_idx)
     
-    original_names = list(parts.unique()); scaler = MinMaxScaler()
+    scaler.fit(X.loc[train_indices])
+    
+    # Calculate REAL Centralized Baseline using the SAME GLobal Scaler
+    centralized_acc, centralized_auc = get_centralized_performance(X, y, dim, classes, config, fitted_scaler=scaler)
+    
     name_to_original_idx = {n: i for i, n in enumerate(original_names)}
     # Ensure y is numpy for safe indexing across partitions
     y_array = np.asarray(y) if not isinstance(y, np.ndarray) else y
@@ -202,16 +222,7 @@ def run_simulation(args, config):
         return
         
     names = authorized_names
-    # Global Scaling Mitigation: To prevent leakage, we fit the scaler only on a representative 
-    # sample of training indexes across the hospitals (simulating a public reference set).
-    # We then transform each hospital's local data using this fixed global reference.
-    train_indices = []
-    for n in names:
-        n_idx = X.index[parts == n]
-        n_tr_idx, _ = train_test_split(n_idx, test_size=0.2, random_state=42)
-        train_indices.extend(n_tr_idx)
-    
-    scaler.fit(X.loc[train_indices])
+    # Nodes transform their local data using the FIXED Global Scaler
     nodes = {n: train_test_split(pd.DataFrame(scaler.transform(X.loc[parts == n]), columns=X.columns, index=X.index[parts == n]), y_array[parts == n], test_size=0.2, random_state=42) for n in names}
     # Detect whether parameters were explicitly passed via CLI vs using the default (1 epoch / 3 rounds)
     # This allows us to apply the adaptive "Gold Standard" defaults automatically.
@@ -254,13 +265,16 @@ def run_simulation(args, config):
         print(f"-> Click 'Link & Participate' on Task ETH-{created_task_id}.")
         print(f"{'='*60}\\n")
         
-        while True:
-            # Index 5 in the Task Tuple is the Status Enum (0=Open, 1=Training, 2=Completed)
-            t_status = bcm.task_contract.functions.tasks(created_task_id).call()[5]
-            if t_status == 1:
-                print(f"✅ Dashboard Participation Confirmed! Task is now fully subscribed (Training Status). Resuming AI Engine...\\n")
-                break
-            time.sleep(2.0)
+        try:
+            while True:
+                # Index 5 in the Task Tuple is the Status Enum (0=Open, 1=Training, 2=Completed)
+                t_status = bcm.task_contract.functions.tasks(created_task_id).call()[5]
+                if t_status == 1:
+                    print(f"✅ Dashboard Participation Confirmed! Task is now fully subscribed (Training Status). Resuming AI Engine...\\n")
+                    break
+                time.sleep(2.0)
+        except KeyboardInterrupt:
+            print(f"\\n🚨 Manual Bypass Triggered. Resuming simulation without dashboard confirmation...")
 
     from flwr.common import ndarrays_to_parameters
     def fit_agg(m, server_round=None): return weighted_average(m, server_round=server_round, log_to_csv=False)

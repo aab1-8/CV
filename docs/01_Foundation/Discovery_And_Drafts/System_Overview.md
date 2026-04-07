@@ -216,9 +216,9 @@ To ensure absolute cross-domain reliability, the **MedShare-FL** system has been
 | :--- | :--- | :--- | :--- |
 | **Test 1** | Diabetes (Binary) | Large-Scale Accuracy/Privacy Trade-off | `cdc_diabetes_binary-negligible` |
 | **Test 2** | Thyroid | Multi-class Federated Convergence | `thyroid_results-negligible-mi` |
-| **Test 3** | Maternal Health | Membership Inference (MI) Vulnerability | `maternal_health-bad-mi` |
+| **Test 3** | Maternal Health | Membership Inference (MI) Vulnerability | `maternal_health` |
 | **Test 4** | Admin-Category | **Robust-MAD** (False Positive Rejection) | `admin_category-falsepositives` |
-| **Test 5** | Diabetes (Hospitals) | Hospital site-specific readmission | `diabetes_hospital_test_results` |
+| **Test 5** | Diabetes (Hospitals) | Hospital site-specific readmission | `diabetes_hospital` |
 | **Test 6** | Support-Mortality | Baseline Latency & Throughput | `support2` |
 | **Test 7** | CDC-012 | Multi-class scalability | `cdc_diabetes_012` |
 | **Test 8** | Stroke | Imbalanced class robustness | `stroke_prediction` |

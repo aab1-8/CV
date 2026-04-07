@@ -11,8 +11,8 @@ def train(net, trainloader, epochs, privacy_engine=None, num_classes=1, noise_mu
     net.to(device)
     net.train()
     
-    # FEDPROX ENHANCEMENT: Store the initial global weights as a 'Global Anchor' (ORIGINAL COMMENT PRESERVED)
-    # proximal term to prevent local drift from global consensus (ORIGINAL COMMENT PRESERVED)
+    # FEDPROX ENHANCEMENT: Store the initial global weights as a 'Global Anchor'
+    # proximal term to prevent local drift from global consensus
     global_params = [p.detach().clone() for p in net.parameters()]
     
     # Step 2: Learning Rate Tuning for Privacy
@@ -52,7 +52,7 @@ def train(net, trainloader, epochs, privacy_engine=None, num_classes=1, noise_mu
             try:
                 if num_classes == 1:
                     # Precise shape sync and numerical stability clamping for BCELoss
-                    # loss stability during backprop: BCELoss needs clamping to prevent Inf (ORIGINAL COMMENT PRESERVED)
+                    # loss stability during backprop: BCELoss needs clamping to prevent Inf
                     loss_y = labels.view(-1).float()
                     # nan_to_num handles cases where adversarial updates break weights
                     loss_out = outputs.view(-1).nan_to_num(0.5).clamp(1e-7, 1.0 - 1e-7)
@@ -93,7 +93,7 @@ def test(net, testloader, num_classes=1, device="cpu"):
     """
     Evaluation engine used to calculate accuracy and AUC on validation clinical records.
     """
-    # Evaluate metrics on validation set (ORIGINAL COMMENT PRESERVED)
+    # Evaluate metrics on validation set
     if testloader is None: return 0.0, 0.0, 0.0 # Robustness: avoid crash on empty slice
     # Set to 'eval' mode: disables Dropout and BatchNormalization if present
     net.to(device)

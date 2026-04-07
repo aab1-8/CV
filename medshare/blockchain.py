@@ -10,7 +10,7 @@ class MedShareBlockchain:
     """
     def __init__(self, rpc_url=None):
         # --- STEP 1: Connect to the local Ganache blockchain node ---
-        if rpc_url is None: # If no specific URL provided, we scan for default Ganache ports
+        if rpc_url is None: # Scan for default Ganache ports
             # Try both standard Ganache RPC ports (8545 is default, 8546 is fallback)
             ports = [8545, 8546]
             for port in ports: # Iterate through possible Ganache networking ports
@@ -18,39 +18,37 @@ class MedShareBlockchain:
                 w3 = Web3(Web3.HTTPProvider(url))          # Create a Web3 connection to that endpoint
                 if self._check_external_w3(w3):            # Confirm the connection is live (Ganache is running)
                     self.w3 = w3                            # Save the active connection to this instance
-                    print(f"[Blockchain] Connected to {url}") # Log success for terminal debugging
-                    break                                   # Stop trying other ports once connected
-            if not hasattr(self, 'w3'): # If the 'w3' attribute was never set, port scanning failed
+                    print(f"[Blockchain] Connected to {url}")
+                    break
+            if not hasattr(self, 'w3'):
                 # If neither port responded, raise a clear error so the user knows Ganache isn't running
                 raise ConnectionError(f"Failed to connect to local blockchain. Tried ports: {ports}")
-        else: # Case for custom environments (vLab, AWS, or Infura)
-            # If a custom RPC URL was provided (e.g. for vLab), connect directly to it
-            self.w3 = Web3(Web3.HTTPProvider(rpc_url)) # Initialize connection to custom endpoint
-            if not self._check_external_w3(self.w3): # Check for heartbeat signal
+        else:
+            # If a custom RPC URL provided, connect directly to it
+            self.w3 = Web3(Web3.HTTPProvider(rpc_url))
+            if not self._check_external_w3(self.w3):
                 raise ConnectionError(f"Failed to connect to local blockchain at {rpc_url}")
 
         # --- STEP 2: Locate the compiled contract build directory ---
-        # __file__ is the absolute path of this blockchain.py file (ORIGINAL COMMENT PRESERVED)
         current_dir = os.path.dirname(os.path.abspath(__file__)) # Identify local module path
-        # The build/ folder sits one level above medshare/ (i.e. at the project root) (ORIGINAL COMMENT PRESERVED)
         build_path = os.path.join(os.path.dirname(current_dir), 'build') # Path where Hardhat/Truffle outputs ABIs
 
-        if not os.path.exists(build_path): # Check if the directory exists
+        if not os.path.exists(build_path):
             # If Hardhat/Truffle hasn't compiled yet, raise a clear error
             raise RuntimeError(f"Build path not found at {build_path}")
 
         # --- STEP 3: Load the deployment addresses for all three deployed contracts ---
-        # deploy_info.json stores the Ethereum addresses assigned to each contract when deployed (ORIGINAL COMMENT PRESERVED)
+        # deploy_info.json stores the Ethereum addresses assigned to each contract when deployed
         with open(os.path.join(build_path, 'deploy_info.json')) as f: # Open the address registry
             self.deploy_info = json.load(f) # Decipher the JSON file into a Python dictionary
 
-        def load_abi(name): # Helper function to read Application Binary Interfaces
+        def load_abi(name):
             # The ABI (Application Binary Interface) is the "API spec" of a Smart Contract
             # It tells Web3 exactly what functions exist and what parameters they take
-            with open(os.path.join(build_path, f"{name}.json")) as f: # Open specific contract artifact
-                return json.load(f)['abi'] # Extract only the functional 'abi' key
+            with open(os.path.join(build_path, f"{name}.json")) as f:
+                return json.load(f)['abi']
 
-        # --- STEP 4: Create Python objects that represent each Smart Contract on the blockchain ---
+        # STEP 4: Create Python objects that represent each Smart Contract on the blockchain
         # MedShareTask: governs task creation, hospital participation, and bounty distribution
         self.task_contract = self.w3.eth.contract(address=self.deploy_info['MedShareTask'], abi=load_abi('MedShareTask'))
         # CommitmentRegistry: logs cryptographic SHA-256 hashes of each round's model weights for audit
@@ -58,21 +56,21 @@ class MedShareBlockchain:
         # Reputation: tracks each hospital's trust score, rewarding honest contributors and penalising bad actors
         self.reputation_contract = self.w3.eth.contract(address=self.deploy_info['Reputation'], abi=load_abi('Reputation'))
 
-        # accounts[0] is the Ganache admin/deployer account; all admin transactions are sent from this address
-        self.w3.eth.default_account = self.w3.eth.accounts[0] # Set standard 'sender' for the session
+        # accounts[0] is the Ganache admin/deployer account
+        self.w3.eth.default_account = self.w3.eth.accounts[0]
         
-        # Guard: Check account capacity vs expected simulation size (e.g. 10 nodes + 1 admin)
+        # Guard: Check account capacity vs expected simulation size
         if len(self.w3.eth.accounts) < 2:
             raise RuntimeError("Ganache must provide at least 2 accounts (1 Admin, 1+ Hospitals). Recommended: 10.")
 
-        self.authorized_hospitals = set() # Empty set to hold string addresses
+        self.authorized_hospitals = set()
 
     def _check_external_w3(self, w3):
         """Web3.py v5/v6 compatibility shim for connection check."""
         try:
-            if hasattr(w3, 'is_connected'): # v6
+            if hasattr(w3, 'is_connected'):
                 return w3.is_connected()
-            return w3.isConnected() # v5 fallback
+            return w3.isConnected()
         except: return False
 
     def is_connected(self):
@@ -87,16 +85,16 @@ class MedShareBlockchain:
         try:
             # Strict Mapping: Ensure hospital index does not exceed Ganache account availability
             assert (hospital_idx + 1) < len(self.w3.eth.accounts), f"Insufficient Ganache accounts for hospital {hospital_idx}"
-            acc = self.w3.eth.accounts[hospital_idx + 1] # Direct mapping (no modulo)
-            # Call the updateReputation function on the Solidity Smart Contract (ORIGINAL COMMENT PRESERVED)
-            # transact() signs and broadcasts the transaction to the blockchain (ORIGINAL COMMENT PRESERVED)
+            acc = self.w3.eth.accounts[hospital_idx + 1] # mapping
+            # Call the updateReputation function on the Solidity Smart Contract
+            # transact() signs and broadcasts the transaction to the blockchain
             tx = self.reputation_contract.functions.updateReputation(acc, int(change), reason).transact({
-                'from': self.w3.eth.accounts[0],           # Must be sent from the admin account (only admin can update scores)
-                'gasPrice': self.w3.to_wei(1, 'gwei')      # Set a minimal gas price (1 gwei) to keep costs low on local Ganache
+                'from': self.w3.eth.accounts[0],           # sent from the admin account, only admin can update scores
+                'gasPrice': self.w3.to_wei(1, 'gwei')      # Set a minimal gas price to keep costs low on local Ganache
             })
             self.w3.eth.wait_for_transaction_receipt(tx)   # Block until the transaction is mined and confirmed
             print(f"[Blockchain] Reputation updated for client {hospital_idx} ({acc}): {change} ({reason})")
-        except Exception as e: # Catch any EVM reverts or connectivity drops
+        except Exception as e:
             print(f"[Blockchain] Reputation update failed for client {hospital_idx}: {e}")
 
     def get_reputation(self, hospital_idx):
@@ -108,11 +106,11 @@ class MedShareBlockchain:
             # Strict Mapping Guard
             assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
             acc = self.w3.eth.accounts[hospital_idx + 1]
-            # .call() is a read-only query — it does NOT send a transaction or cost gas (ORIGINAL COMMENT PRESERVED)
-            return 100 + self.reputation_contract.functions.getScore(acc).call() # Add base score of 100
+            # .call() is a read-only query — it does NOT send a transaction or cost gas
+            return 100 + self.reputation_contract.functions.getScore(acc).call()
         except Exception as e: # If the account is not registered yet on-chain
             print(f"[Blockchain] get_reputation failed: {e}")
-            return 100  # Default baseline score if the contract query fails (safe fallback)
+            return 100  # Default baseline score if the contract query fails, safe fallback
 
     def hash_weights(self, weights):
         """
@@ -122,14 +120,14 @@ class MedShareBlockchain:
         """
         # Concatenate all numpy weight arrays into a single raw bytes stream (Memory intensive)
         data = b"".join(w.tobytes() for w in weights) # Convert multi-dimensional arrays to flat byte blobs
-        # Apply SHA-256 to produce a fixed-length 32-byte cryptographic digest
-        return hashlib.sha256(data).digest() # Return the secure fingerprint
+        
+        return hashlib.sha256(data).digest() # produce a fixed-length 32-byte cryptographic digest, return the secure fingerprint
 
     def authorize_hospital(self, hospital_idx):
         """
         Authorizes a hospital's Ethereum account to participate in a federated task.
         Registers the hospital in both the MedShareTask and CommitmentRegistry contracts.
-        Checks the on-chain state first to avoid redundant (and costly) re-authorization transactions.
+        Checks the on-chain state first to avoid redundant and costly re-authorization transactions.
         """
         try: # Standard blockchain connectivity wrapper
             # Strict Mapping Guard
@@ -214,7 +212,7 @@ class MedShareBlockchain:
             # Strict Mapping Guard
             assert (hospital_idx + 1) < len(self.w3.eth.accounts), "Hospital index exceeds wallet capacity"
             acc = self.w3.eth.accounts[hospital_idx + 1]
-            # from_wei converts the raw Wei integer (e.g. 1000000000000000000) to a human-readable Ether float (1.0) (ORIGINAL COMMENT PRESERVED)
+            # from_wei converts the raw Wei integer (e.g. 1000000000000000000) to a human-readable Ether float (1.0)
             return self.w3.from_wei(self.w3.eth.get_balance(acc), 'ether') # Returns floats like 100.0
         except Exception as e: # Network down case
             print(f"[Blockchain] get_balance failed: {e}")

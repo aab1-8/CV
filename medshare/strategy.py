@@ -27,8 +27,7 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
         Gathers updates from all hospitals and performs Robust Averaging.
         """
         try:
-            # Step 1: UNIVERSAL SANITY CHECK (Protecting server from NaN/Inf crashes)
-            # sanity check: exclude nodes with NaN/Inf updates (ORIGINAL COMMENT PRESERVED)
+            # Sanity check: exclude nodes with NaN/Inf updates
             valid_results = []
             for proxy, res in results:
                 # Extract numerical weights from the client's packet
@@ -40,20 +39,19 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
                     valid_results.append((proxy, res))
             results = valid_results
 
-            # Step 2: Blockchain Initialization
+            # Blockchain Initialization
             bcm = BlockchainManager.get_instance()
             agg_weights = None
             metrics_aggregated = {}
             if not results: return None, {} # Return if zero nodes participated
 
-            # Step 3: Global Metric Aggregation (Calls weighted_average in utils.py)
+            # Global Metric Aggregation
             if self.fit_metrics_aggregation_fn:
                 metrics = [(res.num_examples, res.metrics) for _, res in results]
                 metrics_aggregated = self.fit_metrics_aggregation_fn(metrics, server_round=server_round)
 
-            # Step 4: Defense Mechanism: Robust-MAD (Median Absolute Deviation)
-            # This identifies 'Gradient Scaling' and 'Poisoning' attacks
-            # Anomaly Detection Logic (only if defense is Robust-MAD) (ORIGINAL COMMENT PRESERVED)
+            # Defense Mechanism: Robust-MAD (Median Absolute Deviation)
+            # identifies Gradient Scaling and Poisoning attacks
             defense_name = results[0][1].metrics.get("defense_name", "FedAvg")
             
             if defense_name == "Robust-MAD":
@@ -80,10 +78,8 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
                     # F. Update Reputation on the Ethereum Smart Contract
                     if bcm:
                         if is_malicious: 
-                            # Dock points from the hospital's reputation (SLSH)
                             bcm.update_reputation(c_id, -10, "Anomaly")
                         else: 
-                            # Award points for honest participation
                             bcm.update_reputation(c_id, 1, "Participation")
                     
                     if not is_malicious:
@@ -99,10 +95,10 @@ class AnomalyMonitoringStrategy(flwr.server.strategy.FedAvg):
                     print(f"[Defense] Warning: All clients flagged as outliers. Using client {closest_idx} (closest to median norm {med_norm:.2f}).")
                     results = [results[closest_idx]]
 
-            # Step 5: Perform the actual FedAvg (Weighting updates by dataset size)
+            # Perform FedAvg (Weighting updates by dataset size)
             agg_weights, _ = super().aggregate_fit(server_round, results, failures)
             
-            # Step 6: Post-Aggregation Blockchain Commitments
+            # Post-Aggregation Blockchain Commitments
             if agg_weights:
                 self.latest_weights = parameters_to_ndarrays(agg_weights)
                 if self.enable_blockchain and bcm:

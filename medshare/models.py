@@ -1,6 +1,6 @@
-import torch  # The core PyTorch library for neural network operations
-import torch.nn as nn  # High-level neural network building blocks
-from collections import OrderedDict  # Used for mapping weight names precisely to tensors
+import torch
+import torch.nn as nn
+from collections import OrderedDict
 
 def get_parameters(net):
     """

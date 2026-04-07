@@ -1,9 +1,8 @@
-# MedShare: Elite Privacy-Preserving Federated Learning for Healthcare (MEng Final Audit)
+# MedShare: Privacy-Preserving Federated Learning for Healthcare (MEng Final Audit)
 
-**Status: 🏆 PLATINUM / FULLY VERIFIED (2026)**
 A blockchain-audited, Byzantine-robust federated learning system for collaborative medical AI training across hospitals without sharing raw patient data.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.10+
@@ -80,6 +79,15 @@ bxp267/
 | **Byzantine Robustness** | `Robust-MAD` defense against poisonous outliers |
 | **Blockchain Audit** | Immutable SHA-256 commitment registry (Commit-then-Submit) |
 | **Secure Aggregation** | Symmetric Pairwise Masking (SOTA Protocol) |
+
+## 💰 Smart Contract Payout & Escrow Mechanisms
+
+The blockchain-based compensation system operates via an automated, trustless EVM pipeline executed through `MedShareTask.sol`:
+1. **Task Escrow**: The researcher initiates a study via the UI (`createTask`), locking the specified ETH bounty directly into the smart contract's secure escrow.
+2. **Node Onboarding**: Authorized hospital nodes select requested datasets and join the study (`joinTask`), linking their decentralized wallet identity to the active task.
+3. **Task Fulfillment**: Once the study hits the `minClients` threshold (e.g., 3/3 hospitals mathematically validated), the smart contract updates the task status to `Training`/Ready for Payout.
+4. **Finalize & Reward**: The researcher officially finalizes the study via the UI (`completeTask`), causing the blockchain to check the `IReputation` score of participating nodes, mathematically divide the escrowed bounty among honest contributors, and move their share into `pendingWithdrawals`.
+5. **Secure Claim**: Hospitals can immediately view their earnings in the Hospital Portal, triggering a Pull Payment (`claimReward`), which securely routes the ETH to their wallets.
 
 ## 📈 Available Datasets
 

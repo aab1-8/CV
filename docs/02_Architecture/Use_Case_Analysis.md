@@ -58,9 +58,11 @@ usecaseDiagram
         usecase "Distribute Global Model" as UC_Dist
         usecase "Aggregate Client Updates" as UC_Agg
         usecase "Apply Defense Mechanism" as UC_Defense
+        usecase "Robust-MAD Filter" as Def_MAD
         usecase "Krum Strategy" as Def_Krum
         usecase "Trimmed Average" as Def_Trim
         usecase "FedMedian" as Def_Med
+        usecase "Reputation Slashing" as Def_Rep
         usecase "Update Global Model" as UC_Update
 
         UC_Init --> UC_Dist : "Starts Round"
@@ -68,9 +70,11 @@ usecaseDiagram
         UC_Train --> UC_Agg : "Returns Weights"
         
         UC_Agg ..> UC_Defense : <<include>>
+        UC_Defense <|-- Def_MAD
         UC_Defense <|-- Def_Krum
         UC_Defense <|-- Def_Trim
         UC_Defense <|-- Def_Med
+        UC_Defense <|-- Def_Rep
         
         UC_Agg --> UC_Update : "New Global Weights"
         UC_Update --> UC_Dist : "Next Round"

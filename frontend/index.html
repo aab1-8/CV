@@ -296,19 +296,28 @@
     </section>
 
     <!-- DEVELOPER FOOTER -->
-    <footer style="margin: 4rem 0 2rem; padding: 2rem; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-secondary); font-size: 0.8rem;">
+    <footer
+      style="margin: 4rem 0 2rem; padding: 2rem; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-secondary); font-size: 0.8rem;">
       <p>© 2026 MedShare-FL Research Framework • Federated Learning Audit Dashboard</p>
-      <button id="dev-clear-storage" class="btn-secondary" style="margin-top: 1rem; opacity: 0.5; font-size: 0.75rem; border: 1px dashed rgba(247, 129, 102, 0.4); color: #f78166; border-radius: 8px;">🛠️ Developer: Clear Local Simulation Progress</button>
+      <button id="dev-clear-storage" class="btn-secondary"
+        style="margin-top: 1rem; opacity: 0.5; font-size: 0.75rem; border: 1px dashed rgba(247, 129, 102, 0.4); color: #f78166; border-radius: 8px;">🛠️
+        Developer: Clear Local Simulation Progress</button>
     </footer>
 
     <!-- CUSTOM NOTIFICATION MODAL -->
-    <div id="custom-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 2rem;">
-      <div class="card" style="max-width: 500px; border: 1px solid var(--accent-red); padding: 2rem; text-align: center;">
+    <div id="custom-modal"
+      style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 2rem;">
+      <div class="card"
+        style="max-width: 500px; border: 1px solid var(--accent-red); padding: 2rem; text-align: center;">
         <h2 style="color: var(--accent-red); margin-bottom: 1rem;">🚨 Reset Progress?</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">This will clear all created requests and local node training progress from this browser storage. This is recommended before starting a new finalized dissertation demo.</p>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">This will clear all created
+          requests and local node training progress from this browser storage. This is recommended before starting a new
+          finalized dissertation demo.</p>
         <div style="display: flex; gap: 1rem;">
           <button id="modal-cancel" class="btn-secondary" style="flex: 1; justify-content: center;">Cancel</button>
-          <button id="modal-confirm" class="btn-primary" style="flex: 1; background: var(--accent-red); color: white; justify-content: center;">Reset Everything</button>
+          <button id="modal-confirm" class="btn-primary"
+            style="flex: 1; background: var(--accent-red); color: white; justify-content: center;">Reset
+            Everything</button>
         </div>
       </div>
     </div>

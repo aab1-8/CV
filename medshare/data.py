@@ -1,4 +1,4 @@
-import os, requests, zipfile, io, pandas as pd, numpy as np, torch # Core libraries for data and connectivity
+import os, requests, zipfile, io, pandas as pd, numpy as np, torch
 from torch.utils.data import DataLoader, TensorDataset # Converts Pandas data into PyTorch datasets
 
 def fetch_support2():
@@ -32,7 +32,7 @@ def fetch_thyroid():
 
     # Method 2: Manual URL parsing
     base_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/thyroid-disease/"
-    # Fetches the ANN-Train and ANN-Test data from UCI archives (ORIGINAL COMMENT PRESERVED)
+    # Fetches the ANN-Train and ANN-Test data from UCI archives
     ssl_ctx = ssl.create_default_context()
 
     def read_url(url):
@@ -112,7 +112,7 @@ def load_tabular_data(config):
     elif source == "maternal_health": df = fetch_maternal_health()
     elif source == "hospital_admin":
         df = fetch_hospital_admin()
-        # admin-bill: Median split for a high bill vs low bill classification task (ORIGINAL COMMENT PRESERVED)
+        # admin-bill: Median split for a high bill vs low bill classification task
         if target.lower() == "high_bill":
             source_col = next((c for c in df.columns if c.lower() == "bill amount"), "Bill Amount")
             median = df[source_col].median()
@@ -120,7 +120,7 @@ def load_tabular_data(config):
             df = df.drop(columns=[source_col])
         elif target.lower() == "condition_category":
             source_col = next((c for c in df.columns if c.lower() == "medical condition"), "Medical Condition")
-            # Simplified multi-class: Group into 4 clear care-type categories (Matches Admin-Category in inventory) (ORIGINAL COMMENT PRESERVED)
+            # Simplified multi-class: Group into 4 clear care-type categories (Matches Admin-Category in inventory)
             condition_map = {
                 'Fracture': 'Emergency', 'Sprain': 'Emergency', 'Burns': 'Emergency',
                 'Stroke': 'Emergency', 'Heart Disease': 'Emergency',
@@ -167,14 +167,14 @@ def load_tabular_data(config):
                         k = min(5, minority_size - 1)
                         smote = SMOTE(random_state=42, k_neighbors=k)
                         X_resampled, y_resampled = smote.fit_resample(X_encoded, y_raw)
-                        # RESTORED: Precise rounding for binary indicators after synthetic gen (ORIGINAL COMMENT PRESERVED)
+                        # RESTORED: Precise rounding for binary indicators after synthetic gen
                         binary_cols = [c for c in X_encoded.columns if X_encoded[c].nunique() <= 2]
                         X_resampled[binary_cols] = X_resampled[binary_cols].round()
                         df = pd.DataFrame(X_resampled, columns=X_encoded.columns)
                         df[target] = y_resampled
                     else: raise ValueError("Large dataset detected")
                 except Exception as e:
-                    # Random Oversampling for large datasets (faster for vLab environment) (ORIGINAL VERBATIM RESTORED)
+                    # Random Oversampling for large datasets (faster for vLab environment)
                     major_size = counts.max()
                     balanced_df = []
                     for cls in counts.index:
@@ -193,8 +193,7 @@ def load_tabular_data(config):
     cols_to_drop = [col_map[d] for d in drop_cols if d in col_map and col_map[d].lower() != target.lower()]
     df = df.drop(columns=cols_to_drop, errors='ignore').replace('?', np.nan)
     
-    # 4. Identity & Missing Data Cleaning
-    # Identify and remove identity/uninformative columns (ORIGINAL COMMENT PRESERVED)
+    # Identity Column Removal
     for col in list(df.columns):
         if col.lower() == target.lower(): continue
         # Drop ID-like columns (High cardinality or containing "id")
@@ -208,15 +207,17 @@ def load_tabular_data(config):
         s = pd.to_numeric(df[col], errors='coerce')
         if s.notnull().sum() > (len(df)*0.5): df[col] = s
             
+    # SCIENTIFIC INTEGRITY: Drop missing targets FIRST so they aren't incorrectly imputed with the median
+    df = df.dropna(subset=[target])
     # Step 5: Imputation (Median for numbers, 'Unknown' for categories)
-    # median fill for numeric, 'Unknown' for categorical (ORIGINAL COMMENT PRESERVED)
+    # median fill for numeric, 'Unknown' for categorical
     num_cols, cat_cols = df.select_dtypes(include=[np.number]).columns, df.select_dtypes(exclude=[np.number]).columns
     medians = df[num_cols].median().fillna(0)
     df[num_cols] = df[num_cols].fillna(medians)
     df[cat_cols] = df[cat_cols].fillna("Unknown")
-    df = df.fillna(0).dropna(subset=[target])
+    df = df.fillna(0)
     
-    # Step 6: Data Skew (Heterogeneity Simulation)
+    # Data Heterogeneity Simulation
     het = config.get("heterogeneity", "none").lower()
     num_parts = config.get("NUM_PARTITIONS", 5)
     if het == "label": df = df.sort_values(by=target).reset_index(drop=True)
@@ -224,14 +225,13 @@ def load_tabular_data(config):
         feat_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c != target]
         if feat_cols: df = df.sort_values(by=feat_cols[0]).reset_index(drop=True)
 
-    # Step 7: Partition Logic
-    # Partitioning based on Hospital ID (ORIGINAL COMMENT PRESERVED)
+    # Partition Logic
     partition_col = config.get("PARTITION_COLUMN", "").lower() if config.get("PARTITION_COLUMN") else None
     if partition_col and partition_col in df.columns:
         parts = df[partition_col].astype(str)
         df, cat_cols = df.drop(columns=[partition_col]), cat_cols.drop(partition_col) if partition_col in cat_cols else cat_cols
     else:
-        # ORIGINAL LOGIC RESTORED: Selection between sequential and random splits
+        # Selection between sequential and random splits
         if het != "none":
             indices = np.arange(len(df))
             parts_arr = np.array([f"Hospital_{(i * num_parts // len(df)) + 1}" for i in indices])
@@ -241,24 +241,43 @@ def load_tabular_data(config):
             parts = pd.Series([f"Hospital_{i+1}" for i in np.random.randint(0, num_parts, len(df))], index=df.index)
     
     # Step 8: Multi-class Encoding & Matrix Creation
-    # convert target to labels if necessary (ORIGINAL COMMENT PRESERVED)
+    # convert target to labels if necessary
     if df[target].dtype == 'object' or df[target].dtype.name == 'category' or (df[target].dtype.kind in 'biufc' and (df[target].unique().min() != 0 or df[target].unique().max() != len(df[target].unique())-1)):
         from sklearn.preprocessing import LabelEncoder
         le = LabelEncoder()
-        df[target] = le.fit_transform(df[target])
+        df[target] = le.fit_transform(df[target].astype(str))
     
     cols_to_encode = [c for c in cat_cols if c != target]
     if cols_to_encode: df = pd.get_dummies(df, columns=cols_to_encode, drop_first=True)
 
-    # Convert to Neural-Network-Ready floating point format
-    X, y = df.drop(columns=[target]).astype(np.float32), df[target].astype(np.float32)
-    return X, np.asarray(y), parts, X.shape[1], (1 if y.nunique() <= 2 else int(y.nunique()))
+    # Step 8.5: Initialize Feature Matrix (X) BEFORE scaling per Appendix B
+    X = df.drop(columns=[target])
+
+    # Step 9: Clinical Scaling (Normalization) per Appendix B methodology
+    # To ensure features with high nominal ranges (e.g., BP) don't dominate the Robust-MAD filter
+    if not X.empty:
+        from sklearn.preprocessing import MinMaxScaler
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        # Fit and transform: Ensures all inputs fit within a safe [0,1] range for private AI
+        X_scaled_values = scaler.fit_transform(X)
+        X = pd.DataFrame(X_scaled_values, columns=X.columns, index=X.index)
+
+    # Convert to Neural-Network-Ready format (float for binary, long for multi-class)
+    X = X.astype(np.float32)
+    # SCIENTIFIC INTEGRITY: Use int64 (Long) for multi-class classification, float32 for binary survival
+    out_dim = (1 if df[target].nunique() <= 2 else int(df[target].nunique()))
+    y = df[target].astype(np.int64 if out_dim > 1 else np.float32)
+    return X, np.asarray(y), parts, X.shape[1], out_dim
 
 def create_dataloaders(X, y, batch_size=1024):
     """Utility for creating batches of clinical tensors for GPU/CPU training."""
-    if len(X) == 0: return None # Robustness: avoid crash on empty slice
-    return DataLoader(TensorDataset(torch.tensor(X.values if hasattr(X, 'values') else X).float(), torch.tensor(y).float()), 
-                      batch_size=batch_size, shuffle=True, pin_memory=torch.cuda.is_available())
+    if len(X) == 0: return None
+    # PyTorch consistency: float inputs, label-aware targets
+    x_tensor = torch.tensor(X.values if hasattr(X, 'values') else X).float()
+    y_tensor = torch.tensor(y)
+    if len(y.shape) > 0 and y.dtype == np.int64: y_tensor = y_tensor.long()
+    else: y_tensor = y_tensor.float()
+    return DataLoader(TensorDataset(x_tensor, y_tensor), batch_size=batch_size, shuffle=True, pin_memory=torch.cuda.is_available())
 
 _DATA_CACHE = {}
 def get_data_cached(config):

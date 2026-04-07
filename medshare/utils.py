@@ -1,6 +1,6 @@
-import os, json, numpy as np, time # Core libraries for logging, math and time-tracking
+import os, json, numpy as np, time
 
-# GLOBAL SESSION STORAGE (ORIGINAL COMMENT PRESERVED)
+# GLOBAL SESSION STORAGE
 # These variables maintain cross-round state to provide accurate MI leakage metrics
 _START_TIME = time.time()
 _LAST_LOGGED_ROUND = -1
@@ -39,20 +39,17 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
     agg_train_acc = sum([n * m.get("train_accuracy", m["accuracy"]) for n, m in metrics]) / total
     agg_train_auc = sum([n * m.get("train_auc", m.get("auc", 0.5)) for n, m in metrics]) / total
 
-    # Step 1: MEMERSHIP INFERENCE (MI) ESTIMATION (Privacy Leakage)
-    # MI proxy 1: Accuracy Gap (Yeom et al.) — measures how much better the model is at 'remembering' seen data.
+    # Membership Inference Estimation (Privacy Leakage)
+    # MI proxy 1: Accuracy Gap (Yeom et al.)
     mi_score = max(0, agg_train_acc - agg_acc)
-    # MI proxy 2: AUC Gap (Nasr et al.) — more robust against medical data imbalance.
+    # MI proxy 2: AUC Gap (Nasr et al.)
     mi_auc_score = max(0, agg_train_auc - agg_auc)
 
-    # Step 2: Privacy Extraction (Epsilon Accounting)
-    # The 'Privacy Spent' is the maximum epsilon reported by any hospital (Worst-case scenario)
+    # Privacy Extraction (Epsilon Accounting)
     eps_list = [m.get("privacy_spent", 0.0) for n, m in metrics if m.get("privacy_spent", 0.0) > 0]
     eps = max(eps_list) if eps_list else 0.0
 
-    # Step 3: Round Bridging
-    # In Flower, 'Fit' (Training) and 'Evaluate' (Testing) are separate callbacks. 
-    # We cache training snapshots to make sure the evaluation phase shows the Correct Privacy metrics.
+    # Round Bridging
     current_round = server_round
     if current_round is not None:
         is_fit_phase = any("train_accuracy" in m for _, m in metrics)
@@ -73,8 +70,8 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
     exp_type, atk_type, dfns_name, total_rounds = first_m.get("experiment", "none"), first_m.get("attack_type", "None"), first_m.get("defense_name", "FedAvg"), first_m.get("total_rounds", 1)
     ts_now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
-    # --- Logging experimental results to CSVs for various audits (ORIGINAL COMMENT PRESERVED) ---
-    # --- 4. GAS LOGGING (Blockchain Efficiency) (ORIGINAL COMMENT PRESERVED) ---
+    # --- Logging experimental results to CSVs for various audits ---
+    # --- 4. GAS LOGGING (Blockchain Efficiency) ---
     # Captures exactly how much ETH/Gas each hospital node consumed during the train update
     gas_file = os.path.join(target_test_dir, "exp_gas_log.csv")
     if not os.path.exists(gas_file):
@@ -85,7 +82,7 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
                 h_name = m.get("node_name", f"Hospital_{m.get('client_id', 'unknown')}")
                 f.write(f"{ts_now},{current_round},{h_name},{int(m['gas_used'])}\n")
 
-    # --- 5. LATENCY LOGGING (Compute Speed) (ORIGINAL COMMENT PRESERVED) ---
+    # --- 5. LATENCY LOGGING (Compute Speed) ---
     if log_to_csv and exp_type == "latency":
         lat_file = os.path.join(target_test_dir, "exp_latency_log.csv")
         if not os.path.exists(lat_file):
@@ -94,7 +91,7 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         with open(lat_file, "a", encoding='utf-8') as f:
             f.write(f"{ts_now},{current_round},{time.time() - _START_TIME:.2f}\n")
 
-    # --- 6. ROBUSTNESS & ATTACK LOGGING (ORIGINAL COMMENT PRESERVED) ---
+    # --- 6. ROBUSTNESS & ATTACK LOGGING ---
     if log_to_csv and exp_type == "robustness" and current_round == total_rounds:
         rob_file = os.path.join(target_test_dir, "exp_robustness_results.csv")
         if not os.path.exists(rob_file):
@@ -103,7 +100,7 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
         with open(rob_file, "a", encoding='utf-8') as f:
             f.write(f"{ts_now},{first_m.get('dataset_name', 'unknown')},{atk_type},{dfns_name},{total_rounds},{agg_acc:.4f}\n")
 
-    # --- 7. DP & MI PRIVACY LOGGING (The Audit Record) (ORIGINAL COMMENT PRESERVED) ---
+    # --- 7. DP & MI PRIVACY LOGGING (The Audit Record) ---
     noise = first_m.get("noise_multiplier", 1.0)
     if log_to_csv and current_round == total_rounds:
         # DP results: Noise vs Accuracy vs Privacy Leakage (Epsilon)
@@ -127,8 +124,7 @@ def weighted_average(metrics, server_round=None, log_to_csv=True):
     agg_loss = sum([n * m.get("loss", 0.0) for n, m in metrics]) / total if total > 0 else 0.0
     if agg_loss == 0.0 and current_round in _ROUND_CACHE: agg_loss = _ROUND_CACHE[current_round].get("loss", 0.0)
 
-    # Step 8: Frontend Dashboard Synchronization
-    # Updates the 'training_history.json' file which the React dashboard reads to plot the accuracy curves
+    # Dashboard Synchronization
     hist_file = os.path.join(base_dir, "frontend", "src", "data", "training_history.json")
     os.makedirs(os.path.dirname(hist_file), exist_ok=True)
     history = []

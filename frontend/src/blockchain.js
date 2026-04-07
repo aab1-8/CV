@@ -92,6 +92,25 @@ export async function blockchain_joinTask(taskId) {
 }
 
 /**
+ * Completes a task on the blockchain and triggers the payout.
+ */
+export async function blockchain_completeTask(taskId, modelHash) {
+    try {
+        const contract = await getTaskContract(0); // Researcher is always account 0
+        console.log(`Finalizing task ${taskId} with model hash ${modelHash}...`);
+
+        const tx = await contract.completeTask(taskId, modelHash);
+        const receipt = await tx.wait();
+
+        console.log(`Task finalized in block:`, receipt.blockNumber);
+        return { success: true, txHash: tx.hash };
+    } catch (error) {
+        console.error("Blockchain Error (completeTask):", error);
+        return { success: false, error: error.shortMessage || error.message };
+    }
+}
+
+/**
  * Fetches the total number of tasks from the blockchain.
  */
 export async function blockchain_getTaskCount() {
