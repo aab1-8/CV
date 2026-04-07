@@ -75,7 +75,7 @@ This report constitutes the technical justification and audit of the software sy
 To ensure complete scientific reproducibility, the full source code, smart contracts, and raw empirical datasets are available in the official project repository:
 
 \begin{itemize}
-    \item \textbf{GitLab Repository}: \url{https://gitlab.developers.cam.ac.uk/bxp267/medshare-fl}
+    \item \textbf{GitLab Repository}: \url{https://git.cs.bham.ac.uk/projects-2025-26/bxp267}
     \item \textbf{Full Technical Archive}: \url{docs/01_Foundation/Supplementary_Technical_Evidence.md}
     \item \textbf{System \& State Verification}: \texttt{docs/01\_Foundation/Discovery\_And\_Drafts/} (\textit{System\_Overview.md}, \textit{Project\_State\_Verification.md}, \textit{Final\_Project\_Markdown\_Report.md})
     \item \textbf{Audit Infrastructure}: \texttt{docs/01\_Foundation/Discovery\_And\_Drafts/} (\textit{Issues\_Log.md}, \textit{Master\_File\_Manifest.md})
@@ -490,7 +490,7 @@ The Vite dashboard provides options for different model types (MLP, Linear, etc.
 \subsection{The Interactive Dashboard as a Demonstrable Artifact}
 The \textbf{Vite.js Clinical Dashboard} (\texttt{frontend/}) is a fully runnable artifact that can be demonstrated during the inspection. It is started with \texttt{npm run dev} from the \texttt{frontend/} directory and is accessible at \texttt{http://localhost:5173}.
 
-The dashboard is not a cosmetic addition. It provides three technically significant features: (1) the \textbf{Audit Switcher} dynamically injects \texttt{comparison\_stats.json} from any completed experiment run, proving the pipeline from Python simulation to visual evidence is end-to-end; (2) the \textbf{Reputation Ledger} makes live Web3.py calls to the \texttt{Reputation.sol} contract to display real-time hospital trust scores; and (3) the \textbf{Schema Handshake Guard} enforces cross-domain rejection (e.g., a hospital linking a ``Stroke'' dataset to a ``Diabetes'' study is blocked before any blockchain gas is consumed). The dashboard's ``Demonstrator Mode'' fail-safe also ensures a stable presentation if the Ganache blockchain is offline.
+The dashboard is not a cosmetic addition. It provides three technically significant features: (1) the \textbf{Audit Switcher} dynamically loads JSON telemetry from any completed experiment run, proving the pipeline from Python simulation to visual evidence is end-to-end; (2) the \textbf{Reputation Ledger} makes live Web3.py calls to the \texttt{Reputation.sol} contract to display real-time hospital trust scores; and (3) the \textbf{Schema Handshake Guard} enforces cross-domain rejection (e.g., a hospital linking a ``Stroke'' dataset to a ``Diabetes'' study is blocked before any blockchain gas is consumed). The dashboard's ``Demonstrator Mode'' fail-safe also ensures a stable presentation if the Ganache blockchain is offline.
 
 \section{Conclusions \& Results}
 \label{sec:conclusions}
@@ -729,15 +729,15 @@ Due to the 11-page limit, the extensive \textbf{Appendices (A-R)}, including mat
 \bibitem{nguyen2021} D. C. Nguyen, et al., "Federated Learning Meets Blockchain in Edge Computing," \textit{IEEE Internet of Things Journal}, vol. 8, pp. 12806-12825, 2021.
 \bibitem{beutel2020} D. J. Beutel, et al., "Flower: A Friendly Federated Learning Research Framework," \textit{arXiv preprint arXiv:2007.14390}, 2020.
 \bibitem{yousefpour2021} A. Yousefpour, et al., "Opacus: User-friendly differential privacy in PyTorch," \textit{arXiv preprint arXiv:2109.12298}, 2021.
-\bibitem{chawla2002} N. Chawla et al., "SMOTE," \textit{JAIR}, 2002.
-\bibitem{geyer2017} R. C. Geyer et al., "DP FL," \textit{arXiv}, 2017.
-\bibitem{douceur2002} J. R. Douceur, "The Sybil Attack," \textit{IPTPS}, 2002.
-\bibitem{kairouz2021} P. Kairouz et al., "Advances in FL," \textit{Found. Trends}, 2021.
-\bibitem{cdc2015} CDC, "BRFSS Survey Data," 2015.
-\bibitem{knaus1995} W. A. Knaus et al., "SUPPORT Prognostic Model," \textit{Ann. Int. Med.}, 1995.
-\bibitem{uci-thyroid} UCI Repository, "Thyroid Disease Dataset," 1987.
-\bibitem{dworkroth2014} C. Dwork and A. Roth, "Foundations of DP," 2014.
-\bibitem{hardt2016} M. Hardt et al., "Train Faster, Generalize Better," \textit{ICML}, 2016.
+\bibitem{chawla2002} N. Chawla, et al., "SMOTE: Synthetic Minority Over-sampling Technique," \textit{Journal of Artificial Intelligence Research}, vol. 16, pp. 321--357, 2002.
+\bibitem{geyer2017} R. C. Geyer, et al., "Differentially Private Federated Learning: A Client Level Perspective," \textit{arXiv preprint arXiv:1712.07557}, 2017.
+\bibitem{douceur2002} J. R. Douceur, "The Sybil Attack," in \textit{Proc. International Workshop on Peer-to-Peer Systems (IPTPS)}, 2002.
+\bibitem{kairouz2021} P. Kairouz, et al., "Advances and Open Problems in Federated Learning," \textit{Foundations and Trends in Machine Learning}, vol. 14, no. 1--2, pp. 1--210, 2021.
+\bibitem{cdc2015} Centers for Disease Control and Prevention, ``Behavioral Risk Factor Surveillance System Survey Data,'' Atlanta, GA: U.S. DHHS, 2015.
+\bibitem{knaus1995} W. A. Knaus, et al., "The SUPPORT Prognostic Model," \textit{Annals of Internal Medicine}, vol. 122, no. 3, pp. 191--203, 1995.
+\bibitem{uci-thyroid} UCI Machine Learning Repository, ``Thyroid Disease Dataset,'' Garvan Institute of Medical Research, 1987.
+\bibitem{dworkroth2014} C. Dwork and A. Roth, "The Algorithmic Foundations of Differential Privacy," \textit{Foundations and Trends in Theoretical Computer Science}, vol. 9, no. 3--4, pp. 211--407, 2014.
+\bibitem{hardt2016} M. Hardt, et al., "Train Faster, Generalize Better: Stability of Stochastic Gradient Descent," in \textit{Proc. International Conference on Machine Learning (ICML)}, 2016.
 \end{thebibliography}
 
 \end{document}
