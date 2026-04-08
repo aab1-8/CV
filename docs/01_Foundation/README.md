@@ -47,5 +47,3 @@ In-depth analysis of the "Defense-in-Depth" strategy.
 *   **[MI Privacy Analysis](../06_Security/MI_Privacy_Audit_Analysis.md)**: Analyzing Membership Inference leakage risk.
 *   **[Data Transmission Audit](../06_Security/Data_Transmission_Audit.md)**: Verifying the hashing and blockchain audit trail.
 *   **[Platinum Security Audit](../06_Security/Platinum_Security_Audit.md)**: Comprehensive hardening review.
----
-*Created by Antigravity for the MedShare-FL Project.*

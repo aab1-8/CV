@@ -47,7 +47,7 @@ The **Researcher Portal** uses fuzzy keyword matching to link studies to their s
 | Dashboard Keyword | Linked Audit Asset | Mapping Status |
 | :--- | :--- | :--- |
 | **"Diabetes"** | `cdc_audit.json` | ✅ VERIFIED |
-| **"Thyroid"** | `thyroid_audit.json` | ✅ VERIFIED |
+| **"Thyroid"** | `thyroid_audit.json` | ✅ VERIFIED (80.1%) |
 | **Survival / Mortality** | `support2_audit.json` | ✅ VERIFIED |
 | **"Admin" / "Billing"** | `admin_audit.json` | ✅ VERIFIED |
 
@@ -115,7 +115,3 @@ The compiled Hardhat/Truffle outputs residing in the root `/build` directory (`M
 2. **Javascript Interface (`frontend/src/blockchain.js`)**: Safely imports redundant static copies of these ABIs into the React/Vite dashboard, structurally insulating the public-facing dashboard layer directly from the sensitive core compilation environment.
 
 The system is definitively proven to rely on and perfectly interpret these 5 artifacts with zero structural pathing or decoding errors.
-
----
-**Verification Status: 🏅 PLATINUM (Full-Stack 35-File Audit Complete)**  
-*This document is ready for inclusion in the final project archive.*

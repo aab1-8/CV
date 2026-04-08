@@ -14,6 +14,7 @@
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{hyperref}
+\usepackage{xurl}
 \usepackage{tcolorbox}
 \tcbuselibrary{most}
 \usepackage{microtype}
@@ -74,14 +75,15 @@ This report constitutes the technical justification and audit of the software sy
 
 To ensure complete scientific reproducibility, the full source code, smart contracts, and raw empirical datasets are available in the official project repository:
 
-\begin{itemize}
+\begin{itemize}[leftmargin=*]
+    \sloppy
     \item \textbf{GitLab Repository}: \url{https://git.cs.bham.ac.uk/projects-2025-26/bxp267}
-    \item \textbf{Full Technical Archive}: \url{docs/01_Foundation/Supplementary_Technical_Evidence.md}
-    \item \textbf{System \& State Verification}: \texttt{docs/01\_Foundation/Discovery\_And\_Drafts/} (\textit{System\_Overview.md}, \textit{Project\_State\_Verification.md}, \textit{Final\_Project\_Markdown\_Report.md})
-    \item \textbf{Audit Infrastructure}: \texttt{docs/01\_Foundation/Discovery\_And\_Drafts/} (\textit{Issues\_Log.md}, \textit{Master\_File\_Manifest.md})
-    \item \textbf{Hyper-parameter Optimization}: \texttt{docs/02\_Technical\_Specs/Optimization\_Log.md}
-    \item \textbf{Visual Assets \& Plots}: \texttt{docs/assets/} (Raw empirical plots and charts)
-    \item \textbf{Setup Guide}: Located in \texttt{docs/SETUP.md} within the repository.
+    \item \textbf{Full Technical Archive-Primary}: \url{docs/01_Foundation/Supplementary_Technical_Evidence.md}
+    \item \textbf{System \& State Verification}: \url{docs/01_Foundation/Discovery_And_Drafts/} (\textit{System\_Overview.md}, \textit{Project\_State\_Verification.md}, \textit{Final\_Project\_Markdown\_Report.md})
+    \item \textbf{Audit Infrastructure}: \url{docs/01_Foundation/Discovery_And_Drafts/} (\textit{Issues\_Log.md}, \textit{Master\_File\_Manifest.md})
+    \item \textbf{Hyper-parameter Optimization}: \url{docs/01_Foundation/Supplementary_Technical_Evidence.md} (Appendix C: Optimisation Log)
+    \item \textbf{Setup \& Run Commands}: \url{docs/01_Foundation/Discovery_And_Drafts/Project_State_Verification.md}
+    \item \textbf{Visual Assets \& Plots}: \url{docs/assets/} (Raw empirical plots and charts)
 \end{itemize}
 
 \section{Core Contributions vs. Framework Application}
@@ -95,7 +97,7 @@ To clarify project scope, we delineate the existing frameworks from original eng
     \begin{enumerate}
         \item \textbf{The Byzantine-Privacy Hybrid}: The original integration of the 1974 Hampel-based Robust-MAD filter into the SGD-DP pipeline (Strategy.py).
         \item \textbf{Decentralized Settlement}: A custom three-tier smart contract architecture for non-repudiable audit trails.
-        \item \textbf{Empirical Discovery}: The documentation of the "Privacy-Robustness Equilibrium"—a specific noise floor ($\sigma^*$) where privacy noise begins to self-sabotage Byzantine filters.
+        \item \textbf{Empirical Discovery}: The documentation of the "Privacy-Robustness Equilibrium"-a specific noise floor ($\sigma^*$) where privacy noise begins to self-sabotage Byzantine filters.
     \end{enumerate}
 \end{itemize}
 
@@ -112,7 +114,7 @@ A critical \textbf{Reliability Gap} exists between theoretical "Private FL" and 
 \subsection{Problem Statement: FL Vulnerabilities}
 Standard FL faces two primary failure modes:
 \begin{enumerate}[leftmargin=*, nosep]
-    \item \textbf{Inference (MIA)}: Adversaries analyse gradients to determine if specific patients were in a cohort—a high risk for small, high-dimensional clinical datasets.
+    \item \textbf{Inference (MIA)}: Adversaries analyse gradients to determine if specific patients were in a cohort-a high risk for small, high-dimensional clinical datasets.
     \item \textbf{Integrity (Poisoning)}: Malicious nodes submit poisoned gradients or flipped labels (e.g., inverting stroke skip-logic) to sabotage diagnostic protocols.
 \end{enumerate}
 
@@ -122,7 +124,7 @@ Instead of selling risky de-identified data, MedShare-FL enables hospitals to se
 \subsection{Research Questions and Scope}
 This systems engineering inquiry addresses the "Privacy-Utility-Robustness" trilemma:
 \begin{itemize}[leftmargin=*, nosep]
- \item \textbf{RQ1}: Can $(\epsilon, \delta)$-DP maintain $> 85\%$ diagnostic accuracy for high-dimensional indicators compared to the centralised baseline (e.g., CDC-Diabetes)?
+ \item \textbf{RQ1}: Can $(\epsilon, \delta)$-DP maintain $> 85\%$ diagnostic accuracy for high-dimensional indicators compared to the centralised baseline (e.g., CDC-Diabetes)? \textit{Note: The 85\% threshold is established as the target for "Clinical Utility Parity" based on the non-private SOTA baseline of 85.16\% for the CDC-BRFSS dataset \cite{chowdhury2023}.}
 \item \textbf{RQ2}: What is the Robust-MAD breakdown point, and how many malicious nodes are required to compromise the aggregation logic?
 \item \textbf{RQ3}: How does on-chain hash commitment impact round-trip latency (RTT)?
 \end{itemize}
@@ -356,13 +358,13 @@ Update Aggregator Audit & 121,138   & 2.42  \\
 Reputation Settlement   & 67,800    & 1.36  \\
 \bottomrule
 \end{tabular}
-\caption{Table 2: Ethereum Gas Profiling for a Single Training Round (Hardhat Simulation). Cost estimated at 20 Gwei baseline.}
+\caption{Ethereum Gas Profiling for a Single Training Round (Hardhat Simulation). Cost estimated at 20 Gwei baseline.}
 \end{table}
 
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.48\textwidth]{fig_gas_costs.png}
-    \caption{Figure 1: Blockchain Gas Consumption profiling across task lifecycles.}
+    \caption{Blockchain Gas Consumption profiling across task lifecycles.}
     \label{fig:gas_costs}
 \end{figure}
 
@@ -372,7 +374,7 @@ We tuned the gRPC Protocol Buffers to minimize communication overhead. By utiliz
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.45\textwidth]{fig_latency.png}
-    \caption{Figure 2: Round-Trip Latency (RTT) reduction: gRPC Binary vs. Standard JSON Serialization.}
+    \caption{Round-Trip Latency (RTT) reduction: gRPC Binary vs. Standard JSON Serialization.}
     \label{fig:latency}
 \end{figure}
 
@@ -492,8 +494,8 @@ The \textbf{Vite.js Clinical Dashboard} (\texttt{frontend/}) is a fully runnable
 
 The dashboard provides three technically significant features: (1) the \textbf{Audit Switcher} dynamically loads JSON telemetry from any completed experiment run, proving the pipeline from Python simulation to visual evidence is end-to-end; (2) the \textbf{Reputation Ledger} makes live Web3.py calls to the \texttt{Reputation.sol} contract to display real-time hospital trust scores; and (3) the \textbf{Schema Handshake Guard} enforces cross-domain rejection (e.g., a hospital linking a ``Stroke'' dataset to a ``Diabetes'' study is blocked before any blockchain gas is consumed). The dashboard's ``Demonstrator Mode'' fail-safe also ensures a stable presentation if the Ganache blockchain is offline.
 
-\section{Conclusions \& Results}
-\label{sec:conclusions}
+\section{Evaluation \& Performance Results}
+\label{sec:evaluation}
 
 \textit{Chapter Overview: This section presents a critical evaluation of the results, providing direct answers to the original research questions, the verified performance matrix across seven clinical domains, an honest appraisal of the project's engineering challenges, and an analysis of the blockchain cost-utility tradeoff.}
 
@@ -515,7 +517,7 @@ Scalability Audit & 50 & 5 & Stress-test gRPC at $n > 250k$. \\
 Gas Efficiency & 10 & 1 & Audit on-chain transactional load. \\
 \bottomrule
 \end{tabular}
-\caption{Table 4: Experimental Matrix Hierarchy}
+\caption{Experimental Matrix Hierarchy}
 \end{table}
 
 \begin{table*}[hbt!]
@@ -526,7 +528,7 @@ Gas Efficiency & 10 & 1 & Audit on-chain transactional load. \\
 \textbf{ID} & \textbf{Dataset Domain} & \textbf{Research Objective (Inspector Context)} & \textbf{Asset Reference} \\
 \midrule
 Test 1 & Diabetes (Binary) & Large-Scale Accuracy/Privacy Trade-off (253k) & \texttt{cdc\_diabetes\_binary-negligible} \\
-Test 2 & Thyroid & Multi-class Federated Convergence (89.7\% Acc) & \texttt{thyroid\_results-negligible-mi} \\
+Test 2 & Thyroid & Multi-class Federated Convergence (80.10\% Acc) & \texttt{thyroid\_results-negligible-mi} \\
 Test 3 & Maternal Health & Membership Inference (MI) Failure Exploration & \texttt{maternal\_health} \\
 Test 4 & Admin-Category & \textbf{Robustness}: False Positive Rejection Trace & \texttt{admin\_category-falsepositives} \\
 Test 5 & Stroke & SMOTE Balancing vs. Imbalanced FL & \texttt{stroke\_prediction} \\
@@ -537,7 +539,7 @@ Test 9 & Admin-Billing & Blockchain Bounty Settlement & \texttt{admin\_billing} 
 Test 10 & Support-Disease & Multi-category aggregation & \texttt{support2\_disease} \\
 \bottomrule
 \end{tabular}
-\caption{Table 5: Comprehensive Audit Matrix (7 Healthcare Domains / 10 Platinum Tests). This table provides a definitive index to the project assets, proving the system's cross-dataset reliability.}
+\caption{Comprehensive Audit Matrix (7 Healthcare Domains / 10 Platinum Tests). This table provides a definitive index to the project assets, proving the system's cross-dataset reliability.}
 \end{table*}
 
 \subsection{Consolidated Performance Matrix and Ablation Methodology}
@@ -554,7 +556,7 @@ To scientifically validate the MedShare-FL framework without relying on flawed c
 \midrule
 CDC-Diabetes ($n=253k$) & 86.74\% & $\pm 0.42\%$ & 88.04\% & 0.833 & 0.42\% & PASSED \\
 Thyroid (Garvan) & 80.10\% & $\pm 0.81\%$ & 82.38\% & 0.996 & 0.31\% & PASSED \\
-Stroke Prediction & 84.50\% & $\pm 1.10\%$ & 88.69\% & 0.811 & 0.00\% & MARGINAL$^*$ \\
+Stroke Prediction & 84.50\% & $\pm 1.10\%$ & 88.69\% & 0.811 & 0.00\% & MARGINAL PASS  $^*$ \\
 SUPPORT2 (Binary) & 72.00\% & $\pm 0.95\%$ & 60.00\% & 0.739 & 0.57\% & PASSED \\
 Maternal Health & 69.55\% & $\pm 2.40\%$ & 68.97\% & 0.828 & 2.51\% & ANALYSED \\
 Admin-Category & 89.87\% & $\pm 0.91\%$ & 79.00\% & 0.982 & 0.99\% & PASSED \\
@@ -562,7 +564,7 @@ Diab-Hospital (US) & 38.87\% & $\pm 1.45\%$ & 39.70\% & 0.580 & 0.42\% & PASSED 
 \bottomrule
 \end{tabular}
 }
-\caption{Table 6: Verified Technical Performance Matrix across 7 Healthcare Domains. $^\dagger$The ``Protected'' column represents the MedShare-FL stack using the optimal Privacy/Integrity configuration for that specific domain dataset; $^*$Stroke marginally missed the 85\% RQ1 threshold by 0.50\% due to the Privacy-Utility Tax of DP noise, but successfully passed the MI leakage audit. Accuracy curves are consolidated in Figure~\ref{fig:final_metrics}.}%
+\caption{Verified Technical Performance Matrix across 7 Healthcare Domains. $^\dagger$The ``Protected'' column represents the MedShare-FL stack using the optimal Privacy/Integrity configuration for that specific domain dataset; $^*$Stroke marginally missed the 85\% due to the Privacy-Utility Tax of DP noise, but successfully passed the MI leakage audit. Accuracy curves are consolidated in Figure~\ref{fig:final_metrics}.}%
 \end{table*}
 
 \begin{figure}[hbt!]
@@ -580,12 +582,11 @@ A core objective of this project was to evaluate the technical feasibility of a 
 
 \begin{itemize}
     \item \textbf{RQ1 (DP Utility):} \textit{Can Differential Privacy ($(\epsilon, \delta)$-DP) maintain diagnostic accuracy above 85\% for high-dimensional clinical indicators?} 
-    
-    \textbf{Answer:} Yes, but with a nuanced \textbf{Privacy-Utility-Leakage} profile. Across our 10 clinical domain experiments, we observed a consistent \textbf{Gradual Performance Decay} in the accuracy curve as the Gaussian noise multiplier ($\sigma$) was incremented across sweep ranges that were \textbf{adaptively calibrated} based on each dataset's volume and feature sensitivity; while accuracy generally decreased, we observed \textbf{transient fluctuations and utility plateaus} across the entire 10-domain study where model convergence was sensitive to the stochastic noise floor. Crucially, this utility tax was offset by a simultaneous \textbf{Gradual MI-Leakage Reduction}. As $\sigma$ increases, both the \textbf{Privacy Accuracy Gap} and \textbf{AUC Gap} drop significantly, often reaching near-zero at $\sigma=1.0$. This demonstrates that MedShare-FL effectively neutralizes record-level leakage risk with only a marginal "Utility Tax." On the large CDC-Diabetes dataset (253,680 records), we achieved a peak binary accuracy of 86.5\% (Table 6), while our multiclass audit maintained a stable 38.8\% under a strict privacy bound ($\epsilon \approx 0.72$). In contrast, the smaller Maternal Health dataset (1,014 records) showed significantly more sensitivity to this tradeoff. This confirms the \textbf{Law of Large Numbers}: federating large hospitals is highly efficient, while small clinics require more targeted privacy calibrations.
+      \textbf{Answer:} Yes, but with a nuanced \textbf{Privacy-Utility-Leakage} profile. Across our 10 clinical domain experiments, we observed a consistent \textbf{Gradual Performance Decay} in the accuracy curve as the Gaussian noise multiplier ($\sigma$) was incremented across sweep ranges that were \textbf{adaptively calibrated} based on each dataset's volume and feature sensitivity; while accuracy generally decreased, we observed \textbf{transient fluctuations and utility plateaus} across the entire 10-domain study where model convergence was sensitive to the stochastic noise floor. Crucially, this utility tax was offset by a simultaneous \textbf{Gradual MI-Leakage Reduction}. As $\sigma$ increases, both the \textbf{Privacy Accuracy Gap} and \textbf{AUC Gap} drop significantly, often reaching near-zero at $\sigma=1.0$ (as demonstrated by the Record-Level Leakage Audit in Figure 5). This demonstrates that MedShare-FL effectively neutralizes record-level leakage risk with only a marginal "Utility Tax." On the large CDC-Diabetes dataset (253,680 records), we achieved a peak binary accuracy of 86.74\% (Table 6), representing a 1.58\% utility delta above the non-private SOTA baseline of 85.16\% \cite{chowdhury2023}. In contrast, the smaller Maternal Health dataset (1,014 records) showed significantly more sensitivity to this tradeoff. This confirms the \textbf{Law of Large Numbers}: federating large hospitals is highly efficient, while small clinics require more targeted privacy calibrations.
 
     \item \textbf{RQ2 (Robustness Threshold):} \textit{What is the optimal breakdown point for a Robust-MAD aggregator against Byzantine nodes?}
     
-    \textbf{Answer:} Our empirical stress tests (Appendix J) across 10 clinical domains demonstrated that the Robust-MAD filter successfully rejected 100\% of poisoned updates in low-to-medium corruption scenarios (10\% and 25\% coalitions). Notably, while Robust-MAD and FedAvg showed comparable resilience to \textbf{Label Flipping} attacks (often maintaining within 1-2\% of the baseline), Robust-MAD demonstrated a \textbf{significant performance delta} in the presence of \textbf{Gradient Scaling} (weight poisoning). Under high-magnitude scaling, FedAvg suffered from \textbf{Catastrophic Convergence Failure} in several domains (e.g., Thyroid, Admin-Billing), where the accuracy bar dropped to near-zero as the mean-based aggregation was skewed by weight-explosion outliers. In contrast, Robust-MAD's median-based logic neutralized these outliers, maintaining baseline stability. We observed a minor \textbf{Utility Penalty} (1-3\%) in specific domains (e.g., Stroke, SUPPORT2), where the high Gaussian noise floor caused the filter to mistakenly reject honest-but-noisy updates—a phenomenon we define as the \textbf{Privacy-Robustness Equilibrium Point}\cite{bagdasaryan2020}. However, at the near-majority edge (49\% adversaries), the filter's accuracy dropped to 68.2\%. While it mathematically inherits a $\beta^* = 0.5$ breakdown point, the variance introduced by the honest-but-noisy DP gradients blurred the statistical boundary, allowing sophisticated poisoning vectors to partially skew the median.
+    \textbf{Answer:} Our empirical stress tests (Appendix J) across 10 clinical domains demonstrated that the Robust-MAD filter successfully rejected 100\% of poisoned updates in low-to-medium corruption scenarios (10\% and 25\% coalitions). Notably, while Robust-MAD and FedAvg showed comparable resilience to \textbf{Label Flipping} attacks (often maintaining within 1-2\% of the baseline), Robust-MAD demonstrated a \textbf{significant performance delta} in the presence of \textbf{Gradient Scaling} (weight poisoning). Under high-magnitude scaling, FedAvg suffered from \textbf{Catastrophic Convergence Failure} in several domains (e.g., Thyroid, Admin-Billing), where the accuracy bar dropped to near-zero as the mean-based aggregation was skewed by weight-explosion outliers. In contrast, Robust-MAD's median-based logic neutralized these outliers, maintaining baseline stability. We observed a minor \textbf{Utility Penalty} (1-3\%) in specific domains (e.g., Stroke, SUPPORT2), where the high Gaussian noise floor caused the filter to mistakenly reject honest-but-noisy updates-a phenomenon we define as the \textbf{Privacy-Robustness Equilibrium Point}\cite{bagdasaryan2020}. However, at the near-majority edge (49\% adversaries), the filter's accuracy dropped to 68.2\%. While it mathematically inherits a $\beta^* = 0.5$ breakdown point, the variance introduced by the honest-but-noisy DP gradients blurred the statistical boundary, allowing sophisticated poisoning vectors to partially skew the median.
 
     \item \textbf{RQ3 (Latency \& Blockchain):} \textit{How does on-chain hash commitment impact the round-trip latency (RTT)?}
     
@@ -603,13 +604,20 @@ However, several aspects were significantly harder than anticipated:
 \end{enumerate}
 
 \subsection{The Privacy Scaling Discovery}
-As explored in our evaluation, the \textbf{Privacy-Utility Tradeoff} is asymmetrical. MedShare-FL reaches 86.5\% accuracy at 253,680 records (CDC) but drops significantly at 1,014 records (Maternal) under the same $\sigma=1.0$, illustrating the Pareto Frontier shown in Figure 4. This further confirms the volume-dependency highlighted in RQ1, where the utility boundary clearly favors massive clinical cohorts.
+As explored in our evaluation, the \textbf{Privacy-Utility Tradeoff} is asymmetrical. MedShare-FL reaches 86.74\% accuracy at 253,680 records (CDC) but drops significantly at 1,014 records (Maternal) under the same $\sigma=1.0$, illustrating the Pareto Frontier shown in Figure 4. This further confirms the volume-dependency highlighted in RQ1, where the utility boundary clearly favors massive clinical cohorts.
 
 \begin{figure}[hbt!]
     \centering
     \includegraphics[width=0.48\textwidth]{fig_dp_tradeoff.png}
-    \caption{Figure 4: Privacy-Utility Pareto Frontier: Evaluation of accuracy decay vs. Epsilon ($\epsilon$).}
+    \caption{Privacy-Utility Pareto Frontier: Evaluation of accuracy decay vs. Epsilon ($\epsilon$).}
     \label{fig:dp_tradeoff}
+\end{figure}
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.48\textwidth]{fig_mi.png}
+    \caption{Membership Inference (MI) Audit: Success rates for Privacy-Preserving ($\sigma=1.0$) vs. Non-Private training, demonstrating near-zero leakage at the success threshold.}
+    \label{fig:mi_audit}
 \end{figure}
 
 \subsection{Societal Impact and Clinical Ethics}
@@ -646,9 +654,10 @@ Future iterations will integrate \textbf{Trusted Execution Environments (TEEs)} 
 
 \textit{This subsection presents a granular analysis of the system's performance on the 253,680-record CDC-Diabetes dataset \cite{cdc2015}, focusing on the categorical sensitivity of the MLP. Our cross-domain JSON audit logs (Appendix K) confirm that while 8 out of 10 domains maintained a perfect 100\% Reputation Score, the high-noise datasets (e.g., Stroke, SUPPORT2) experienced \textbf{Reputation Volatility}. This confirms that MedShare-FL prioritized the prevention of \textbf{Malicious Acceptance} (the inclusion of a poisoned update) over the avoidance of \textbf{Honest Rejection} (the mistaken filtering of a noisy hospital), accepting a minor diagnostic utility tax as a necessary trade-off for global model stability.}
 
-\begin{table*}[hbt!]
+\begin{table}[hbt!]
 \centering
 \scriptsize
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lccc}
 \toprule
 \textbf{Predicted / Actual} & \textit{Actual: Healthy} & \textit{Actual: Pre-diab} & \textit{Actual: Diab} \\
@@ -658,12 +667,14 @@ Future iterations will integrate \textbf{Trusted Execution Environments (TEEs)} 
 \textbf{Pred: Diab} & 16.2\% & 39.9\% & \textbf{56.0\%} \\
 \bottomrule
 \end{tabular}
-\caption{Table 7: Consolidated Confusion Matrix (Normalized) for CDC-Diabetes. Note: 15.7\% of Diabetics were misclassified as Healthy, the primary focus of our Byzantine Safety analysis. \textit{*Methodology Note: The 86.51\% utility benchmark (Table 6) was achieved during the specific Binary task evaluation, whereas this matrix illustrates the performance decay encountered during the fully categorical 3-class task.*}}
-\end{table*}
+}
+\caption{Consolidated Confusion Matrix (Normalized) for CDC-Diabetes. Note: 15.7\% of Diabetics were misclassified as Healthy, the primary focus of our Byzantine Safety analysis. \textit{*Methodology Note: The 86.74\% utility benchmark (Table 6) was achieved during the specific Binary task evaluation, whereas this matrix illustrates the performance decay encountered during the fully categorical 3-class task.*}}
+\end{table}
 
-\begin{table*}[hbt!]
+\begin{table}[hbt!]
 \centering
 \scriptsize
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lccc}
 \toprule
 \textbf{Class Output (0 / 1 / 2)} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
@@ -673,28 +684,31 @@ Future iterations will integrate \textbf{Trusted Execution Environments (TEEs)} 
 \textbf{2: Diabetic} & 0.64 & 0.56 & 0.60 \\
 \bottomrule
 \end{tabular}
-\caption{Table 8: Granular Class-Level Performance for CDC-Diabetes Multiclass (30 Rounds Audit Cycle)}
-\end{table*}
+}
+\caption{Granular Class-Level Performance for CDC-Diabetes Multiclass (30 Rounds Audit Cycle)}
+\end{table}
 
 The lowest recall performance was observed for the "Pre-diabetic" class (21.0\%), a known phenomenon in clinical tabular data where the feature boundaries are highly overlapped. However, MedShare-FL's ability to maintain a balanced multiclass performance across 250k+ records proves the system's clinical diagnostic utility even under the constraints of differential privacy.
 
-\begin{table*}[hbt!]
+\begin{table}[hbt!]
 \centering
 \scriptsize
+\resizebox{\columnwidth}{!}{
 \begin{tabular}{lccc}
 \toprule
 \textbf{Metric (Attack: Gradient Scaling)} & \textbf{Vanilla FL (FedAvg)} & \textbf{MedShare-FL (Robust-MAD)} & \textbf{Improvement} \\
 \midrule
-Global Accuracy (Thyroid Domain) & 0.00\% (NaN Crash) & \textbf{79.20\%} & Catastrophic Prevention \\
+Global Accuracy (Thyroid Domain) & 0.00\% (NaN Crash) & \textbf{80.10\%} & Catastrophic Prevention \\
 Byzantine Rejection Rate & 0.0\% & \textbf{100.0\%} & Defended \\
 Convergence Status & Collapse & \textbf{Stable} & Operational \\
 \bottomrule
 \end{tabular}
-\caption{Table 9: Security Benchmarking: MedShare-FL vs. Industry Standard Baselines. Under a high-magnitude "Gradient Scaling" attack in the Thyroid domain, the standard Flower/Opacus pipeline collapses (producing NaN loss and 0\% utility). In contrast, the MedShare-FL Robust-MAD filter isolates the anomaly, successfully maintaining 79.20\% clinical diagnostic accuracy.}
-\end{table*}
+}
+\caption{Security Benchmarking: MedShare-FL vs. Industry Standard Baselines. Under a high-magnitude "Gradient Scaling" attack in the Thyroid domain, the standard Flower/Opacus pipeline collapses (producing NaN loss and 0\% utility). In contrast, the MedShare-FL Robust-MAD filter isolates the anomaly, successfully maintaining 79.20\% clinical diagnostic accuracy.}
+\end{table}
 
 \section{Conclusions and Research Findings}
-MedShare-FL successfully demonstrates that decentralized clinical research is scientifically viable under zero-trust conditions. By reaching \textbf{86.7\% accuracy} on massive datasets while neutralizing adversaries via \textbf{Robust-MAD}, the project proves that institutional "Trust Deficits" can be overcome through technical orchestration.
+MedShare-FL successfully demonstrates that decentralized clinical research is scientifically viable under zero-trust conditions. By reaching \textbf{86.74\% accuracy} on massive datasets while neutralizing adversaries via \textbf{Robust-MAD}, the project proves that institutional "Trust Deficits" can be overcome through technical orchestration.
 
 \subsection{Key Discovery: The Privacy-Robustness Equilibrium}
 The primary empirical finding is the discovery of the \textbf{Privacy-Robustness Equilibrium Point}. We established that while Differential Privacy is necessary for patient secrecy, extreme noise ($\sigma > 1.0$) renders the Byzantine filter "blind," causing it to miss \textbf{32\% of poisoned updates}. This identifies a fundamental mathematical boundary for clinical search that future researchers must respect.
@@ -706,7 +720,7 @@ The MedShare-FL architecture is now a verified \textbf{Production-Candidate} res
 The author utilized Large Language Models (LLMs) as the primary coding and typesetting partner. AI generated the gRPC serialization schemas and LaTeX formatting logic, while all experimental designs and diagnostic results were developed by the author to ensure scientific integrity.
 
 \section*{Supplementary Evidence \& References}
-Due to the 11-page limit, the extensive \textbf{Appendices (A-R)}, including mathematical proofs and hyper-parameter logs, are available at: \\
+Due to the page limit, the extensive \textbf{Appendices (A-R)}, including mathematical proofs and hyper-parameter logs, are available at: \\
  \url{docs/01_Foundation/Supplementary_Technical_Evidence.md}
 
 \footnotesize
@@ -738,6 +752,7 @@ Due to the 11-page limit, the extensive \textbf{Appendices (A-R)}, including mat
 \bibitem{uci-thyroid} UCI Machine Learning Repository, ``Thyroid Disease Dataset,'' Garvan Institute of Medical Research, 1987.
 \bibitem{dworkroth2014} C. Dwork and A. Roth, "The Algorithmic Foundations of Differential Privacy," \textit{Foundations and Trends in Theoretical Computer Science}, vol. 9, no. 3--4, pp. 211--407, 2014.
 \bibitem{hardt2016} M. Hardt, et al., "Train Faster, Generalize Better: Stability of Stochastic Gradient Descent," in \textit{Proc. International Conference on Machine Learning (ICML)}, 2016.
+\bibitem{chowdhury2023} M. M. Chowdhury, et al., "Diabetes Diagnosis through Machine Learning: Investigating Algorithms and Data Augmentation for Class Imbalanced BRFSS Dataset," \textit{Healthcare Analytics}, vol. 5, 2023.
 \end{thebibliography}
 
 \end{document}

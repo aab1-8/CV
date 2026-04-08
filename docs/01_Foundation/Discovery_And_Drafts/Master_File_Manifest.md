@@ -12,7 +12,7 @@
 | `test/plot_results.py` | **Visualization** | `plot_accuracy` | Generates the performance proof graphs. |
 
 ### The "Golden Line Numbers" for Inspection:
-*   **Hampel Filter (Robust-MAD)**: `medshare/strategy.py`, Line **60** (Calculation) & **69** (Threshold).
+*   **Hampel Filter (Robust-MAD)**: `medshare/strategy.py`, Line **59** (Calculation) & **68** (Threshold).
 *   **DP-SGD (Opacus)**: `medshare/engine.py`, Line **29** (Privacy wrapping).
 *   **FedProx Logic**: `medshare/engine.py`, Line **69** (Consensus stability).
 *   **On-Chain Commitment**: `medshare/client.py`, Line **80** (Handshake logic).

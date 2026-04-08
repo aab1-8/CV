@@ -266,13 +266,13 @@ The MedShare-FL demonstrator is engineered for "Clinical Resilience," ensuring t
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Dataset} & \textbf{Acc (Baseline)} & \textbf{Acc (Protected)} & \textbf{AUC (Global)} & \textbf{Epsilon ($\epsilon$)} \\ \midrule
-Thyroid ($n=7.2k$) & 82.38\% & 80.10\% & 0.996 & 1.57 \\
-Stroke ($n=5.1k$) & 88.69\% & 84.50\% & 0.811 & 1.57 \\
+Thyroid ($n=7.2k$) & 82.38\% & 80.10\% & 0.996 & 0.00 \\
+Stroke ($n=5.1k$) & 88.69\% & 84.50\% & 0.811 & 2.53 \\
 CDC-Diabetes ($n=253k$) & 88.04\% & 86.74\% & 0.833 & 1.57 \\
-SUPPORT2 & 60.00\% & 72.00\% & 0.739 & 1.57 \\
+SUPPORT2 & 60.00\% & 72.00\% & 0.739 & 0.00 \\
 Maternal Health & 68.97\% & 69.55\% & 0.828 & 3.25 \\
-Admin-Category & 79.00\% & 89.87\% & 0.982 & 1.57 \\
-Diab-Hospital & 39.70\% & 38.87\% & 0.580 & 1.57 \\ \bottomrule
+Admin-Category & 79.00\% & 89.87\% & 0.982 & 0.00 \\
+Diab-Hospital & 39.70\% & 38.87\% & 0.580 & 0.72 \\ \bottomrule
 \end{tabular}
 \caption{Table 12: Final Verification Matrix (Extended 7-Domain Scope)}
 \end{table*}

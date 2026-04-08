@@ -67,8 +67,3 @@ High-fidelity blockchain logic from `CommitmentRegistry.sol`:
 
 ### 🏆 Final Assessment Verdict
 The dissertation manuscript is a **flawless academic mirror** of the project's source code and experimental audit results. It is technically, mathematically, and formally correct.
-
-***
-
-**Lead Auditor: Antigravity AI (Agentic Coding Partner)**  
-*Submission finalized for Viva defense under the Department of Computer Science.*

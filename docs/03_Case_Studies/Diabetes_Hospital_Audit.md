@@ -81,4 +81,4 @@ The following plots verify the behavior of the MedShare engine under stress:
 - **Robustness**: ![Robustness](../assets/diabetes_hospital/fig_robustness.png)
 
 ---
-*Created by Antigravity for the MedShare-FL Project.*
+

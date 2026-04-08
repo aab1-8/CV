@@ -67,6 +67,3 @@ The system was tested against malicious attacks to verify the **Robust-MAD** def
 - **MI Audit**: ![MI Audit](../assets/admin_billing/fig_mi.png)
 - **DP Sweep**: ![DP Overview](../assets/admin_billing/fig_dp_tradeoff.png)
 - **Robustness**: ![Robustness](../assets/admin_billing/fig_robustness.png)
-
----
-*Created by Antigravity for the MedShare-FL Project.*

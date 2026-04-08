@@ -92,6 +92,3 @@ The following plots verify the behavior of the MedShare engine under stress:
 * **Raw Logs**: `exp_*.csv` in `assets/thyroid_results-negligible-mi/` (Original empirical data).
 * **Model Weights**: `best_model.pth` (The audited global state).
 * **Metadata**: `training_history.json`, `baseline.json`, `comparison_stats.json`.
-
----
-*Created by Antigravity for the MedShare-FL Project.*
