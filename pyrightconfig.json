@@ -1,0 +1,23 @@
+{
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Windows",
+  "venvPath": "C:\\Users\\bhuva\\AppData\\Local\\Programs\\Python\\Python312",
+  "include": [
+    ".",
+    "medshare"
+  ],
+  "extraPaths": [
+    "C:\\Users\\bhuva\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages",
+    "C:\\Users\\bhuva\\bxp267"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "medshare",
+      "extraPaths": [
+        "C:\\Users\\bhuva\\bxp267"
+      ]
+    }
+  ],
+  "typeCheckingMode": "off",
+  "useLibraryCodeForTypes": true
+}

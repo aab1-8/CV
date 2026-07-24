@@ -1,0 +1,59 @@
+# Python Virtual Environment
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+ganache.log
+
+# Environment variables
+.env
+
+# Node
+node_modules/
+
+# Scientific Results & Visualization (MUST BE TRACKED)
+test/*.csv
+test/*.png
+test/*.json
+docs/assets/**/*.png
+docs/assets/**/*.csv
+!test/best_model.pth  # Models are still ignored as they are too large for Git
+
+
+# Google Drive sync temp
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# Hardhat/Truffle artifacts (keep build/ for deploy_info.json)
+artifacts/
+
+# Local databases and caches
+ganache_db/
+cache/
+back_up_plots/
+node-v14.21.3-linux-x64/
+node-v14.21.3-linux-x64.tar.xz
+node-v16.20.2-linux-x64/
+build/*.dbg.json
+
+# --- FINAL VIVA ADDITION: TRACK AUDIT IMAGES ---
+!docs/assets/audit_results/*.png

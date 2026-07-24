@@ -1,0 +1,114 @@
+[
+  {
+    "Hospital": "COPD",
+    "Accuracy": 0.3333333333333333,
+    "AUC-ROC": 1.0,
+    "Samples": 13,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "CHF",
+    "Accuracy": 0.8,
+    "AUC-ROC": 0.75,
+    "Samples": 22,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "ARF/MOSF w/Sepsis",
+    "Accuracy": 0.625,
+    "AUC-ROC": 0.8666666666666667,
+    "Samples": 36,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Lung Cancer",
+    "Accuracy": 0.0,
+    "AUC-ROC": 0.5,
+    "Samples": 7,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Colon Cancer",
+    "Accuracy": 1.0,
+    "AUC-ROC": 0.5,
+    "Samples": 7,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Coma",
+    "Accuracy": 0.5,
+    "AUC-ROC": 0.0,
+    "Samples": 6,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "MOSF w/Malig",
+    "Accuracy": 0.5,
+    "AUC-ROC": 0.0,
+    "Samples": 7,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Cirrhosis",
+    "Accuracy": 1.0,
+    "AUC-ROC": 0.5,
+    "Samples": 2,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "COPD",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 13,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "CHF",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 22,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "ARF/MOSF w/Sepsis",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 36,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Lung Cancer",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 7,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Colon Cancer",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 7,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Coma",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 6,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "MOSF w/Malig",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 7,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Cirrhosis",
+    "Accuracy": 0.72,
+    "AUC-ROC": 0.7386666666666667,
+    "Samples": 2,
+    "Type": "Federated"
+  }
+]

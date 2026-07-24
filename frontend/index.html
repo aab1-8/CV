@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedShare | Federated Learning Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container">
+    <header
+      style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; margin-bottom: 2rem;">
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div>
+          <h1>MedShare Dashboard</h1>
+          <p id="dataset-name" style="color: var(--text-secondary); margin-top: 0.25rem;">Federated Learning Marketplace
+          </p>
+        </div>
+        <button id="theme-toggle" aria-label="Toggle Light/Dark Theme">
+          ☀️ Light Mode
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 1.5rem; align-items: center;">
+        <!-- AUDIT SELECTOR -->
+        <div id="audit-selector-container" class="audit-selector-box"
+          style="display: flex; gap: 0.75rem; align-items: center; padding: 0.5rem 1rem; border-radius: 12px;">
+          <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">VIEW AUDIT:</span>
+          <select id="audit-dataset-selector" class="form-input"
+            style="padding: 0.4rem 0.8rem; height: auto; border: 1px solid rgba(255,255,255,0.1); background: #1a2333; color: white; cursor: pointer; border-radius: 8px;">
+            <option value="comparison_stats" style="background: #1a2333; color: white;">📊 Current FL Simulation (Live)
+            </option>
+            <option value="support2_audit" style="background: #1a2333; color: white;">📊 Support2 Mortality (Federated
+              Aggregation Test)</option>
+            <option value="thyroid_audit" style="background: #1a2333; color: white;">📊 Thyroid Disorder (MI Privacy
+              Test)</option>
+            <option value="maternal_risk_audit" style="background: #1a2333; color: white;">📊 Maternal Health Risk
+              (Multi-class Test)</option>
+            <option value="admin_audit" style="background: #1a2333; color: white;">📊 Admin Category (Robust-MAD
+              Poisoning Defense)</option>
+            <option value="cdc_audit" style="background: #1a2333; color: white;">📊 CDC Diabetes (System Scalability
+              Test)</option>
+          </select>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin: 0 0.5rem;">
+            <div id="live-indicator"
+              style="width: 10px; height: 10px; background: #62efab; border-radius: 50%; box-shadow: 0 0 8px #62efab; animation: pulse 2s infinite;">
+            </div>
+            <span style="font-size: 0.75rem; color: #62efab; font-weight: 700; letter-spacing: 0.5px;">LIVE</span>
+          </div>
+          <button id="btn-sync-local" class="btn-secondary"
+            style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">🔄 Sync</button>
+        </div>
+
+        <div class="view-toggle">
+          <button id="btn-analytics" class="toggle-btn active">📈 Analytics</button>
+          <button id="btn-hospital" class="toggle-btn">🏥 Hospital Portal</button>
+          <button id="btn-marketplace" class="toggle-btn">📊 Researcher Portal</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ HOSPITAL VIEW ============ -->
+    <section id="hospital-view" class="view-section" style="display: none;">
+      <div style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem;">🏥 Hospital Portal</h2>
+        <p style="color: var(--text-secondary);">View and respond to model requests from researchers. Train local models
+          using your hospital's data.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="hospital-info-card card">
+          <div class="card-title">Your Hospital</div>
+          <div style="display: flex; gap: 2rem; align-items: center; margin-top: 1rem;">
+            <div style="flex: 1;">
+              <label style="color: var(--text-secondary); font-size: 0.85rem;">Hospital Name</label>
+              <input type="text" id="hospital-name" class="form-input" placeholder="Enter hospital name"
+                value="General Hospital A">
+            </div>
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.85rem;">Hospital Node Account</label>
+              <select id="hospital-account-selector" class="form-input" style="min-width: 150px;">
+                <option value="1">🏥 Hospital Node 1 (Account #1)</option>
+                <option value="2">🏥 Hospital Node 2 (Account #2)</option>
+                <option value="3">🏥 Hospital Node 3 (Account #3)</option>
+                <option value="4">🏥 Hospital Node 4 (Account #4)</option>
+                <option value="5">🏥 Hospital Node 5 (Account #5)</option>
+              </select>
+            </div>
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.85rem;">Active Dataset Link</label>
+              <select id="hospital-dataset-link" class="form-input" style="min-width: 150px;">
+                <option value="none">-- Link Local Source --</option>
+                <option value="diabetes">Diabetes (cdc)</option>
+                <option value="stroke">Stroke Prediction</option>
+                <option value="survival">Heart Disease / SUPPORT2 (Survival)</option>
+                <option value="thyroid">Thyroid</option>
+                <option value="maternal">Maternal Health</option>
+                <option value="hospital">Diabetes (Hospitals)</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 1.5rem;">
+            <label style="color: var(--text-secondary); font-size: 0.85rem;">Available Data Types</label>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+              <span class="data-tag">Diabetes (cdc)</span>
+              <span class="data-tag">Stroke Prediction</span>
+              <span class="data-tag">Heart Disease / SUPPORT2 (Survival)</span>
+              <span class="data-tag">Thyroid</span>
+              <span class="data-tag">Maternal Health</span>
+              <span class="data-tag">Diabetes (Hospitals)</span>
+              <span class="data-tag">Admin</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border: 1px solid var(--accent-green); background: rgba(98, 239, 171, 0.05);">
+          <div class="card-title" style="color: var(--accent-green);">💰 Earnings & Rewards</div>
+          <div style="margin: 1rem 0; text-align: center;">
+            <div id="hospital-rewards-balance" style="font-size: 2rem; font-weight: 700; color: #fff;">0.00 ETH</div>
+            <p style="color: var(--text-secondary); font-size: 0.8rem;">Pending on-chain bounty pool</p>
+          </div>
+          <button id="btn-claim-rewards" class="btn-primary"
+            style="background: var(--accent-green); color: #fff; width: 100%; justify-content: center;">🔗 Claim
+            Reward</button>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom: 1rem;">📋 Available Requests</h3>
+      <div id="hospital-requests-list" class="requests-grid">
+        <!-- Populated by JS -->
+        <div class="empty-state">No active requests. Check the Marketplace for new opportunities.</div>
+      </div>
+    </section>
+
+    <!-- ============ RESEARCHER VIEW (Researcher) ============ -->
+    <section id="marketplace-view" class="view-section" style="display: none;">
+      <div style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem;">📊 Researcher Portal</h2>
+        <p style="color: var(--text-secondary);">Create model requests and track contributions from hospitals.</p>
+      </div>
+
+      <!-- Marketplace Stats -->
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="card" style="text-align: center;">
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Active Researchers</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-blue);">128</div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Models Requested</div>
+          <div id="stats-models-requested" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-teal);">0
+          </div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Node Contributions</div>
+          <div id="stats-total-contributions" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-green);">0
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">Create New Request</div>
+        <form id="form-create-request" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+          <div>
+            <label class="card-title">Data Type</label>
+            <select id="req-data-type" class="form-input">
+              <option value="Diabetes Classification">Diabetes Classification</option>
+              <option value="Heart Disease (Survival)">Heart Disease (Survival)</option>
+              <option value="Stroke Prediction">Stroke Prediction</option>
+              <option value="Maternal Health Risk">Maternal Health Risk</option>
+              <option value="Thyroid Disorder Aggregation">Thyroid Disorder Aggregation</option>
+              <option value="Diabetes Hospitals (Multi-site)">Diabetes Hospitals (Multi-site)</option>
+              <option value="Admin Category (Security Testing)">Admin Category (Security Testing)</option>
+            </select>
+          </div>
+          <div>
+            <label class="card-title">Hospitals Needed</label>
+            <input type="number" id="req-hospitals" class="form-input" value="3" min="1">
+          </div>
+          <div>
+            <label class="card-title">Model Type</label>
+            <select id="req-model-type" class="form-input">
+              <option value="MLP (Multi-Layer)">MLP (Multi-Layer)</option>
+              <option value="CNN (Convolutional)">CNN (Convolutional)</option>
+              <option value="Linear Regression">Linear Regression</option>
+              <option value="XGBoost (Federated)">XGBoost (Federated)</option>
+            </select>
+          </div>
+          <div style="grid-column: span 1;">
+            <label class="card-title">ETH Bounty (Total)</label>
+            <input type="number" id="req-bounty" class="form-input" value="1.5" step="0.1">
+          </div>
+          <div style="grid-column: span 2;">
+            <label class="card-title">Description (Optional)</label>
+            <input type="text" id="req-description" class="form-input"
+              placeholder="e.g., Predict 30-day readmission risk">
+          </div>
+
+          <button type="submit" class="btn-primary"
+            style="grid-column: span 3; margin-top: 0.5rem; justify-content: center;">
+            🚀 Create Request
+          </button>
+        </form>
+      </div>
+
+      <h3 style="margin-bottom: 1rem;">📦 Your Requests</h3>
+      <div id="researcher-requests-list" class="requests-grid">
+        <!-- Populated by JS -->
+        <div class="empty-state">No requests yet. Create one above to start collecting hospital contributions.</div>
+      </div>
+    </section>
+
+    <!-- ============ ANALYTICS VIEW (Original Dashboard) ============ -->
+    <section id="analytics-view" class="view-section">
+      <section class="metrics-grid">
+        <div class="card">
+          <div class="card-title">Total Patients</div>
+          <div class="card-value" id="total-samples">0</div>
+          <div id="node-count-subtext" class="card-subtitle">Loading nodes...</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg Accuracy</div>
+          <div class="card-value" id="avg-accuracy">0.00%</div>
+          <div class="card-subtitle" id="avg-accuracy-sub">Mean performance of local models</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg AUC-ROC</div>
+          <div class="card-value" id="avg-auc">0.000</div>
+          <div class="card-subtitle" id="avg-auc-sub">Mean predictive power</div>
+        </div>
+      </section>
+
+      <div style="margin: 0 0 2rem 0;">
+        <h2 style="margin-bottom: 1rem; font-size: 1.25rem; color: var(--accent-teal);">📈 Global Performance
+          Benchmarks
+        </h2>
+        <section class="stats-grid" id="comparison-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <!-- Will be populated by JS -->
+        </section>
+      </div>
+
+      <section class="charts-grid">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Triple Baseline Comparison</h3>
+            <p>Accuracy summary: Local vs. Centralized vs Federated </p>
+          </div>
+          <canvas id="benchmark-bar-chart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Hospital Data Distribution</h3>
+            <p>Number of patient records per specialized hospital node</p>
+          </div>
+          <canvas id="distribution-chart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Model Performance Comparison</h3>
+            <p>Accuracy and AUC-ROC comparison (Local vs. Federated)</p>
+          </div>
+          <canvas id="performance-chart"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Federated Training Progress</h3>
+            <p>Global Model Accuracy & Loss over training rounds</p>
+          </div>
+          <canvas id="training-chart"></canvas>
+        </div>
+      </section>
+
+      <div style="margin: 2rem 0; padding-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">Security & Privacy Audit</h2>
+        <section class="stats-grid" id="security-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <!-- Will be populated by JS -->
+        </section>
+
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-secondary);">🛡️ Network Reputation
+          (Hospital Trust Scores)</h3>
+        <div id="hospital-reputation-list"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+          <!-- Populated by JS -->
+          <div class="empty-state">Loading network trust scores...</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- DEVELOPER FOOTER -->
+    <footer
+      style="margin: 4rem 0 2rem; padding: 2rem; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-secondary); font-size: 0.8rem;">
+      <p>© 2026 MedShare-FL Research Framework • Federated Learning Audit Dashboard</p>
+      <button id="dev-clear-storage" class="btn-secondary"
+        style="margin-top: 1rem; opacity: 0.5; font-size: 0.75rem; border: 1px dashed rgba(247, 129, 102, 0.4); color: #f78166; border-radius: 8px;">🛠️
+        Developer: Clear Local Simulation Progress</button>
+    </footer>
+
+    <!-- CUSTOM NOTIFICATION MODAL -->
+    <div id="custom-modal"
+      style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 2rem;">
+      <div class="card"
+        style="max-width: 500px; border: 1px solid var(--accent-red); padding: 2rem; text-align: center;">
+        <h2 style="color: var(--accent-red); margin-bottom: 1rem;">🚨 Reset Progress?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">This will clear all created
+          requests and local node training progress from this browser storage. This is recommended before starting a new
+          finalized dissertation demo.</p>
+        <div style="display: flex; gap: 1rem;">
+          <button id="modal-cancel" class="btn-secondary" style="flex: 1; justify-content: center;">Cancel</button>
+          <button id="modal-confirm" class="btn-primary"
+            style="flex: 1; background: var(--accent-red); color: white; justify-content: center;">Reset
+            Everything</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

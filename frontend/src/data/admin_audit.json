@@ -1,0 +1,27 @@
+{
+  "dataset_name": "Admin-Category",
+  "reputation": {
+    "Hospital_5": -102,
+    "Hospital_1": 175,
+    "Hospital_2": 174,
+    "Hospital_4": 173,
+    "Hospital_3": 174
+  },
+  "local_accuracy": 0.43170076116160844,
+  "local_auc": 0.8978656365927966,
+  "centralized_accuracy": 0.79,
+  "centralized_auc": 0.979613016980863,
+  "federated_accuracy": 0.8987341772151899,
+  "federated_auc": 0.9827403213041559,
+  "improvement_local_fed": 108.18452457598195,
+  "security": {
+    "dp_enabled": false,
+    "epsilon": 0.0,
+    "delta": "1e-5",
+    "leakage_acc": 0.039087778898427517,
+    "leakage_auc": 0.015580563984390894,
+    "defense_type": "Robust-MAD",
+    "attack_simulated": true,
+    "attack_type": "gradient_scale"
+  }
+}

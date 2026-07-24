@@ -1,0 +1,27 @@
+{
+  "dataset_name": "Maternal-Health",
+  "reputation": {
+    "Hospital_3": 100,
+    "Hospital_5": 100,
+    "Hospital_2": 100,
+    "Hospital_4": 100,
+    "Hospital_1": 100
+  },
+  "local_accuracy": 0.4824132115210421,
+  "local_auc": 0.7135026228265603,
+  "centralized_accuracy": 0.6059113300492611,
+  "centralized_auc": 0.8030617055509023,
+  "federated_accuracy": 0.6165048543689321,
+  "federated_auc": 0.7786459871457351,
+  "improvement_local_fed": 27.79601380009907,
+  "security": {
+    "dp_enabled": true,
+    "epsilon": 138.68837010237718,
+    "delta": "1e-5",
+    "leakage_acc": 0.08709359494301838,
+    "leakage_auc": 0.025116561864019338,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "None"
+  }
+}

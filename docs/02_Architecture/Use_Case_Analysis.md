@@ -1,0 +1,95 @@
+# MedShare Use Case Diagram
+
+This diagram was generated to visualize the local machine execution flow, including datasets, attacks, defenses, and blockchain interactions.
+
+```mermaid
+usecaseDiagram
+    actor "User / Researcher" as User
+    actor "Blockchain Service (Ganache)" as Blockchain
+
+    package "1. Configuration Phase" {
+        usecase "Initialize Simulation" as UC_Init
+        usecase "Select Dataset" as UC_Data
+        usecase "Select Experiment" as UC_Exp
+        
+        usecase "Support2 (Clinical)" as Data_Sup
+        usecase "CDC Diabetes" as Data_CDC
+        usecase "Heart Disease" as Data_Heart
+        
+        usecase "Robustness (Attack/Def)" as Exp_Rob
+        usecase "Diff. Privacy" as Exp_DP
+        usecase "Gas Cost Analysis" as Exp_Gas
+        usecase "Performance/Latency" as Exp_Lat
+
+        User --> UC_Init
+        UC_Init ..> UC_Data : <<include>>
+        UC_Init ..> UC_Exp : <<include>>
+        
+        UC_Data <|-- Data_Sup
+        UC_Data <|-- Data_CDC
+        UC_Data <|-- Data_Heart
+        
+        UC_Exp <|-- Exp_Rob
+        UC_Exp <|-- Exp_DP
+        UC_Exp <|-- Exp_Gas
+        UC_Exp <|-- Exp_Lat
+    }
+
+    package "2. Client Execution (Hospital Node)" {
+        usecase "Train Local Model" as UC_Train
+        usecase "Apply Differential Privacy" as UC_DP_Apply
+        usecase "Add Gaussian Noise" as UC_Noise
+        usecase "Simulate Attack" as UC_Attack
+        usecase "Gradient Scaling" as Atk_Grad
+        usecase "Label Flipping" as Atk_Flip
+        usecase "Generate Hash Commitment" as UC_Hash
+
+        UC_Train ..> UC_DP_Apply : <<include>> (If DP Enabled)
+        UC_DP_Apply ..> UC_Noise : <<include>>
+        
+        UC_Train ..> UC_Attack : <<extend>> (If Malicious)
+        UC_Attack <|-- Atk_Grad
+        UC_Attack <|-- Atk_Flip
+        
+        UC_Train ..> UC_Hash : <<include>>
+    }
+
+    package "3. Server Orchestration" {
+        usecase "Distribute Global Model" as UC_Dist
+        usecase "Aggregate Client Updates" as UC_Agg
+        usecase "Apply Defense Mechanism" as UC_Defense
+        usecase "Robust-MAD Filter" as Def_MAD
+        usecase "Krum Strategy" as Def_Krum
+        usecase "Trimmed Average" as Def_Trim
+        usecase "FedMedian" as Def_Med
+        usecase "Reputation Slashing" as Def_Rep
+        usecase "Update Global Model" as UC_Update
+
+        UC_Init --> UC_Dist : "Starts Round"
+        UC_Dist --> UC_Train : "Sends Parameters"
+        UC_Train --> UC_Agg : "Returns Weights"
+        
+        UC_Agg ..> UC_Defense : <<include>>
+        UC_Defense <|-- Def_MAD
+        UC_Defense <|-- Def_Krum
+        UC_Defense <|-- Def_Trim
+        UC_Defense <|-- Def_Med
+        UC_Defense <|-- Def_Rep
+        
+        UC_Agg --> UC_Update : "New Global Weights"
+        UC_Update --> UC_Dist : "Next Round"
+    }
+
+    package "4. Blockchain Integration" {
+        usecase "Post Commitment" as UC_Post_Commit
+        usecase "Post Final Model" as UC_Post_Final
+        usecase "Record Gas Costs" as UC_GasLog
+
+        UC_Hash --> UC_Post_Commit : "Triggers Tx"
+        UC_Post_Commit --> Blockchain : "Smart Contract Call"
+        UC_Post_Commit ..> UC_GasLog : <<include>>
+        
+        UC_Update --> UC_Post_Final : "End of Round"
+        UC_Post_Final --> Blockchain : "Smart Contract Call"
+    }
+```

@@ -1,0 +1,114 @@
+[
+  {
+    "Hospital": "Lung Cancer",
+    "Accuracy": 0.8956043956043956,
+    "AUC-ROC": 0.30836293186955116,
+    "Samples": 908,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Lung Cancer",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 908,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Cirrhosis",
+    "Accuracy": 0.6764705882352942,
+    "AUC-ROC": 0.9262187088274045,
+    "Samples": 508,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Cirrhosis",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 508,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "ARF/MOSF w/Sepsis",
+    "Accuracy": 0.8506401137980085,
+    "AUC-ROC": 0.9330954875837867,
+    "Samples": 3515,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "ARF/MOSF w/Sepsis",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 3515,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Coma",
+    "Accuracy": 0.8083333333333333,
+    "AUC-ROC": 0.9251456745853877,
+    "Samples": 596,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Coma",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 596,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "CHF",
+    "Accuracy": 0.6654676258992805,
+    "AUC-ROC": 0.7486093281985451,
+    "Samples": 1387,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "CHF",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 1387,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "Colon Cancer",
+    "Accuracy": 0.8737864077669902,
+    "AUC-ROC": 0.3803418803418803,
+    "Samples": 512,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "Colon Cancer",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 512,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "COPD",
+    "Accuracy": 0.6443298969072165,
+    "AUC-ROC": 0.7521367521367522,
+    "Samples": 967,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "COPD",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 967,
+    "Type": "Federated"
+  },
+  {
+    "Hospital": "MOSF w/Malig",
+    "Accuracy": 0.965034965034965,
+    "AUC-ROC": 0.6782608695652174,
+    "Samples": 712,
+    "Type": "Local Baseline"
+  },
+  {
+    "Hospital": "MOSF w/Malig",
+    "Accuracy": 0.8710462287104623,
+    "AUC-ROC": 0.9184621977356734,
+    "Samples": 712,
+    "Type": "Federated"
+  }
+]

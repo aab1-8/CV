@@ -1,0 +1,12 @@
+{
+    "name": "medshare-core",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "ganache": "^7.9.2",
+        "solc": "^0.8.20"
+    },
+    "devDependencies": {
+        "hardhat": "^2.19.4"
+    }
+}

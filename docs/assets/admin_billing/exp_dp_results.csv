@@ -1,0 +1,6 @@
+timestamp_utc,dataset,noise,rounds,accuracy,epsilon,leakage_acc,leakage_auc
+2026-03-15T14:55:06Z,Admin-Billing-Risk,0.05,50,0.8663,294.86,0.0283,0.0000
+2026-03-15T14:57:50Z,Admin-Billing-Risk,0.1,50,0.8317,96.12,0.0104,0.0323
+2026-03-15T14:59:57Z,Admin-Billing-Risk,0.2,50,0.5050,35.08,0.0329,0.0000
+2026-03-15T15:02:05Z,Admin-Billing-Risk,0.3,50,0.7426,20.39,0.0000,0.0474
+2026-03-15T15:04:11Z,Admin-Billing-Risk,0.5,50,0.4802,10.73,0.0250,0.0585

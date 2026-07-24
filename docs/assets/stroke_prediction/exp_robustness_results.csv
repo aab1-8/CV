@@ -1,0 +1,7 @@
+timestamp_utc,dataset,attack,defense,rounds,accuracy
+2026-03-17T02:02:33Z,Stroke,None,FedAvg,10,0.8665
+2026-03-17T02:04:19Z,Stroke,None,Robust-MAD,10,0.8793
+2026-03-17T02:05:03Z,Stroke,label_flip,FedAvg,10,0.8659
+2026-03-17T02:06:19Z,Stroke,label_flip,Robust-MAD,10,0.8603
+2026-03-17T02:07:03Z,Stroke,gradient_scale,FedAvg,10,0.7124
+2026-03-17T02:07:49Z,Stroke,gradient_scale,Robust-MAD,10,0.5829

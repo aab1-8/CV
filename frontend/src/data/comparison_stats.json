@@ -1,0 +1,30 @@
+{
+  "dataset_name": "SUPPORT2-Death",
+  "reputation": {
+    "COPD": 100,
+    "CHF": 100,
+    "ARF/MOSF w/Sepsis": 100,
+    "Lung Cancer": 100,
+    "Colon Cancer": 100,
+    "Coma": 100,
+    "MOSF w/Malig": 100,
+    "Cirrhosis": 100
+  },
+  "local_accuracy": 0.7325723755411255,
+  "local_auc": 0.6422356689517034,
+  "centralized_accuracy": 0.775,
+  "centralized_auc": 0.8686140161077053,
+  "federated_accuracy": 0.7401960784313726,
+  "federated_auc": 0.7743849696055579,
+  "improvement_local_fed": 1.040675726356142,
+  "security": {
+    "dp_enabled": false,
+    "epsilon": 0.0,
+    "delta": "1e-5",
+    "leakage_acc": 0.03113891970675886,
+    "leakage_auc": 0.05938597575097937,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "None"
+  }
+}

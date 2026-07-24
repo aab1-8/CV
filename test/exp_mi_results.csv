@@ -1,0 +1,6 @@
+timestamp_utc,dataset,noise,rounds,mode,leakage_acc,leakage_auc,accuracy
+2026-03-25T17:31:52Z,Maternal-Health,0.0,50,No Privacy (Baseline),0.1995,0.1409,0.6878
+2026-03-25T17:40:06Z,Maternal-Health,0.05,50,With DP (sigma=0.05),0.0452,0.0230,0.6456
+2026-03-25T17:47:27Z,Maternal-Health,0.1,50,With DP (sigma=0.1),0.0742,0.0392,0.6390
+2026-03-25T17:56:00Z,Maternal-Health,0.2,50,With DP (sigma=0.2),0.0609,0.0506,0.6324
+2026-03-25T18:01:54Z,Maternal-Health,0.5,50,With DP (sigma=0.5),0.0871,0.0251,0.6165

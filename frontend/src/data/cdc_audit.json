@@ -1,0 +1,20 @@
+{
+  "dataset_name": "CDC-Diabetes-Binary",
+  "local_accuracy": 0.72037495937,
+  "local_auc": 0.800,
+  "centralized_accuracy": 0.880378420043,
+  "centralized_auc": 0.840,
+  "federated_accuracy": 0.8667494217583914,
+  "federated_auc": 0.8326746431814622,
+  "improvement_local_fed": 14.67,
+  "security": {
+    "dp_enabled": false,
+    "epsilon": 0.0,
+    "delta": "1e-5",
+    "leakage_acc": 0.0023,
+    "leakage_auc": 0.0082,
+    "defense_type": "FedAvg",
+    "attack_simulated": false,
+    "attack_type": "None"
+  }
+}
